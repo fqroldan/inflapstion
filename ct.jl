@@ -25,7 +25,7 @@ function CrazyType(;
         α = 0.17,
         σ = 0.125,
         ystar = 0.05,
-        ω = 0.3,
+        ω = 0.271,
         Np = 25,
         Na = 25
         )
@@ -227,6 +227,5 @@ end
 L_mat = choose_ω()
 
 # ct = CrazyType()
-
 # pfi!(ct)
 # plot_ct(ct)
