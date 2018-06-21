@@ -161,11 +161,11 @@ function plot_ct(ct::CrazyType)
         if dim == 1
             xgrid = ct.pgrid
             zgrid = ct.agrid
-            xtitle= "p"
+            xtitle= "𝑝"
         elseif dim == 2
             xgrid = ct.agrid
             zgrid = ct.pgrid
-            xtitle= "a"
+            xtitle= "𝑎"
         else
             throw(error("wrong dim"))
         end
@@ -174,10 +174,10 @@ function plot_ct(ct::CrazyType)
         for (jz, zv) in enumerate(zgrid)
             if dim == 1
                 y_vec = y_mat[:, jz]
-                name = "a"
+                name = "𝑎"
             elseif dim == 2
                 y_vec = y_mat[jz, :]
-                name = "p"
+                name = "𝑝"
             end
             name = name * " = $(round(zv,2))"
             jz % 2 == 0? showleg_i = showleg: showleg_i = false
@@ -189,8 +189,8 @@ function plot_ct(ct::CrazyType)
     end
     pπa = lines(ct, ct.gπ, dim = 1, title="gπ", showleg = true)
     pπp = lines(ct, ct.gπ, dim = 2, title="gπ", showleg = true)
-    pLa = lines(ct, ct.L , dim = 1, title="L")
-    pLp = lines(ct, ct.L , dim = 2, title="L")
+    pLa = lines(ct, ct.L , dim = 1, title="𝓛")
+    pLp = lines(ct, ct.L , dim = 2, title="𝓛")
 
     p = [pπa pπp; pLa pLp]
     p.plot.layout["font_family"] = "Fira Sans Light"
@@ -203,7 +203,30 @@ function plot_ct(ct::CrazyType)
 end
 
 end # everywhere
-ct = CrazyType()
 
-pfi!(ct)
-plot_ct(ct)
+function choose_ω()
+    Nω = 25
+    ωgrid = linspace(-0.5, 0.5, Nω)
+
+    ct = CrazyType()
+
+    L_mat = zeros(Nω, ct.Na)
+
+    for (jω, ωv) in enumerate(ωgrid)
+        ct.ω = ωv
+        pfi!(ct, verbose = false)
+
+        # Save the element of the value function with lower positive p
+        L_mat[jω, :] = ct.L[2, :]
+        print("\nMinimum element at ω = $ωv is $(round(min(ct.L[2,:])))")
+    end
+
+    return L_mat
+end
+
+L_mat = choose_ω()
+
+# ct = CrazyType()
+
+# pfi!(ct)
+# plot_ct(ct)
