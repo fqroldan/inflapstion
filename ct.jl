@@ -206,7 +206,7 @@ end # everywhere
 
 function choose_ω()
     Nω = 25
-    ωgrid = linspace(-0.5, 0.5, Nω)
+    ωgrid = linspace(0.0, 0.5, Nω)
 
     ct = CrazyType()
 
@@ -218,7 +218,7 @@ function choose_ω()
 
         # Save the element of the value function with lower positive p
         L_mat[jω, :] = ct.L[2, :]
-        print("\nMinimum element at ω = $ωv is $(round(min(ct.L[2,:])))")
+        print("\nMinimum element at ω = $(round(ωv,3)) is $(round(minimum(ct.L[2,:]),3))")
     end
 
     return L_mat
