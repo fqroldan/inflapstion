@@ -23,16 +23,16 @@ function CrazyType(;
         β = 0.9,
         γ = 1.,
         α = 0.17,
-        σ = 0.125,
+        σ = 0.15,
         ystar = 0.05,
         ω = 0.271,
-        Np = 25,
-        Na = 25
+        Np = 30,
+        Na = 20
         )
 
     A = 1/(α*γ) * ystar
 
-    curv = 0.6
+    curv = 0.25
     pgrid = linspace(0, 1, Np).^(1./curv)
     agrid = linspace(0, 1.25*A, Na)
 
@@ -78,7 +78,7 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
 
     f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * dist_ϵ(ct, ϵv)
 
-    (val, err) = hquadrature(f, -1.96*ct.σ, 1.96*ct.σ, reltol=1e-6, abstol=0, maxevals=0)
+    (val, err) = hquadrature(f, -1.96*ct.σ, 1.96*ct.σ, reltol=1e-12, abstol=0, maxevals=0)
 
     return val
 end
@@ -224,8 +224,8 @@ function choose_ω()
     return L_mat
 end
 
-L_mat = choose_ω()
+# L_mat = choose_ω()
 
-# ct = CrazyType()
-# pfi!(ct)
-# plot_ct(ct)
+ct = CrazyType()
+pfi!(ct)
+plot_ct(ct)
