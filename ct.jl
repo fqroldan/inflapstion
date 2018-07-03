@@ -26,8 +26,8 @@ function CrazyType(;
         σ = 0.15,
         ystar = 0.05,
         ω = 0.271,
-        Np = 30,
-        Na = 20
+        Np = 35,
+        Na = 25
         )
 
     A = 1/(α*γ) * ystar
@@ -78,7 +78,7 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
 
     f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * dist_ϵ(ct, ϵv)
 
-    (val, err) = hquadrature(f, -1.96*ct.σ, 1.96*ct.σ, reltol=1e-12, abstol=0, maxevals=0)
+    (val, err) = hquadrature(f, -1.96*ct.σ, 1.96*ct.σ, reltol=1e-16, abstol=0, maxevals=0)
 
     return val
 end
