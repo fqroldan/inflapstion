@@ -244,10 +244,9 @@ function choose_ω()
 		s = "\nMinimum element at ω = $(@sprintf("%.3g",ωv)) is $(@sprintf("%.3g",lmin)) with a₀ = $(@sprintf("%.3g", amin))"
 		flag ? s = s*" ✓" : nothing
 		print_save(s)
-		if minimum(ct.L[2,:]) < L_min
-			L_min = minimum(ct.L[2,:])
-			_, jωmin = findmin(ct.L[2,:])
-			ωmin = ωgrid[jωmin]
+		if lmin < L_min
+			L_min = lmin
+			ωmin = ωv
 		end
 	end
 
