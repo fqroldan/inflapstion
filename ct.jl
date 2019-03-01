@@ -1,9 +1,9 @@
+@everywhere using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays
+@everywhere include("reporting_routines.jl")
+
 @everywhere begin
 
-using Distributions, Interpolations, Optim, Cubature, PlotlyJS, Rsvg, QuantEcon, LaTeXStrings
-include("reporting_routines.jl")
-
-type CrazyType
+mutable struct CrazyType
 	β::Float64
 	γ::Float64
 	α::Float64
@@ -21,21 +21,22 @@ type CrazyType
 	L::Array{Float64, 2}
 end
 function CrazyType(;
-		β = 0.9,
-		γ = 1.,
+		β = 0.96,
+		γ = 1.0,
 		α = 0.17,
 		σ = 0.15,
 		ystar = 0.05,
-		ω = 0.271,
-		Np = 35,
-		Na = 25
+		#ω = 0.271,
+		ω = 0.15,
+		Np = 45,
+		Na = 35
 		)
 
 	A = 1/(α*γ) * ystar
 
 	curv = 0.25
-	pgrid = linspace(0, 1, Np).^(1./curv)
-	agrid = linspace(0, 1.25*A, Na)
+	pgrid = range(0, 1, length=Np).^(1.0/curv)
+	agrid = range(0, 1.25*A, length=Na)
 
 	gπ = zeros(Np, Na)
 	L = zeros(Np, Na)
@@ -50,25 +51,28 @@ end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
 
-dist_ϵ(ct, ϵv) = pdf.(Normal(0.,ct.σ), ϵv)
+dist_ϵ(ct) = Normal(0, ct.σ)
+pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 function Bayes(ct::CrazyType, obs_π, exp_π, av, pv)
 
-	numerator = pv * dist_ϵ(ct, obs_π - av)
-	denominator = numerator + (1.-pv) * dist_ϵ(ct, obs_π - exp_π)
+	numer = pv * pdf_ϵ(ct, obs_π - av)
+	denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
 
-	return numerator / denominator
+	return numer / denomin
 end
 
+NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π′)
+
 function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
-	exp_π  = itp_gπ[pv, av]
+	exp_π  = itp_gπ(pv, av)
 	pprime = Bayes(ct, obs_π, exp_π, av, pv)
 	aprime = ϕ(ct, av)
-	gπ′ = itp_gπ[pprime, aprime]
-	exp_π′ = pprime * aprime + (1.-pprime) * gπ′
+	gπ′ = itp_gπ(pprime, aprime)
+	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
 
-	y = (1./ct.α) * (obs_π - exp_π′)
+	y = NKPC(ct, obs_π, exp_π′)
 
-	L′ = itp_L[pprime, aprime]
+	L′ = itp_L(pprime, aprime)
 
 	L = (y-ct.ystar)^2 + ct.γ * obs_π^2 + ct.β * L′
 
@@ -77,19 +81,20 @@ end
 
 function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * dist_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * pdf_ϵ(ct, ϵv)
 
-	(val, err) = hquadrature(f, -1.96*ct.σ, 1.96*ct.σ, reltol=1e-16, abstol=0, maxevals=0)
+	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-16, atol=0, maxevals=0)
 
-	return val
+	return val / (cdf(dist_ϵ(ct), 3.09*ct.σ) - cdf(dist_ϵ(ct), -3.09*ct.σ))
 end
+
 
 function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 
 	minπ, maxπ = -0.9, 1.25 / (ct.α*ct.γ) * ct.ystar
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
-			minπ, maxπ, GoldenSection()
+			minπ, maxπ, GoldenSection(), reltol=1e-12, abstol=1e-12
 			)
 	gπ = res.minimizer
 	L = res.minimum
@@ -99,9 +104,11 @@ end
 
 function optim_step(ct::CrazyType, itp_gπ, itp_L)
 
-	gπ, L = SharedArray(ct.gπ), SharedArray(ct.L)
+	gπ, L = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
+	# gπ, L = Array{Float64}(undef, size(ct.gπ)), Array{Float64}(undef, size(ct.L))
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
-	@sync @parallel for js in 1:size(apgrid,1)
+	@sync @distributed for js in 1:size(apgrid,1)
+    # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 		gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, av, pv)
@@ -120,10 +127,13 @@ function pf_iter(ct::CrazyType)
 	return new_gπ, new_L
 end
 
-function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=1000, verbose::Bool=true)
+function pfi!(ct::CrazyType; tol::Float64=1e-5, maxiter::Int64=2500, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.33
+    if verbose
+        print_save("\nStarting PFI")
+    end
 
 	while dist > tol && iter < maxiter
 		iter += 1
@@ -136,16 +146,17 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=1000, verbose::Bo
 
 		dist = max(dist_π, dist_L)
 
-		ct.gπ = upd_η * new_gπ + (1.-upd_η) * old_gπ
-		ct.L  = upd_η * new_L  + (1.-upd_η) * old_L
+		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * old_gπ
+		ct.L  = upd_η * new_L  + (1.0-upd_η) * old_L
 
 		if verbose && iter % 10 == 0
 			print_save("\nAfter $iter iterations, d(π, L) = ($(@sprintf("%0.3g",dist_π)), $(@sprintf("%0.3g",dist_L)))")
 		end
 	end
+	return (dist <= tol)
 end
 
-function plot_ct(ct::CrazyType)
+function plot_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 	col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
 		"#2ca02c",  # cooked asparagus green
@@ -171,7 +182,7 @@ function plot_ct(ct::CrazyType)
 			throw(error("wrong dim"))
 		end
 		Nz = length(zgrid)
-		l = Array{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(Nz)
+		l = Array{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, Nz)
 		for (jz, zv) in enumerate(zgrid)
 			if dim == 1
 				y_vec = y_mat[:, jz]
@@ -180,8 +191,8 @@ function plot_ct(ct::CrazyType)
 				y_vec = y_mat[jz, :]
 				name = "𝑝"
 			end
-			name = name * " = $(round(zv,2))"
-			jz % 2 == 0? showleg_i = showleg: showleg_i = false
+			name = name * " = $(@sprintf("%.2g", zv))"
+			jz % 2 == 0 ? showleg_i = showleg : showleg_i = false
 			l_new = scatter(;x=xgrid, y=y_vec, name = name, showlegend = showleg_i, marker_color=col[ceil(Int,10*jz/Nz)])
 			l[jz] = l_new
 		end
@@ -194,48 +205,66 @@ function plot_ct(ct::CrazyType)
 	pLp = lines(ct, ct.L , dim = 2, title="𝓛")
 
 	p = [pπa pπp; pLa pLp]
-	p.plot.layout["font_family"] = "Fira Sans Light"
-	p.plot.layout["height"] = 600
-	p.plot.layout["width"]  = 950
-	p.plot.layout["font_size"] = 12
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
-	savefig(p, pwd() * "/../Graphs/ct.png")
-	Void
+	function makeplot(p, ext)
+		savefig(p, pwd() * "/../Graphs/ct" * ext)
+	end
+
+	if make_pdf
+		makeplot(p, ".pdf")
+	end
+	if make_png
+		makeplot(p, ".png")
+	end
+
+	return p
 end
 
 end # everywhere
 
 function choose_ω()
 	Nω = 25
-	ωgrid = linspace(0.0, 0.5, Nω)
+	ωgrid = range(0.0, 0.5, length=Nω)
 
 	ct = CrazyType()
 
-	L_mat = zeros(Nω, ct.Na)
+	L_mat = zeros(Nω, ct.Np, ct.Na)
 
+	L_min = 100.
+	ωmin = 1.0
 	for (jω, ωv) in enumerate(ωgrid)
 		ct.ω = ωv
-		pfi!(ct, verbose = false)
+		flag = pfi!(ct, verbose = false)
 
-		# Save the element of the value function with lower positive p
-		L_mat[jω, :] = ct.L[2, :]
-		print_save("\nMinimum element at ω = $(round(ωv,3)) is $(round(minimum(ct.L[2,:]),3))")
+		# Save the corresponding value function
+		L_mat[jω, :, :] = ct.L[:, :]
+		lmin, jamin = findmin(ct.L[2,:])
+		amin = ct.agrid[jamin]
+		s = "\nMinimum element at ω = $(@sprintf("%.3g",ωv)) is $(@sprintf("%.3g",lmin)) with a₀ = $(@sprintf("%.3g", amin))"
+		flag ? s = s*" ✓" : nothing
+		print_save(s)
+		if minimum(ct.L[2,:]) < L_min
+			L_min = minimum(ct.L[2,:])
+			_, jωmin = findmin(ct.L[2,:])
+			ωmin = ωgrid[jωmin]
+		end
 	end
 
-	return L_mat
+	return L_mat, ωmin
 end
 
 function iter_simul(ct::CrazyType, itp_gπ, pv, av)
-	ϵ = rand(Normal(0., ct.σ))
+	ϵ = rand(dist_ϵ(ct))
 
-	exp_π = itp_gπ[pv, av]
+	exp_π = itp_gπ(pv, av)
 	obs_π = exp_π+ϵ
 	pprime = Bayes(ct, obs_π, exp_π, av, pv)
 	aprime = ϕ(ct, av)
-	gπ′ = itp_gπ[pprime, aprime]
-	exp_π′ = pprime * aprime + (1.-pprime) * gπ′
+	gπ′ = itp_gπ(pprime, aprime)
+	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
 
-	y = (1./ct.α) * (obs_π - exp_π′)
+	y = NKPC(ct, obs_π, exp_π′)
 
 	return pprime, aprime, obs_π, y
 end
@@ -243,7 +272,7 @@ end
 function simul(ct::CrazyType; T::Int64=50)
 	p0 = ct.pgrid[2]
 
-	ind_a0 = indmin(ct.L[2, :])
+	_, ind_a0 = findmin(ct.L[2, :])
 	a0 = ct.agrid[ind_a0]
 
 	p, a = p0, a0
@@ -256,13 +285,16 @@ function simul(ct::CrazyType; T::Int64=50)
 		p_vec[tt], a_vec[tt] = p, a
 		pp, ap, πt, yt = iter_simul(ct, itp_gπ, p, a)
 		π_vec[tt], y_vec[tt] = πt, yt
+		if tt == T
+			p_vec[end], a_vec[end] = pp, ap
+		end
+		p, a = pp, ap
 	end
-	p_vec[end], a_vec[end] = pp, ap
 
 	return p_vec, a_vec, π_vec, y_vec
 end
 
-function plot_simul(ct::CrazyType, T::Int64=50)
+function plot_simul(ct::CrazyType; T::Int64=50)
 	p_vec, a_vec, π_vec, y_vec = simul(ct, T=T)
 
 	pp = plot(scatter(;x=1:T, y=p_vec), Layout(;title="Reputation"))
@@ -271,23 +303,21 @@ function plot_simul(ct::CrazyType, T::Int64=50)
 	py = plot(scatter(;x=1:T, y=y_vec), Layout(;title="Output"))
 
 	p = [pp pa; py pπ]
-	p.plot.layout["font_family"] = "Fira Sans Light"
-	p.plot.layout["height"] = 600
-	p.plot.layout["width"]  = 950
-	p.plot.layout["font_size"] = 12
+	relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
 
     return p
 end
 
-# L_mat = choose_ω()
+L_mat, ωmin = choose_ω()
+ct = CrazyType(; ω = ωmin)
 
 write(pwd()*"/../output.txt", "")
 
-ct = CrazyType()
+# ct = CrazyType()
 pfi!(ct)
-#plot_ct(ct)
+plot_ct(ct)
 
-using JLD
-save("ct.jld", "ct", ct)
+# using JLD
+# save("ct.jld", "ct", ct)
 
-#plot_simul(ct, T=50)
+# plot_simul(ct, T=50)
