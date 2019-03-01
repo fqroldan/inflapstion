@@ -236,7 +236,7 @@ end # everywhere
 
 function choose_ω()
 	Nω = 25
-	ωgrid = range(0.0, 0.5, length=Nω)
+	ωgrid = range(0.0, 0.75, length=Nω)
 
 	ct = CrazyType()
 	L_mat = zeros(Nω, ct.Np, ct.Na)
@@ -271,7 +271,7 @@ function choose_ω()
 		scatter(;x=ωgrid, y=L_min[:, 2, jamin_vec[:]])
 		])
 
-	return L_mat, ωmin
+	return L_mat, ωmin, p1
 end
 
 function iter_simul(ct::CrazyType, itp_gπ, pv, av)
@@ -329,11 +329,12 @@ function plot_simul(ct::CrazyType; T::Int64=50)
 end
 write(pwd()*"/../output.txt", "")
 
-L_mat, ωmin = choose_ω()
-ct = CrazyType(; ω = ωmin)
+L_mat, ωmin, p1 = choose_ω()
+p1
+# ct = CrazyType(; ω = ωmin)
 
-pfi!(ct)
-plot_ct(ct)
+# pfi!(ct)
+# plot_ct(ct)
 
 # using JLD
 # save("ct.jld", "ct", ct)
