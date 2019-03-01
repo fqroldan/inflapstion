@@ -24,7 +24,7 @@ function CrazyType(;
 		β = 0.96,
 		γ = 1.0,
 		α = 0.17,
-		σ = 0.15,
+		σ = 0.2,
 		ystar = 0.05,
 		#ω = 0.271,
 		ω = 0.15,
@@ -32,17 +32,20 @@ function CrazyType(;
 		Na = 35
 		)
 
-	A = 1/(α*γ) * ystar
+	y = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * 0.0
+
+	A = α / (1.0-exp(-ω)) * y
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
-	agrid = range(0, 1.25*A, length=Na)
+	agrid = range(0, 1.0*A, length=Na)
 
 	gπ = zeros(Np, Na)
 	L = zeros(Np, Na)
 	for jp in 1:Np
 		for (ja, av) in enumerate(agrid)
-			gπ[jp, ja] = av
+			y_Nash = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * av
+			gπ[jp, ja] = α * y_Nash + exp(-ω) * av
 		end
 	end
 
@@ -65,7 +68,13 @@ NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π�
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
 	exp_π  = itp_gπ(pv, av)
-	pprime = Bayes(ct, obs_π, exp_π, av, pv)
+	if pv == ct.pgrid[1]
+		pprime = 0.0
+	elseif pv == ct.pgrid[end]
+		pprime = 1.0
+	else
+		pprime = Bayes(ct, obs_π, exp_π, av, pv)
+	end
 	aprime = ϕ(ct, av)
 	gπ′ = itp_gπ(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
@@ -82,19 +91,21 @@ end
 function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * pdf_ϵ(ct, ϵv)
+	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 
-	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-16, atol=0, maxevals=0)
+	sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 
-	return val / (cdf(dist_ϵ(ct), 3.09*ct.σ) - cdf(dist_ϵ(ct), -3.09*ct.σ))
+	val = val / sum_prob
+
+	return val
 end
-
 
 function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 
-	minπ, maxπ = -0.9, 1.25 / (ct.α*ct.γ) * ct.ystar
+	minπ, maxπ = -0.9, 1.5 / (ct.α*ct.γ) * ct.ystar
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
-			minπ, maxπ, GoldenSection(), reltol=1e-12, abstol=1e-12
+			minπ, maxπ, GoldenSection(), reltol=1e-32, abstol=1e-32
 			)
 	gπ = res.minimizer
 	L = res.minimum
@@ -127,7 +138,7 @@ function pf_iter(ct::CrazyType)
 	return new_gπ, new_L
 end
 
-function pfi!(ct::CrazyType; tol::Float64=1e-5, maxiter::Int64=2500, verbose::Bool=true)
+function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=2500, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.33
@@ -233,6 +244,8 @@ function choose_ω()
 
 	L_min = 100.
 	ωmin = 1.0
+
+	amin_vec = zeros(Nω)
 	for (jω, ωv) in enumerate(ωgrid)
 		ct.ω = ωv
 		flag = pfi!(ct, verbose = false)
@@ -249,6 +262,8 @@ function choose_ω()
 			ωmin = ωv
 		end
 	end
+
+
 
 	return L_mat, ωmin
 end
@@ -306,13 +321,11 @@ function plot_simul(ct::CrazyType; T::Int64=50)
 
     return p
 end
+write(pwd()*"/../output.txt", "")
 
 L_mat, ωmin = choose_ω()
 ct = CrazyType(; ω = ωmin)
 
-write(pwd()*"/../output.txt", "")
-
-# ct = CrazyType()
 pfi!(ct)
 plot_ct(ct)
 
