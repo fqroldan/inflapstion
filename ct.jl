@@ -34,7 +34,7 @@ function CrazyType(;
 
 	y = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * 0.0
 
-	A = α / (1.0-exp(-ω)) * y
+	A = α / (1.0-β*exp(-ω)) * y
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
@@ -239,21 +239,25 @@ function choose_ω()
 	ωgrid = range(0.0, 0.5, length=Nω)
 
 	ct = CrazyType()
-
 	L_mat = zeros(Nω, ct.Np, ct.Na)
 
 	L_min = 100.
 	ωmin = 1.0
 
-	amin_vec = zeros(Nω)
+	jamin_vec = zeros(Nω)
 	for (jω, ωv) in enumerate(ωgrid)
-		ct.ω = ωv
+		Lguess, πguess = ct.L, ct.gπ
+		ct = CrazyType(; ω = ωv)
+		ct.L = Lguess
+		ct.gπ = πguess
+
 		flag = pfi!(ct, verbose = false)
 
 		# Save the corresponding value function
 		L_mat[jω, :, :] = ct.L[:, :]
-		lmin, jamin = findmin(ct.L[2,:])
-		amin = ct.agrid[jamin]
+		lmin, ja = findmin(ct.L[2,:])
+		amin = ct.agrid[ja]
+		jamin_vec[jω] = ja
 		s = "\nMinimum element at ω = $(@sprintf("%.3g",ωv)) is $(@sprintf("%.3g",lmin)) with a₀ = $(@sprintf("%.3g", amin))"
 		flag ? s = s*" ✓" : nothing
 		print_save(s)
@@ -263,7 +267,9 @@ function choose_ω()
 		end
 	end
 
-
+	p1 = plot([
+		scatter(;x=ωgrid, y=L_min[:, 2, jamin_vec[:]])
+		])
 
 	return L_mat, ωmin
 end
