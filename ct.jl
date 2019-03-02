@@ -102,7 +102,7 @@ end
 
 function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 
-	minπ, maxπ = -0.9, 1.5 / (ct.α*ct.γ) * ct.ystar
+	minπ, maxπ = -0.1, 1.25*av
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
 			minπ, maxπ, GoldenSection(), reltol=1e-32, abstol=1e-32
@@ -113,8 +113,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 	return gπ, L
 end
 
-function optim_step(ct::CrazyType, itp_gπ, itp_L)
-
+function optim_step(ct::CrazyType, itp_gπ, itp_L; optimize::Bool=true)
 	gπ, L = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
 	# gπ, L = Array{Float64}(undef, size(ct.gπ)), Array{Float64}(undef, size(ct.L))
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
@@ -122,18 +121,23 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L)
     # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
-		gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, av, pv)
+		if optimize
+			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, av, pv)
+		else
+			gπ[jp, ja] = ct.gπ[jp, ja]
+			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], av, pv)
+		end
 	end
 
 	return gπ, L
 end
 
-function pf_iter(ct::CrazyType)
+function pf_iter(ct::CrazyType; optimize::Bool=true)
 	knots = (ct.pgrid, ct.agrid)
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()))
 	itp_L  = interpolate(knots, ct.L , Gridded(Linear()))
 
-	new_gπ, new_L = optim_step(ct, itp_gπ, itp_L)
+	new_gπ, new_L = optim_step(ct, itp_gπ, itp_L; optimize=optimize)
 
 	return new_gπ, new_L
 end
@@ -156,6 +160,10 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=2500, verbose::Bo
 		dist_L = sqrt.(sum( (new_L  - old_L ).^2 )) / sqrt.(sum(old_L .^2))
 
 		dist = max(dist_π, dist_L)
+
+		for jj in 1:5
+			new_gπ, new_L = pf_iter(ct; optimize=false)
+		end
 
 		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * old_gπ
 		ct.L  = upd_η * new_L  + (1.0-upd_η) * old_L
