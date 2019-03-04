@@ -38,7 +38,7 @@ function CrazyType(;
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
-	agrid = range(0, 1*A, length=Na)
+	agrid = range(0, 0.75*A, length=Na)
 
 	gπ = zeros(Np, Na)
 	L = zeros(Np, Na)
@@ -75,13 +75,26 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
 	else
 		pprime = Bayes(ct, obs_π, exp_π, av, pv)
 	end
+
+	σ_η = 0.1
+	η_vec = range(-1.96*σ_η, 1.96*σ_η, length = 5)
+	pη = pdf.(Normal(0,σ_η), η_vec)
+	pη = pη / sum(pη)
+
 	aprime = ϕ(ct, av)
+
+	ap_vec = aprime .* (1.0 .+ η_vec)
+
+	L′ = 0.0
+	for (jap, apv) in enumerate(ap_vec)
+		apv = max(min(apv, maximum(ct.agrid)), minimum(ct.agrid))
+		L′ += itp_L(pprime, apv) * pη[jap]
+	end
+
 	gπ′ = itp_gπ(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
 
 	y = NKPC(ct, obs_π, exp_π′)
-
-	L′ = itp_L(pprime, aprime)
 
 	L = (y-ct.ystar)^2 + ct.γ * obs_π^2 + ct.β * L′
 
@@ -102,7 +115,7 @@ end
 
 function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 
-	minπ, maxπ = -0.1, 1.1*maximum(ct.agrid)
+	minπ, maxπ = -0.1, 1.35*maximum(ct.agrid)
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
 			minπ, maxπ, Brent()#, reltol=1e-32, abstol=1e-32
