@@ -96,7 +96,7 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
 
 	y = NKPC(ct, obs_π, exp_π′)
 
-	L = (y-ct.ystar)^2 + ct.γ * obs_π^2 + ct.β * L′
+	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 
 	return L
 end
