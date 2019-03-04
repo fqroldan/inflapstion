@@ -155,7 +155,7 @@ function pf_iter(ct::CrazyType; optimize::Bool=true)
 	return new_gπ, new_L
 end
 
-function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=2500, verbose::Bool=true)
+function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.75
