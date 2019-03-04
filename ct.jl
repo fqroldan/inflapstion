@@ -68,9 +68,9 @@ NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π�
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
 	exp_π  = itp_gπ(pv, av)
-	if pv == ct.pgrid[1]
+	if isapprox(pv, 0.0)
 		pprime = 0.0
-	elseif pv == ct.pgrid[end]
+	elseif isapprox(pv, 1.0)
 		pprime = 1.0
 	else
 		pprime = Bayes(ct, obs_π, exp_π, av, pv)
