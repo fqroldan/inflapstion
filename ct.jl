@@ -24,7 +24,7 @@ function CrazyType(;
 		β = 0.96,
 		γ = 1.0,
 		α = 0.17,
-		σ = 0.3,
+		σ = 0.25,
 		ystar = 0.05,
 		#ω = 0.271,
 		ω = 0.15,
@@ -38,7 +38,7 @@ function CrazyType(;
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
-	agrid = range(0, 1.0*A, length=Na)
+	agrid = range(0, 1*A, length=Na)
 
 	gπ = zeros(Np, Na)
 	L = zeros(Np, Na)
@@ -161,12 +161,17 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=2500, verbose::Bo
 
 		dist = max(dist_π, dist_L)
 
-		for jj in 1:5
-			new_gπ, new_L = pf_iter(ct; optimize=false)
+		for jj in 1:2
+			_, new_L = pf_iter(ct)
+			ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
+			for jj in 1:2
+				_, new_L = pf_iter(ct; optimize=false)
+				ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
+			end
 		end
 
-		ct.gπ = upd_η*0.2 * new_gπ + (1.0-upd_η*0.2) * old_gπ
-		ct.L  = upd_η * new_L  + (1.0-upd_η) * old_L
+		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ
+		ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 
 		if verbose && iter % 10 == 0
 			print_save("\nAfter $iter iterations, d(π, L) = ($(@sprintf("%0.3g",dist_π)), $(@sprintf("%0.3g",dist_L)))")
@@ -252,7 +257,7 @@ function choose_ω()
 	L_min = 100.
 	ωmin = 1.0
 
-	jamin_vec = zeros(Nω)
+	jamin_vec = Vector{Int64}(undef, Nω)
 	for (jω, ωv) in enumerate(ωgrid)
 		Lguess, πguess = ct.L, ct.gπ
 		ct = CrazyType(; ω = ωv)
@@ -275,8 +280,9 @@ function choose_ω()
 		end
 	end
 
+	Lplot = [L_mat[jj, 2, jamin_vec[jj]] for jj in 1:Nω]
 	p1 = plot([
-		scatter(;x=ωgrid, y=L_min[:, 2, jamin_vec[:]])
+		scatter(;x=ωgrid, y=Lplot)
 		])
 
 	return L_mat, ωmin, p1
