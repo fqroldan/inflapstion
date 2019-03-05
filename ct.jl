@@ -19,13 +19,16 @@ mutable struct CrazyType
 
 	gπ::Array{Float64, 2}
 	L::Array{Float64, 2}
+	
+	Ey::Array{Float64, 2}
+	Eπ::Array{Float64, 2}
 end
 function CrazyType(;
 		β = 0.96,
 		γ = 1.0,
 		α = 0.17,
 		σ = 0.15,
-		ystar = 0.075,
+		ystar = 0.025,
 		#ω = 0.271,
 		ω = 0.15,
 		Np = 45,
@@ -49,7 +52,10 @@ function CrazyType(;
 		end
 	end
 
-	return CrazyType(β, γ, α, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L)
+	Ey = zeros(Np, Na)
+	Eπ = zeros(Np, Na)
+
+	return CrazyType(β, γ, α, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ)
 end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
@@ -66,7 +72,7 @@ end
 
 NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π′)
 
-function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
+function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
 		pprime = 0.0
@@ -97,11 +103,13 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv)
 	y = NKPC(ct, obs_π, exp_π′)
 
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
-
+	if get_y
+		return y
+	end
 	return L
 end
 
-function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
+function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv; get_y::Bool=false)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * pdf_ϵ(ct, ϵv)
 	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
@@ -109,6 +117,15 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv)
 	sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 
 	val = val / sum_prob
+
+	if get_y
+		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv; get_y=true) * pdf_ϵ(ct, ϵv)
+		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
+
+		Ey = Ey / sum_prob
+
+		return Ey
+	end
 
 	return val
 end
@@ -122,12 +139,13 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 			)
 	gπ = res.minimizer
 	L = res.minimum
-
+	
 	return gπ, L
 end
 
 function optim_step(ct::CrazyType, itp_gπ, itp_L; optimize::Bool=true)
-	gπ, L = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
+	gπ, L  = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
+	Ey, Eπ = SharedArray{Float64}(ct.Ey), SharedArray{Float64}(ct.Eπ)
 	# gπ, L = Array{Float64}(undef, size(ct.gπ)), Array{Float64}(undef, size(ct.L))
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
 	@sync @distributed for js in 1:size(apgrid,1)
@@ -140,9 +158,11 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L; optimize::Bool=true)
 			gπ[jp, ja] = ct.gπ[jp, ja]
 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], av, pv)
 		end
+		Ey[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], av, pv; get_y=true)
+		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 	end
 
-	return gπ, L
+	return gπ, L, Ey, Eπ
 end
 
 function pf_iter(ct::CrazyType; optimize::Bool=true)
@@ -150,9 +170,9 @@ function pf_iter(ct::CrazyType; optimize::Bool=true)
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()))
 	itp_L  = interpolate(knots, ct.L , Gridded(Linear()))
 
-	new_gπ, new_L = optim_step(ct, itp_gπ, itp_L; optimize=optimize)
+	new_gπ, new_L, new_y, new_π = optim_step(ct, itp_gπ, itp_L; optimize=optimize)
 
-	return new_gπ, new_L
+	return new_gπ, new_L, new_y, new_π
 end
 
 function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bool=true)
@@ -167,7 +187,7 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Boo
 		iter += 1
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L)
 
-		new_gπ, new_L = pf_iter(ct)
+		new_gπ, new_L, new_y, new_π = pf_iter(ct)
 
 		dist_π = sqrt.(sum( (new_gπ - old_gπ).^2 )) / sqrt.(sum(old_gπ.^2))
 		dist_L = sqrt.(sum( (new_L  - old_L ).^2 )) / sqrt.(sum(old_L .^2))
@@ -175,16 +195,18 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Boo
 		dist = max(dist_π, dist_L)
 
 		for jj in 1:2
-			_, new_L = pf_iter(ct)
+			_, new_L, _, _ = pf_iter(ct)
 			ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 			for jj in 1:5
-				_, new_L = pf_iter(ct; optimize=false)
+				_, new_L, _, _ = pf_iter(ct; optimize=false)
 				ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 			end
 		end
 
 		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ
 		ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
+		ct.Ey = upd_η * new_y + (1.0-upd_η) * ct.Ey
+		ct.Eπ = upd_η * new_π + (1.0-upd_η) * ct.Eπ
 
 		if verbose && iter % 10 == 0
 			print_save("\nAfter $iter iterations, d(π, L) = ($(@sprintf("%0.3g",dist_π)), $(@sprintf("%0.3g",dist_L)))")
@@ -193,7 +215,7 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Boo
 	return (dist <= tol)
 end
 
-function plot_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
+function plot_ct(ct::CrazyType, y1, y2, n1, n2; make_pdf::Bool=false, make_png::Bool=false)
 	col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
 		"#2ca02c",  # cooked asparagus green
@@ -236,10 +258,10 @@ function plot_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 		p = plot([l[jz] for jz in 1:Nz], Layout(;title=title, xaxis_title=xtitle))
 		return p
 	end
-	pπa = lines(ct, ct.gπ, dim = 1, title="gπ", showleg = true)
-	pπp = lines(ct, ct.gπ, dim = 2, title="gπ", showleg = true)
-	pLa = lines(ct, ct.L , dim = 1, title="𝓛")
-	pLp = lines(ct, ct.L , dim = 2, title="𝓛")
+	pπa = lines(ct, ct.y1, dim = 1, title=n1, showleg = true)
+	pπp = lines(ct, ct.y1, dim = 2, title=n1, showleg = true)
+	pLa = lines(ct, ct.y2, dim = 1, title=n2)
+	pLp = lines(ct, ct.y2, dim = 2, title=n2)
 
 	p = [pπa pπp; pLa pLp]
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
@@ -259,6 +281,16 @@ function plot_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 end
 
 end # everywhere
+
+function makeplots_ct(ct::CrazyType)
+
+	p1 = plot_ct(ct, ct.gπ, ct.L, "gπ", "𝓛")
+
+	p2 = plot_ct(ct, ct.Ey, ct.Eπ, "𝔼y", "𝔼π")
+
+	return p1, p2
+end
+
 
 function choose_ω()
 	Nω = 25
@@ -361,7 +393,8 @@ p1
 # ct = CrazyType(; ω = ωmin)
 
 # pfi!(ct)
-# plot_ct(ct)
+
+# p1, p2 = makeplots_ct(ct)
 
 # using JLD
 # save("ct.jld", "ct", ct)
