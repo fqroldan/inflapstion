@@ -25,7 +25,7 @@ function CrazyType(;
 		γ = 1.0,
 		α = 0.17,
 		σ = 0.15,
-		ystar = 0.05,
+		ystar = 0.075,
 		#ω = 0.271,
 		ω = 0.15,
 		Np = 45,
@@ -177,7 +177,7 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Boo
 		for jj in 1:2
 			_, new_L = pf_iter(ct)
 			ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
-			for jj in 1:2
+			for jj in 1:5
 				_, new_L = pf_iter(ct; optimize=false)
 				ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 			end
