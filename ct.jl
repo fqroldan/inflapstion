@@ -25,11 +25,11 @@ mutable struct CrazyType
 	Ep::Array{Float64, 2}
 end
 function CrazyType(;
-		β = 0.9,#6,
-		γ = 0.5,#1.0,
+		β = 0.96,
+		γ = 1.0,
 		α = 0.17,
-		σ = 0.1,
-		ystar = 0.025,
+		σ = 0.2,
+		ystar = 0.05,
 		#ω = 0.271,
 		ω = 0.15,
 		Np = 45,
@@ -69,7 +69,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, av, pv)
 	numer = pv * pdf_ϵ(ct, obs_π - av)
 	denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
 
-	drift = (1.0 - pv) * 0.05
+	drift = (1.0 - pv) * 0.0
 
 	return numer / denomin + drift
 end
@@ -217,6 +217,7 @@ function pfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Boo
 		ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 		ct.Ey = upd_η * new_y + (1.0-upd_η) * ct.Ey
 		ct.Eπ = upd_η * new_π + (1.0-upd_η) * ct.Eπ
+		ct.Ep = upd_η * new_π + (1.0-upd_η) * ct.Ep
 
 		if verbose && iter % 10 == 0
 			print_save("\nAfter $iter iterations, d(π, L) = ($(@sprintf("%0.3g",dist_π)), $(@sprintf("%0.3g",dist_L)))")
@@ -286,31 +287,39 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	p = [p1a p1p; p2a p2p]
 
+	if N == 2
+		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]]
+	elseif N == 3
+		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]; pl[3,1] pl[3,2]]
+	end
+
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
-	function makeplot(pl, ext)
-		savefig(pl, pwd() * "/../Graphs/ct" * ext)
+	function makeplot(p, ext)
+		savefig(p, pwd() * "/../Graphs/ct" * ext)
 	end
 
 	if make_pdf
-		makeplot(pl, ".pdf")
+		makeplot(p, ".pdf")
 	end
 	if make_png
-		makeplot(pl, ".png")
+		makeplot(p, ".png")
 	end
 
-	return pl
+	return p
 end
 
 end # everywhere
 
 function makeplots_ct(ct::CrazyType)
 
-	p1 = plot_ct(ct, ct.gπ, ct.L, "gπ", "𝓛")
+	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"))
 
-	p2 = plot_ct(ct, ct.Ey, ct.Eπ, "𝔼y", "𝔼π")
+	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"))
 
-	return p1, p2
+	p3 = plot_ct(ct, (ct.Ey, ct.Eπ, ct.Ep), ("𝔼y", "𝔼π", "𝔼p"))
+
+	return p1, p2, p3
 end
 
 
@@ -414,10 +423,12 @@ L_mat, ωmin, p1 = choose_ω()
 p1
 # ct = CrazyType(; ω = ωmin)
 
+
+# ct = CrazyType()
 # pfi!(ct)
 
-# p1, p2 = makeplots_ct(ct)
-
+# p1, p2 = makeplots_ct(ct);
+# p1
 # using JLD
 # save("ct.jld", "ct", ct)
 
