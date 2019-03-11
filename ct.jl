@@ -271,7 +271,7 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bo
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
 
-		makeplots_ct(ct; make_png=true, tempplot=true)
+		# makeplots_ct(ct; make_png=true, tempplot=true)
 	end
 	nothing
 end
