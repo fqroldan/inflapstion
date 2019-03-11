@@ -270,11 +270,13 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bo
 		end
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
+
+		makeplots_ct(ct; make_png=true, tempplot=true)
 	end
 	nothing
 end
 
-function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
+function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false, tempplot::Bool=true)
 
 	if length(y_tuple) != length(n_tuple)
 		throw(error("Make sure # y's = # n's"))
@@ -343,15 +345,16 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
-	function makeplot(p, ext)
+	function makeplot(p, ext::String, tempplot::Bool)
+		tempplot ? add_temp = "_temp" : add_temp = ""
 		savefig(p, pwd() * "/../Graphs/ct" * ext)
 	end
 
 	if make_pdf
-		makeplot(p, ".pdf")
+		makeplot(p, ".pdf", tempplot)
 	end
 	if make_png
-		makeplot(p, ".png")
+		makeplot(p, ".png", tempplot)
 	end
 
 	return p
@@ -359,7 +362,7 @@ end
 
 end # everywhere
 
-function makeplots_ct(ct::CrazyType)
+function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false, tempplot::Bool=true)
 
 	gπ_over_a = zeros(size(ct.gπ))
 	Ep_over_p = zeros(size(ct.Ep))
@@ -368,11 +371,11 @@ function makeplots_ct(ct::CrazyType)
 		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
-	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"))
+	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
 
-	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"))
+	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
 
-	p3 = plot_ct(ct, (gπ_over_a, Ep_over_p), ("gπ-a", "𝔼p'-p"))
+	p3 = plot_ct(ct, (gπ_over_a, Ep_over_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
 
 	return p1, p2, p3
 end
