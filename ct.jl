@@ -1,6 +1,6 @@
 using Distributed
 
-@everywhere using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays
+@everywhere using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates
 @everywhere include("reporting_routines.jl")
 
 @everywhere begin
@@ -415,7 +415,7 @@ function choose_ω()
 		# ct.L = Lguess
 		# ct.gπ = πguess
 		t1 = time()
-		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv))")
+		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
 		flag = Epfi!(ct, verbose = false)
 
 		# Save the corresponding value function
