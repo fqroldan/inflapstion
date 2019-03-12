@@ -35,8 +35,8 @@ function CrazyType(;
 		σ = 0.05,
 		ystar = 0.05,
 		# ω = 0.271,
-		ω = 0.02,
-		# ω = 0.0,
+		ω = 0.05,
+		# ω = 0.1,
 		Np = 45,
 		Na = 30
 		)
@@ -51,7 +51,7 @@ function CrazyType(;
 	agrid = range(0, (1.1*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
-	L = ones(Np, Na) * 1e8
+	L = ones(Np, Na) * 1e5
 	for (jp, pv) in enumerate(pgrid)
 		for (ja, av) in enumerate(agrid)
 			y_Nash = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * av
@@ -72,8 +72,9 @@ end
 
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
+cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
 
-function Bayes(ct::CrazyType, obs_π, exp_π, av, pv)
+function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	numer = pv * pdf_ϵ(ct, obs_π - av)
 	denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
@@ -87,14 +88,14 @@ end
 NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - exp_π′)
 # BLPC(ct::CrazyType, obs_π, exp_π)  = ct.α * (obs_π - exp_π)
 
-function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv; get_y::Bool=false)
+function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
 		pprime = 0.0
 	elseif isapprox(pv, 1.0)
 		pprime = 1.0
 	else
-		pprime = Bayes(ct, obs_π, exp_π, av, pv)
+		pprime = Bayes(ct, obs_π, exp_π, pv, av)
 	end
 
 #=	σ_η = 0.05
@@ -132,20 +133,21 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, av, pv; get_y::Bool=false
 	return L
 end
 
-function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv; get_y::Bool=false)
+function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, pv, av; get_y::Bool=false)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv) * pdf_ϵ(ct, ϵv)
-	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av) * pdf_ϵ(ct, ϵv)
+	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
 
-	sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
+	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
 	val = val / sum_prob
 
 	if get_y
-		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv; get_y=true)[1] * pdf_ϵ(ct, ϵv)
-		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
-		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, av, pv; get_y=true)[2] * pdf_ϵ(ct, ϵv)
-		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
+		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[1] * pdf_ϵ(ct, ϵv)
+		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[2] * pdf_ϵ(ct, ϵv)
+		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
 
 		Ey = Ey / sum_prob
 		Ep = Ep / sum_prob
@@ -156,19 +158,19 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, av, pv; get_y::Bool=fa
 	return val
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
+function opt_L(ct::CrazyType, itp_gπ, itp_L, pv, av)
 
 	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
 	res = Optim.optimize(
-			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
+			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
 			minπ, maxπ, Brent(), rel_tol=1e-32, abs_tol=1e-32
 			)
 	gπ = res.minimizer
 	L = res.minimum
 
 	# resgs = Optim.optimize(
-	# 		gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
-	# 		minπ, maxπ, GoldenSection()#, reltol=1e-32, abstol=1e-32
+	# 		gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
+	# 		minπ, maxπ, GoldenSection(), rel_tol=1e-32, abs_tol=1e-32
 	# 		)
 	# if resgs.minimum < res.minimum
 	# 	gπ = resgs.minimizer
@@ -189,12 +191,12 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, gπ_guess; optimize::Bool=tru
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 		if optimize
-			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, av, pv)
+			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, pv, av)
 		else
 			gπ[jp, ja] = gπ_guess[jp, ja]
-			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], av, pv)
+			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], pv, av)
 		end
-		Ey[jp, ja], Ep[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], av, pv; get_y=true)
+		Ey[jp, ja], Ep[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], pv, av; get_y=true)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 	end
 
@@ -219,12 +221,13 @@ end
 function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.9
+	upd_η = 0.75
     if verbose
         print_save("\nStarting PFI")
     end
 
     ct.gπ = zeros(size(ct.gπ))
+	ct.L = ones(ct.Np, ct.Na) * 1e5
 	while dist > tol && iter < maxiter
 		iter += 1
 
@@ -255,7 +258,7 @@ end
 function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.75
+	upd_η = 0.5
 
 	while dist > tol && iter < maxiter
 		iter += 1
@@ -431,7 +434,7 @@ function iter_simul(ct::CrazyType, itp_gπ, pv, av)
 
 	exp_π = itp_gπ(pv, av)
 	obs_π = exp_π+ϵ
-	pprime = Bayes(ct, obs_π, exp_π, av, pv)
+	pprime = Bayes(ct, obs_π, exp_π, pv, av)
 	aprime = ϕ(ct, av)
 	gπ′ = itp_gπ(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
