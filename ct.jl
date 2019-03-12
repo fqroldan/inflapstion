@@ -407,14 +407,15 @@ function choose_ω()
 	L_min = 100.
 	ωmin = 1.0
 	amin_min = 1.0
-
+	t0 = time()
 	jamin_vec = Vector{Int64}(undef, Nω)
 	for (jω, ωv) in enumerate(ωgrid)
 		Lguess, πguess = ct.L, ct.gπ
 		ct = CrazyType(; ω = ωv)
 		# ct.L = Lguess
 		# ct.gπ = πguess
-
+		t1 = time()
+		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv))")
 		flag = Epfi!(ct, verbose = false)
 
 		# Save the corresponding value function
@@ -422,7 +423,8 @@ function choose_ω()
 		lmin, ja = findmin(ct.L[2,:])
 		amin = ct.agrid[ja]
 		jamin_vec[jω] = ja
-		s = "\nMinimum element at ω = $(@sprintf("%.3g",ωv)) is $(@sprintf("%.3g",lmin)) with a₀ = $(@sprintf("%.3g", amin))"
+		print_save(": done in $(time_print(time()-t1))")
+		s = "\nMinimum element is $(@sprintf("%.3g",lmin)) with a₀ = $(@sprintf("%.3g", amin))"
 		flag ? s = s*" ✓" : nothing
 		print_save(s)
 		if lmin < L_min
@@ -431,7 +433,7 @@ function choose_ω()
 			amin_min = amin
 		end
 	end
-
+	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
 	Lplot = [L_mat[jj, 2, jamin_vec[jj]] for jj in 1:Nω]
 	p1 = plot([
 		scatter(;x=ωgrid, y=Lplot)
