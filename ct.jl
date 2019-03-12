@@ -27,18 +27,18 @@ mutable struct CrazyType
 	Ep::Array{Float64, 2}
 end
 function CrazyType(;
-		β = 0.9,
-		γ = 1.0,
+		β = 0.96,
+		γ = 60.0,
 		α = 0.17,
 		# α = 0.8,
 		# α = 0.02,
-		σ = 0.05,
-		ystar = 0.05,
-		# ω = 0.271,
-		ω = 0.05,
+		σ = 0.01,
+		ystar = 0.1,
+		ω = 0.271,
+		# ω = 0.05,
 		# ω = 0.1,
-		Np = 45,
-		Na = 30
+		Np = 90,
+		Na = 60
 		)
 
 	y = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * 0.0
@@ -51,7 +51,7 @@ function CrazyType(;
 	agrid = range(0, (1.1*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
-	L = ones(Np, Na) * 1e5
+	L = ones(Np, Na)
 	for (jp, pv) in enumerate(pgrid)
 		for (ja, av) in enumerate(agrid)
 			y_Nash = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * av
@@ -85,7 +85,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	return numer / denomin# + drift
 end
 
-NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - exp_π′)
+NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π′)
 # BLPC(ct::CrazyType, obs_π, exp_π)  = ct.α * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false)
@@ -136,18 +136,18 @@ end
 function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, pv, av; get_y::Bool=false)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av) * pdf_ϵ(ct, ϵv)
-	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 
-	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
 	val = val / sum_prob
 
 	if get_y
 		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[1] * pdf_ϵ(ct, ϵv)
-		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[2] * pdf_ϵ(ct, ϵv)
-		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-36, atol=0, maxevals=0)
+		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-32, atol=0, maxevals=0)
 
 		Ey = Ey / sum_prob
 		Ep = Ep / sum_prob
@@ -158,25 +158,28 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, pv, av; get_y::Bool=fa
 	return val
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, pv, av)
+function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 
 	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
-			minπ, maxπ, Brent(), rel_tol=1e-32, abs_tol=1e-32
+			minπ, maxπ, GoldenSection(), rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
 	gπ = res.minimizer
 	L = res.minimum
 
-	# resgs = Optim.optimize(
-	# 		gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
-	# 		minπ, maxπ, GoldenSection(), rel_tol=1e-32, abs_tol=1e-32
-	# 		)
-	# if resgs.minimum < res.minimum
-	# 	gπ = resgs.minimizer
-	# 	L = res.minimum
-	# end
-	
+	if Optim.converged(res) == false
+		# a = Optim.iterations(res)
+		# println(a)
+		resb = Optim.optimize(
+				gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
+				minπ, maxπ, Brent(), rel_tol=1e-18, abs_tol=1e-18#, iterations=100000
+				)
+		if resb.minimum < res.minimum
+			gπ = resb.minimizer
+			L = resb.minimum
+		end
+	end
 	return gπ, L
 end
 
@@ -190,13 +193,14 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, gπ_guess; optimize::Bool=tru
     # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
+		π_guess = gπ_guess[jp, ja]
 		if optimize
-			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, pv, av)
+			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, π_guess, pv, av)
 		else
-			gπ[jp, ja] = gπ_guess[jp, ja]
-			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], pv, av)
+			gπ[jp, ja] = π_guess
+			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av)
 		end
-		Ey[jp, ja], Ep[jp, ja] = exp_L(ct, itp_gπ, itp_L, gπ[jp, ja], pv, av; get_y=true)
+		Ey[jp, ja], Ep[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av; get_y=true)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 	end
 
@@ -218,7 +222,7 @@ function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
 	return new_gπ, new_L, new_y, new_π, new_p
 end
 
-function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbose::Bool=true)
+function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
 	iter = 0
 	upd_η = 0.75
@@ -226,8 +230,10 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbo
         print_save("\nStarting PFI")
     end
 
-    ct.gπ = zeros(size(ct.gπ))
-	ct.L = ones(ct.Np, ct.Na) * 1e5
+    if reset_guess
+	    ct.gπ = zeros(size(ct.gπ))
+		ct.L = ones(ct.Np, ct.Na)
+	end
 	while dist > tol && iter < maxiter
 		iter += 1
 
@@ -252,24 +258,31 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbo
 			print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 		end
 	end
+	if verbose && dist <= tol
+		print_save("\nConverged in $iter iterations.")
+	elseif verbose
+		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
+	end
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=100, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.5
 
+	reset_guess = false
 	while dist > tol && iter < maxiter
 		iter += 1
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
-		pfi!(ct, old_gπ; verbose = verbose);
+		flag = pfi!(ct, old_gπ; verbose = verbose, reset_guess=reset_guess);
+		reset_guess = !flag
 
 		dist = sqrt.(sum( (ct.gπ  - old_gπ ).^2 )) / sqrt.(sum(old_gπ .^2))
 		if verbose #&& iter % 10 == 0
-			print_save("\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))")
+			print_save("\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))\n")
 		end
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
@@ -399,10 +412,10 @@ function choose_ω()
 	for (jω, ωv) in enumerate(ωgrid)
 		Lguess, πguess = ct.L, ct.gπ
 		ct = CrazyType(; ω = ωv)
-		ct.L = Lguess
-		ct.gπ = πguess
+		# ct.L = Lguess
+		# ct.gπ = πguess
 
-		flag = pfi!(ct, verbose = false)
+		flag = Epfi!(ct, verbose = false)
 
 		# Save the corresponding value function
 		L_mat[jω, :, :] = ct.L[:, :]
@@ -484,23 +497,23 @@ function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 end
 write(pwd()*"/../output.txt", "")
 
-#=
+
 L_mat, ωmin, p1 = choose_ω()
 p1
 
 ct = CrazyType(; ω = ωmin)
-pfi!(ct);
+Epfi!(ct);
 p1, p2, p3 = makeplots_ct(ct);
 p1
-=#
 
 
+#=
 ct = CrazyType()
 Epfi!(ct, maxiter = 500)
 
 p1, p2, p3 = makeplots_ct(ct);
 p1
-
+=#
 
 # using JLD
 # save("ct.jld", "ct", ct)
