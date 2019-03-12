@@ -37,8 +37,8 @@ function CrazyType(;
 		# ω = 0.271,
 		ω = 0.02,
 		# ω = 0.0,
-		Np = 150,
-		Na = 140
+		Np = 45,
+		Na = 30
 		)
 
 	y = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * 0.0
@@ -161,7 +161,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, av, pv)
 	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, av, pv),
-			minπ, maxπ, Brent()#, reltol=1e-32, abstol=1e-32
+			minπ, maxπ, Brent(), rel_tol=1e-32, abs_tol=1e-32
 			)
 	gπ = res.minimizer
 	L = res.minimum
@@ -219,7 +219,7 @@ end
 function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.75
+	upd_η = 0.9
     if verbose
         print_save("\nStarting PFI")
     end
@@ -255,7 +255,7 @@ end
 function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=500, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.25
+	upd_η = 0.75
 
 	while dist > tol && iter < maxiter
 		iter += 1
