@@ -280,12 +280,7 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=75, verbose::Boo
 	return dist
 end
 
-function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
-
-	if length(y_tuple) != length(n_tuple)
-		throw(error("Make sure # y's = # n's"))
-	end
-
+function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
 	col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
 		"#2ca02c",  # cooked asparagus green
@@ -297,44 +292,47 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 		"#bcbd22",  # curry yellow-green
 		"#17becf"   # blue-teal
 		]
-
-	function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
-		if dim == 1
-			xgrid = ct.pgrid
-			zgrid = ct.agrid
-			xtitle= "𝑝"
-		elseif dim == 2
-			xgrid = ct.agrid
-			zgrid = ct.pgrid
-			xtitle= "𝑎"
-		else
-			throw(error("wrong dim"))
-		end
-		Nz = length(zgrid)
-		l = Array{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, Nz)
-		for (jz, zv) in enumerate(zgrid)
-			if dim == 1
-				y_vec = y_mat[:, jz]
-				name = "𝑎"
-			elseif dim == 2
-				y_vec = y_mat[jz, :]
-				name = "𝑝"
-			end
-			name = name * " = $(@sprintf("%.2g", zv))"
-			jz % 2 == 0 ? showleg_i = showleg : showleg_i = false
-			l_new = scatter(;x=xgrid, y=y_vec, name = name, showlegend = showleg_i, marker_color=col[ceil(Int,10*jz/Nz)])
-			l[jz] = l_new
-		end
-		p = plot([l[jz] for jz in 1:Nz], Layout(;title=title, xaxis_title=xtitle))
-		return p
+	if dim == 1
+		xgrid = ct.pgrid
+		zgrid = ct.agrid
+		xtitle= "𝑝"
+	elseif dim == 2
+		xgrid = ct.agrid
+		zgrid = ct.pgrid
+		xtitle= "𝑎"
+	else
+		throw(error("wrong dim"))
 	end
+	Nz = length(zgrid)
+	l = Array{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, Nz)
+	for (jz, zv) in enumerate(zgrid)
+		if dim == 1
+			y_vec = y_mat[:, jz]
+			name = "𝑎"
+		elseif dim == 2
+			y_vec = y_mat[jz, :]
+			name = "𝑝"
+		end
+		name = name * " = $(@sprintf("%.2g", zv))"
+		jz % 2 == 0 ? showleg_i = showleg : showleg_i = false
+		l_new = scatter(;x=xgrid, y=y_vec, name = name, showlegend = showleg_i, marker_color=col[ceil(Int,10*jz/Nz)])
+		l[jz] = l_new
+	end
+	p = plot([l[jz] for jz in 1:Nz], Layout(;title=title, xaxis_title=xtitle))
+	return p
+end
+
+function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
+	if length(y_tuple) != length(n_tuple)
+		throw(error("Make sure # y's = # n's"))
+	end
+
 	N = length(y_tuple)
 	pl = Array{PlotlyJS.SyncPlot,2}(undef, N, 2)
 	for jj in 1:N
 		pl[jj, 1] = lines(ct, y_tuple[jj], dim = 1, title=n_tuple[jj], showleg = (jj==1))
 		pl[jj, 2] = lines(ct, y_tuple[jj], dim = 2, title=n_tuple[jj], showleg = (jj==1))
 	end
-
 	if N == 1
 		p = [pl[1,1] pl[1,2]]
 	elseif N == 2
@@ -342,6 +340,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	elseif N == 3
 		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]; pl[3,1] pl[3,2]]
 	end
+
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
@@ -403,7 +402,7 @@ end
 
 
 function choose_ω(; remote::Bool=true)
-	Nω = 25
+	Nω = 11
 	ωgrid = range(0.0, 0.75, length=Nω)
 
 	ct = CrazyType()
