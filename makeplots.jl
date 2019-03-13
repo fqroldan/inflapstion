@@ -1,4 +1,4 @@
-using PlotlyJS, ORCA, JSON
+using PlotlyJS, JSON
 
 
 function retrieve_plot(fn::String)
