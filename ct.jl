@@ -266,7 +266,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbo
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=100, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=75, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.5
@@ -286,13 +286,11 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=100, verbose::Bo
 		end
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
-
-		# makeplots_ct(ct; make_png=true, tempplot=true)
 	end
-	nothing
+	return dist
 end
 
-function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false, tempplot::Bool=true)
+function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
 
 	if length(y_tuple) != length(n_tuple)
 		throw(error("Make sure # y's = # n's"))
@@ -361,16 +359,15 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
-	function makeplot(p, ext::String, tempplot::Bool)
-		tempplot ? add_temp = "_temp" : add_temp = ""
+	function makeplot(p, ext::String)
 		savefig(p, pwd() * "/../Graphs/ct" * ext)
 	end
 
 	if make_pdf
-		makeplot(p, ".pdf", tempplot)
+		makeplot(p, ".pdf")
 	end
 	if make_png
-		makeplot(p, ".png", tempplot)
+		makeplot(p, ".png")
 	end
 
 	return p
@@ -378,7 +375,7 @@ end
 
 end # everywhere
 
-function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false, tempplot::Bool=true)
+function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 
 	gπ_over_a = zeros(size(ct.gπ))
 	Ep_over_p = zeros(size(ct.Ep))
@@ -387,17 +384,17 @@ function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false,
 		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
-	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
+	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"); make_pdf=make_pdf, make_png=make_png)
 
-	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
+	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"); make_pdf=make_pdf, make_png=make_png)
 
-	p3 = plot_ct(ct, (gπ_over_a, Ep_over_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png, tempplot=tempplot)
+	p3 = plot_ct(ct, (gπ_over_a, Ep_over_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png)
 
 	return p1, p2, p3
 end
 
 
-function choose_ω()
+function choose_ω(; remote::Bool=true)
 	Nω = 25
 	ωgrid = range(0.0, 0.75, length=Nω)
 
@@ -416,7 +413,16 @@ function choose_ω()
 		# ct.gπ = πguess
 		t1 = time()
 		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
-		flag = Epfi!(ct, verbose = false)
+		tol = 1e-4
+		dist = Epfi!(ct, verbose = false, tol=tol)
+		flag = (dist <= tol)
+
+		p1, p2, p3 = makeplots_ct(ct; make_json=true)
+		if remote
+			savejson(p1, pwd()*"/../Graphs/tests/ct_1_jomega_$(jω).json")
+			savejson(p2, pwd()*"/../Graphs/tests/ct_2_jomega_$(jω).json")
+			savejson(p3, pwd()*"/../Graphs/tests/ct_3_jomega_$(jω).json")
+		end
 
 		# Save the corresponding value function
 		L_mat[jω, :, :] = ct.L[:, :]
@@ -433,6 +439,7 @@ function choose_ω()
 			amin_min = amin
 		end
 	end
+
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
 	Lplot = [L_mat[jj, 2, jamin_vec[jj]] for jj in 1:Nω]
 	p1 = plot([
@@ -500,7 +507,7 @@ end
 write(pwd()*"/../output.txt", "")
 
 
-L_mat, ωmin, p1 = choose_ω()
+L_mat, ωmin, p1 = choose_ω(; remote = true)
 p1
 
 ct = CrazyType(; ω = ωmin)
