@@ -48,7 +48,7 @@ function CrazyType(;
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
 	curv = 0.5
-	agrid = range(0, (1.1*A)^curv, length=Na).^(1.0/curv)
+	agrid = range(0, (1.5*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
 	L = ones(Np, Na)
@@ -525,7 +525,7 @@ end
 write(pwd()*"/../output.txt", "")
 
 
-_loopω = false
+_loopω = true
 
 if _loopω
 	L_mat, ωmin, p1 = choose_ω(; remote = true)
@@ -537,7 +537,7 @@ if _loopω
 	p1
 end
 
-_only1 = true
+_only1 = false
 
 if _only1
 	ct = CrazyType()
