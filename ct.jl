@@ -41,8 +41,6 @@ function CrazyType(;
 		Na = 60
 		)
 
-	y = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * 0.0
-
 	A = α / (1.0 - β + α^2*γ) * ystar
 
 	curv = 0.25
@@ -52,14 +50,6 @@ function CrazyType(;
 
 	gπ = zeros(Np, Na)
 	L = ones(Np, Na)
-	for (jp, pv) in enumerate(pgrid)
-		for (ja, av) in enumerate(agrid)
-			y_Nash = 1.0 / (1.0+2.0*γ*α^2) * ystar - 2.0*γ*α / (1.0+2.0*γ*α^2) * av
-			# gπ[jp, ja] = A
-			# yN = (1.0/α) * (gπ[jp, ja] - ct.β * exp(-ω) * A)
-			# L[jp, ja] = (1.0/(1.0-β)) * ((ystar-yN)^2 + γ*gπ[jp,ja]^2)
-		end
-	end
 
 	Ey = zeros(Np, Na)
 	Eπ = zeros(Np, Na)
