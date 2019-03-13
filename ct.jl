@@ -34,9 +34,9 @@ function CrazyType(;
 		# α = 0.02,
 		σ = 0.01,
 		ystar = 0.1,
-		ω = 0.271,
+		# ω = 0.271,
 		# ω = 0.05,
-		# ω = 0.1,
+		ω = 0.1,
 		Np = 60,
 		Na = 60
 		)
@@ -48,7 +48,7 @@ function CrazyType(;
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
 	curv = 0.5
-	agrid = range(0, (1.5*A)^curv, length=Na).^(1.0/curv)
+	agrid = range(0, (1.05*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
 	L = ones(Np, Na)
@@ -435,7 +435,7 @@ function choose_ω(; remote::Bool=true)
 		dist = Epfi!(ct, verbose = false, tol=tol)
 		flag = (dist <= tol)
 
-		p1, p2, p3 = makeplots_ct(ct; make_json=true)
+		p1, p2, p3 = makeplots_ct(ct)
 		if remote
 			savejson(p1, pwd()*"/../Graphs/tests/ct_1_jomega_$(jω).json")
 			savejson(p2, pwd()*"/../Graphs/tests/ct_2_jomega_$(jω).json")
@@ -522,7 +522,7 @@ function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 
     return p
 end
-# write(pwd()*"/../output.txt", "")
+write(pwd()*"/../output.txt", "")
 
 function establish_remote()
 	machine_name = ""
