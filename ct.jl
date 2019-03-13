@@ -344,14 +344,10 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 		pl[jj, 1] = lines(ct, y_tuple[jj], dim = 1, title=n_tuple[jj], showleg = (jj==1))
 		pl[jj, 2] = lines(ct, y_tuple[jj], dim = 2, title=n_tuple[jj], showleg = (jj==1))
 	end
-	p1a = lines(ct, y_tuple[1], dim = 1, title=n_tuple[1], showleg = true)
-	p1p = lines(ct, y_tuple[1], dim = 2, title=n_tuple[1], showleg = true)
-	p2a = lines(ct, y_tuple[2], dim = 1, title=n_tuple[2])
-	p2p = lines(ct, y_tuple[2], dim = 2, title=n_tuple[2])
 
-	p = [p1a p1p; p2a p2p]
-
-	if N == 2
+	if N == 1
+		p = [pl[1,1] pl[1,2]]
+	elseif N == 2
 		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]]
 	elseif N == 3
 		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]; pl[3,1] pl[3,2]]
@@ -374,6 +370,28 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 end
 
 end # everywhere
+
+function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛")
+
+	col = [	"#1f77b4",  # muted blue
+		"#ff7f0e",  # safety orange
+		"#2ca02c",  # cooked asparagus green
+		"#d62728",  # brick red
+		"#9467bd",  # muted purple
+		"#8c564b",  # chestnut brown
+		"#e377c2",  # raspberry yogurt pink
+		"#7f7f7f",  # middle gray
+		"#bcbd22",  # curry yellow-green
+		"#17becf"   # blue-teal
+		]
+
+	p1 = plot([
+		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[ceil(Int,1+9*(av)/(ct.agrid[end]))], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
+		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false))
+	savejson(p1, "/home/q/test.json")
+
+	nothing
+end
 
 function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 
@@ -507,22 +525,27 @@ end
 write(pwd()*"/../output.txt", "")
 
 
-L_mat, ωmin, p1 = choose_ω(; remote = true)
-p1
+_loopω = false
 
-ct = CrazyType(; ω = ωmin)
-Epfi!(ct);
-p1, p2, p3 = makeplots_ct(ct);
-p1
+if _loopω
+	L_mat, ωmin, p1 = choose_ω(; remote = true)
+	p1
 
+	ct = CrazyType(; ω = ωmin)
+	Epfi!(ct);
+	p1, p2, p3 = makeplots_ct(ct);
+	p1
+end
 
-#=
-ct = CrazyType()
-Epfi!(ct, maxiter = 500)
+_only1 = true
 
-p1, p2, p3 = makeplots_ct(ct);
-p1
-=#
+if _only1
+	ct = CrazyType()
+	Epfi!(ct, maxiter = 50)
+
+	p1, p2, p3 = makeplots_ct(ct);
+	p1
+end
 
 # using JLD
 # save("ct.jld", "ct", ct)
