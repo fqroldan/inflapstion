@@ -428,6 +428,12 @@ function choose_ω(; remote::Bool=true)
 	ωgrid = range(0.0, 0.25, length=Nω)
 
 	ct = CrazyType()
+	π_Nash = ct.α / (1.0 - ct.β + ct.α^2*ct.γ) * ct.ystar
+
+	print_save("Credibility Dynamics and Disinflation Plans\n")
+	print_save("\nAt current parameters Nash inflation is $(@sprintf("%.3g",π_Nash))")
+	print_save("\nLooping over behavioral types with ω ∈ [0, 0.25]")
+
 	L_mat = zeros(Nω, ct.Np, ct.Na)
 
 	L_min = 100.
