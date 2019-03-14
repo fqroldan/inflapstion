@@ -256,7 +256,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbo
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=75, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=1e-3, maxiter::Int64=75, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.5
@@ -403,7 +403,7 @@ end
 
 function choose_ω(; remote::Bool=true)
 	Nω = 11
-	ωgrid = range(0.0, 0.75, length=Nω)
+	ωgrid = range(0.0, 0.25, length=Nω)
 
 	ct = CrazyType()
 	L_mat = zeros(Nω, ct.Np, ct.Na)
@@ -523,27 +523,23 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-_loopω = true
 
-if _loopω
-	L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
-	p1
+L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
+p1
 
-	ct = CrazyType(; ω = ωmin)
-	Epfi!(ct);
-	p1, p2, p3 = makeplots_ct(ct);
-	p1
-end
+ct = CrazyType(; ω = ωmin)
+Epfi!(ct);
+p1, p2, p3 = makeplots_ct(ct);
+p1
 
-_only1 = false
+#=
+ct = CrazyType()
+Epfi!(ct, maxiter = 50)
 
-if _only1
-	ct = CrazyType()
-	Epfi!(ct, maxiter = 50)
+p1, p2, p3 = makeplots_ct(ct);
+p1
+=#
 
-	p1, p2, p3 = makeplots_ct(ct);
-	p1
-end
 
 # using JLD
 # save("ct.jld", "ct", ct)
