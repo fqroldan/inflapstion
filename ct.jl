@@ -374,12 +374,18 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛")
 		"#17becf"   # blue-teal
 		]
 
-	p1 = plot([
-		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[ceil(Int,1+9*(av)/(ct.agrid[end]))], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
-		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false))
-	savejson(p1, "/home/q/test.json")
+	function set_col(ja, agrid, rel::Bool=false)
+		if rel
+			return ceil(Int,1+9*(agrid[ja])/(agrid[end]))
+		else
+			return ceil(Int,10*ja/length(agrid))
+		end
+	end
 
-	nothing
+	p1 = plot([
+		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
+		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false))
+	return p1
 end
 
 function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
@@ -400,6 +406,22 @@ function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 	return p1, p2, p3
 end
 
+function makeplots_ct_pa(ct::CrazyType)
+
+	gπ_over_a = zeros(size(ct.gπ))
+	Ep_over_p = zeros(size(ct.Ep))
+	for (jp, pv) in enumerate(ct.pgrid), (ja,av) in enumerate(ct.agrid)
+		gπ_over_a[jp, ja] = ct.gπ[jp, ja] - av
+		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
+	end
+
+	pL = plot_ct_pa(ct, ct.L, "𝓛")
+	pπ = plot_ct_pa(ct, ct.gπ, "gπ")
+	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
+	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
+
+	return [pL pπ; py pp]
+end
 
 function choose_ω(; remote::Bool=true)
 	Nω = 11
@@ -429,6 +451,11 @@ function choose_ω(; remote::Bool=true)
 			savejson(p1, pwd()*"/../Graphs/tests/ct_1_jomega_$(jω).json")
 			savejson(p2, pwd()*"/../Graphs/tests/ct_2_jomega_$(jω).json")
 			savejson(p3, pwd()*"/../Graphs/tests/ct_3_jomega_$(jω).json")
+		end
+
+		p1 = makeplots_ct_pa(ct)
+		if remote
+			savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
 		end
 
 		# Save the corresponding value function
