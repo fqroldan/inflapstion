@@ -28,7 +28,7 @@ mutable struct CrazyType
 end
 function CrazyType(;
 		β = 0.96,
-		γ = 60.0,
+		γ = 40.0,
 		α = 0.17,
 		# α = 0.8,
 		# α = 0.02,
