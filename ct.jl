@@ -87,16 +87,15 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false
 	else
 		pprime = Bayes(ct, obs_π, exp_π, pv, av)
 	end
+	aprime = ϕ(ct, av)
 
-#=	σ_η = 0.05
+	#=
+	σ_η = 0.05
 	η_vec = range(-1.96*σ_η, 1.96*σ_η, length = 9)
 	pη = pdf.(Normal(0,σ_η), η_vec)
 	pη = pη / sum(pη)
-=#
-	aprime = ϕ(ct, av)
 
-	#=ap_vec = aprime# .* (1.0 .+ η_vec)
-
+	ap_vec = aprime .* (1.0 .+ η_vec)
 	L′ = 0.0
 	for (jap, apv) in enumerate(ap_vec)
 		apv = max(min(apv, maximum(ct.agrid)), minimum(ct.agrid))
@@ -105,17 +104,9 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false
 	=#
 
 	L′ = itp_L(pprime, aprime)
-
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	#=
-	gπ′ = itp_gπ(pv, aprime)
-	exp_π′ = pv * aprime + (1.0-pv) * gπ′
-	=#
-
 	y = NKPC(ct, obs_π, exp_π′)
-	# y = BLPC(ct, obs_π, exp_π)
-
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
 		return y, pprime
