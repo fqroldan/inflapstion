@@ -271,8 +271,14 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-3, maxiter::Int64=75, verbose::Boo
 		reset_guess = !flag
 
 		dist = sqrt.(sum( (ct.gπ  - old_gπ ).^2 )) / sqrt.(sum(old_gπ .^2))
+		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))"
+		if flag
+			rep_status *= "✓ "
+		end
 		if verbose #&& iter % 10 == 0
-			print_save("\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))\n")
+			print_save(rep_status*"\n")
+		else
+			print(rep_status)
 		end
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
