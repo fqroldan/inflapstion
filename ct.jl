@@ -8,7 +8,7 @@ using Distributed
 mutable struct CrazyType
 	β::Float64
 	γ::Float64
-	α::Float64
+	κ::Float64
 	σ::Float64
 	ystar::Float64
 	ω::Float64
@@ -29,9 +29,9 @@ end
 function CrazyType(;
 		β = 0.96,
 		γ = 50.0,
-		α = 0.17,
-		# α = 0.8,
-		# α = 0.02,
+		κ = 0.17,
+		# κ = 0.8,
+		# κ = 0.02,
 		σ = 0.01,
 		ystar = 0.1,
 		# ω = 0.271,
@@ -41,7 +41,7 @@ function CrazyType(;
 		Na = 60
 		)
 
-	A = α / (1.0 - β + α^2*γ) * ystar
+	A = κ / (1.0 - β + κ^2*γ) * ystar
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
@@ -55,7 +55,7 @@ function CrazyType(;
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType(β, γ, α, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
+	return CrazyType(β, γ, κ, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
 end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
@@ -75,8 +75,8 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	return numer / denomin# + drift
 end
 
-NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.α) * (obs_π - ct.β * exp_π′)
-# BLPC(ct::CrazyType, obs_π, exp_π)  = ct.α * (obs_π - exp_π)
+NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.κ) * (obs_π - ct.β * exp_π′)
+# BLPC(ct::CrazyType, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
@@ -434,7 +434,7 @@ function choose_ω(; remote::Bool=true)
 	ωgrid = range(0.0, 0.25, length=Nω)
 
 	ct = CrazyType()
-	π_Nash = ct.α / (1.0 - ct.β + ct.α^2*ct.γ) * ct.ystar
+	π_Nash = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
 	print_save("\nAt current parameters Nash inflation is $(@sprintf("%.3g",π_Nash))")
