@@ -457,6 +457,7 @@ function choose_ω(; remote::Bool=true)
 		end
 
 		p1 = makeplots_ct_pa(ct)
+		relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
 		if remote
 			savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
 		end
