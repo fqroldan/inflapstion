@@ -330,14 +330,8 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 		pl[jj, 1] = lines(ct, y_tuple[jj], dim = 1, title=n_tuple[jj], showleg = (jj==1))
 		pl[jj, 2] = lines(ct, y_tuple[jj], dim = 2, title=n_tuple[jj], showleg = (jj==1))
 	end
-	if N == 1
-		p = [pl[1,1] pl[1,2]]
-	elseif N == 2
-		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]]
-	elseif N == 3
-		p = [pl[1,1] pl[1,2]; pl[2,1] pl[2,2]; pl[3,1] pl[3,2]]
-	end
 
+	p = hvcat(2, pl[:])
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
@@ -357,7 +351,7 @@ end
 
 end # everywhere
 
-function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛")
+function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
 	col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
@@ -381,7 +375,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛")
 
 	p1 = plot([
 		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
-		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝"))
+		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	return p1
 end
 
@@ -415,7 +409,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	annual_π = (1 .+ ct.gπ).^4 .- 1
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛")
-	pπ = plot_ct_pa(ct, 100*annual_π, "gπ")
+	pπ = plot_ct_pa(ct, 100*annual_π, "gπ", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
 
