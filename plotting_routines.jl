@@ -1,10 +1,6 @@
 using PlotlyJS
 
-plot_bgcolor
-paper_bgcolor
-
-
-const col = [	"#1f77b4",  # muted blue
+col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
 		"#2ca02c",  # cooked asparagus green
 		"#d62728",  # brick red

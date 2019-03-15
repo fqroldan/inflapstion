@@ -1,72 +1,12 @@
 using Distributed
 
 @everywhere using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates
+
 @everywhere include("reporting_routines.jl")
+@everywhere include("type_def.jl")
 @everywhere include("plotting_routines.jl")
 
 @everywhere begin
-
-mutable struct CrazyType
-	β::Float64
-	γ::Float64
-	κ::Float64
-	σ::Float64
-	ystar::Float64
-	ω::Float64
-
-	pgrid::Vector{Float64}
-	agrid::Vector{Float64}
-
-	Np::Int64
-	Na::Int64
-
-	gπ::Array{Float64, 2}
-	L::Array{Float64, 2}
-	
-	Ey::Array{Float64, 2}
-	Eπ::Array{Float64, 2}
-	Ep::Array{Float64, 2}
-end
-function CrazyType(;
-		β = 1.02^(-0.25),
-		γ = 60.0,
-		κ = 0.17,
-		# κ = 0.8,
-		# κ = 0.02,
-		σ = 0.01,
-		ystar = 0.05,
-		# ω = 0.271,
-		# ω = 0.05,
-		ω = 0.1,
-		Np = 45,
-		Na = 45
-		)
-
-	A = κ / (1.0 - β + κ^2*γ) * ystar
-
-	curv = 0.25
-	pgrid = range(0, 1, length=Np).^(1.0/curv)
-	curv = 0.5
-	agrid = range(0, (1.15*A)^curv, length=Na).^(1.0/curv)
-
-	gπ = zeros(Np, Na)
-	L = ones(Np, Na)
-
-	Ey = zeros(Np, Na)
-	Eπ = zeros(Np, Na)
-	Ep = zeros(Np, Na)
-
-	return CrazyType(β, γ, κ, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
-end
-
-ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
-
-Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
-
-dist_ϵ(ct) = Normal(0, ct.σ)
-pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
-cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
-
 function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	numer = pv * pdf_ϵ(ct, obs_π - av)
@@ -254,7 +194,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bo
 	upd_η = 0.33
 
 	reset_guess = false
-	tol_pfi = 1e-8
+	tol_pfi = 1e-8 / 0.9
 	while dist > tol && iter < maxiter
 		iter += 1
 		tol_pfi = max(min(tol_pfi*0.9, dist * 1e-7), 1e-12)
@@ -308,16 +248,16 @@ function choose_ω(; remote::Bool=true)
 		# ct.gπ = πguess
 		t1 = time()
 		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
-		tol = 1e-4
+		tol = 5e-4
 		dist = Epfi!(ct, verbose = false, tol=tol)
 		flag = (dist <= tol)
 
-		p1, p2, p3 = makeplots_ct(ct)
-		if remote
-			savejson(p1, pwd()*"/../Graphs/tests/ct_1_jomega_$(jω).json")
-			savejson(p2, pwd()*"/../Graphs/tests/ct_2_jomega_$(jω).json")
-			savejson(p3, pwd()*"/../Graphs/tests/ct_3_jomega_$(jω).json")
-		end
+		# p1, p2, p3 = makeplots_ct(ct)
+		# if remote
+		# 	savejson(p1, pwd()*"/../Graphs/tests/ct_1_jomega_$(jω).json")
+		# 	savejson(p2, pwd()*"/../Graphs/tests/ct_2_jomega_$(jω).json")
+		# 	savejson(p3, pwd()*"/../Graphs/tests/ct_3_jomega_$(jω).json")
+		# end
 
 		p1 = makeplots_ct_pa(ct)
 		relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
@@ -420,20 +360,20 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-#=
+
 L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
 p1
 
 ct = CrazyType(; ω = ωmin)
 Epfi!(ct);
-=#
 
+#=
 ct = CrazyType(ω = 0)
 Epfi!(ct)
 
 p1 = makeplots_ct_pa(ct);
 p1
-
+=#
 
 
 # using JLD
