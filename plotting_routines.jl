@@ -72,8 +72,6 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
-end # everywhere
-
 function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
 	col = [	"#1f77b4",  # muted blue

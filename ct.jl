@@ -349,6 +349,9 @@ function choose_ω(; remote::Bool=true)
 
 	return L_mat, ωmin, p1
 end
+end # everywhere
+
+
 
 function iter_simul(ct::CrazyType, itp_gπ, pv, av)
 	ϵ = rand(dist_ϵ(ct))
