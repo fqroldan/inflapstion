@@ -33,7 +33,7 @@ function CrazyType(;
 		# κ = 0.8,
 		# κ = 0.02,
 		σ = 0.01,
-		ystar = 0.15,
+		ystar = 0.05,
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
@@ -247,7 +247,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=150, verbo
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=1e-3, maxiter::Int64=75, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=1e-4, maxiter::Int64=75, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.33
@@ -331,7 +331,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 		pl[jj, 2] = lines(ct, y_tuple[jj], dim = 2, title=n_tuple[jj], showleg = (jj==1))
 	end
 
-	p = hvcat(2, pl[:])
+	# p = hvcat(2, pl[:])
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
 
@@ -553,20 +553,20 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-
+#=
 L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
 p1
 
 ct = CrazyType(; ω = ωmin)
 Epfi!(ct);
+=#
 
-#=
-ct = CrazyType()
-Epfi!(ct, maxiter = 50)
+ct = CrazyType(ω = 0)
+Epfi!(ct)
 
 p1, p2, p3 = makeplots_ct(ct);
 p1
-=#
+
 
 
 # using JLD
