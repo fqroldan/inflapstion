@@ -250,7 +250,7 @@ end
 function Epfi!(ct::CrazyType; tol::Float64=1e-3, maxiter::Int64=75, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.5
+	upd_η = 0.33
 
 	reset_guess = false
 	while dist > tol && iter < maxiter
