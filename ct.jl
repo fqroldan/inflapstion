@@ -381,7 +381,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛")
 
 	p1 = plot([
 		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
-		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false))
+		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝"))
 	return p1
 end
 
@@ -412,8 +412,10 @@ function makeplots_ct_pa(ct::CrazyType)
 		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
+	annual_π = (1 .+ ct.gπ).^4 .- 1
+
 	pL = plot_ct_pa(ct, ct.L, "𝓛")
-	pπ = plot_ct_pa(ct, ct.gπ, "gπ")
+	pπ = plot_ct_pa(ct, 100*annual_π, "gπ")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
 
@@ -426,9 +428,10 @@ function choose_ω(; remote::Bool=true)
 
 	ct = CrazyType()
 	π_Nash = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
+	π_Nash = (1+π_Nash)^4 - 1
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
-	print_save("\nAt current parameters Nash inflation is $(@sprintf("%.3g",π_Nash))")
+	print_save("\nAt current parameters Nash inflation is $(@sprintf("%.3g",100*π_Nash))%")
 	print_save("\nLooping over behavioral types with ω ∈ [0, 0.25]")
 
 	L_mat = zeros(Nω, ct.Np, ct.Na)
@@ -560,8 +563,6 @@ p1
 
 ct = CrazyType(; ω = ωmin)
 Epfi!(ct);
-p1, p2, p3 = makeplots_ct(ct);
-p1
 
 #=
 ct = CrazyType()
