@@ -1,7 +1,10 @@
 using PlotlyJS
 
-function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
-	col = [	"#1f77b4",  # muted blue
+plot_bgcolor
+paper_bgcolor
+
+
+const col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
 		"#2ca02c",  # cooked asparagus green
 		"#d62728",  # brick red
@@ -12,6 +15,8 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 		"#bcbd22",  # curry yellow-green
 		"#17becf"   # blue-teal
 		]
+
+function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
 	if dim == 1
 		xgrid = ct.pgrid
 		zgrid = ct.agrid
@@ -56,7 +61,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	# p = hvcat(2, pl[:])
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950)
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	function makeplot(p, ext::String)
 		savefig(p, pwd() * "/../Graphs/ct" * ext)
@@ -73,18 +78,6 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 end
 
 function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
-
-	col = [	"#1f77b4",  # muted blue
-		"#ff7f0e",  # safety orange
-		"#2ca02c",  # cooked asparagus green
-		"#d62728",  # brick red
-		"#9467bd",  # muted purple
-		"#8c564b",  # chestnut brown
-		"#e377c2",  # raspberry yogurt pink
-		"#7f7f7f",  # middle gray
-		"#bcbd22",  # curry yellow-green
-		"#17becf"   # blue-teal
-		]
 
 	function set_col(ja, agrid, rel::Bool=false)
 		if rel
@@ -134,5 +127,9 @@ function makeplots_ct_pa(ct::CrazyType)
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
 
-	return [pL pπ; py pp]
+	p = [pL pπ; py pp]
+	
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+
+	return p
 end
