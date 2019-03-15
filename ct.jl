@@ -61,6 +61,8 @@ end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
 
+Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
+
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
@@ -246,7 +248,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1500, verb
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=200, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=1e-4, maxiter::Int64=200, verbose::Bool=true)
 	dist = 10.
 	iter = 0
 	upd_η = 0.33
@@ -255,7 +257,7 @@ function Epfi!(ct::CrazyType; tol::Float64=1e-6, maxiter::Int64=200, verbose::Bo
 	tol_pfi = 1e-8
 	while dist > tol && iter < maxiter
 		iter += 1
-		tol_pfi = min(tol_pfi, dist * 1e-6)
+		tol_pfi = min(tol_pfi*0.9, dist * 1e-7)
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 

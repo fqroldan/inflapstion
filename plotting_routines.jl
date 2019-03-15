@@ -79,6 +79,8 @@ end
 
 function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
+	a_max = Nash(ct)
+
 	function set_col(ja, agrid, rel::Bool=false)
 		if rel
 			return ceil(Int,1+9*(agrid[ja])/(agrid[end]))
@@ -88,7 +90,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 	end
 
 	p1 = plot([
-		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid)
+		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
 		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	return p1
 end
@@ -128,7 +130,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
 
 	p = [pL pπ; py pp]
-	
+
 	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	return p
