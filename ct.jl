@@ -28,7 +28,7 @@ mutable struct CrazyType
 	Ep::Array{Float64, 2}
 end
 function CrazyType(;
-		β = 0.96,
+		β = 1.02^(-0.25),
 		γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
