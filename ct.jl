@@ -28,12 +28,12 @@ mutable struct CrazyType
 end
 function CrazyType(;
 		β = 0.96,
-		γ = 50.0,
+		γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
 		# κ = 0.02,
 		σ = 0.01,
-		ystar = 0.1,
+		ystar = 0.15,
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
@@ -46,7 +46,7 @@ function CrazyType(;
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
 	curv = 0.5
-	agrid = range(0, (1.05*A)^curv, length=Na).^(1.0/curv)
+	agrid = range(0, (1.15*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
 	L = ones(Np, Na)
@@ -431,7 +431,8 @@ function choose_ω(; remote::Bool=true)
 	π_Nash = (1+π_Nash)^4 - 1
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
-	print_save("\nAt current parameters Nash inflation is $(@sprintf("%.3g",100*π_Nash))%")
+	print_save("\nNash inflation is $(@sprintf("%.3g",100*π_Nash))%")
+	print_save("\nGrid for a goes up to $(@sprintf("%.3g",maximum(ct.agrid)))")
 	print_save("\nLooping over behavioral types with ω ∈ [0, 0.25]")
 
 	L_mat = zeros(Nω, ct.Np, ct.Na)
