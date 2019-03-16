@@ -12,10 +12,14 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	numer = pv * pdf_ϵ(ct, obs_π - av)
 	denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
 
+	p′ = numer / denomin
+
+	p′ = max(0.0, min(1.0, p′))
+
 	# drift = (1.0 - pv) * 0.15
 	# drift = -(pv) * 0.15
 
-	return numer / denomin# + drift
+	return p′
 end
 
 NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.κ) * (obs_π - ct.β * exp_π′)
