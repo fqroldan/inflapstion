@@ -326,28 +326,31 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 	knots = (ct.pgrid, ct.agrid)
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()))
 
-	p_vec, a_vec, π_vec, y_vec = zeros(T), zeros(T), zeros(T), zeros(T)
+	p_vec, a_vec, π_vec, y_vec, g_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
 	for tt = 1:T
 		p_vec[tt], a_vec[tt] = p, a
+		g_vec[tt] = itp_gπ(p,a)
 		pp, ap, πt, yt = iter_simul(ct, itp_gπ, p, a)
 		π_vec[tt], y_vec[tt] = πt, yt
-		if tt == T
-			p_vec[end], a_vec[end] = pp, ap
-		end
+
 		p, a = pp, ap
 	end
 
-	return p_vec, a_vec, π_vec, y_vec
+	return p_vec, a_vec, π_vec, y_vec, g_vec
 end
 
 function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
-	p_vec, a_vec, π_vec, y_vec = simul(ct, T=T, jp0=jp0)
+	p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0)
 
 	annual_π = (1 .+ π_vec).^4 .- 1
+	annual_g = (1 .+ g_vec).^4 .- 1
 	annual_a = (1 .+ a_vec).^4 .- 1
 
 	pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
-	pa = plot(scatter(;x=1:T, y=100*annual_a, showlegend=false), Layout(;title="Target", yaxis_title="%"))
+	pa = plot([
+		scatter(;x=1:T, y=100*annual_a, showlegend=false)
+		scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
+		], Layout(;title="Target", yaxis_title="%"))
 	pπ = plot(scatter(;x=1:T, y=100*annual_π, showlegend=false), Layout(;title="Inflation", yaxis_title="%"))
 	py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
 
