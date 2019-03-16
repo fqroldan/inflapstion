@@ -54,6 +54,6 @@ end
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
 Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
-dist_ϵ(ct) = Normal(0, ct.σ)
+dist_ϵ(ct) = Normal(0, ct.σ^2)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
