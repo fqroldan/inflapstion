@@ -343,10 +343,13 @@ end
 function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 	p_vec, a_vec, π_vec, y_vec = simul(ct, T=T, jp0=jp0)
 
-	pp = plot(scatter(;x=1:T, y=p_vec), Layout(;title="Reputation"))
-	pa = plot(scatter(;x=1:T, y=a_vec), Layout(;title="Target"))
-	pπ = plot(scatter(;x=1:T, y=π_vec), Layout(;title="Inflation"))
-	py = plot(scatter(;x=1:T, y=y_vec), Layout(;title="Output"))
+	annual_π = (1 .+ π_vec).^4 .- 1
+	annual_a = (1 .+ a_vec).^4 .- 1
+
+	pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
+	pa = plot(scatter(;x=1:T, y=100*annual_a, showlegend=false), Layout(;title="Target", yaxis_title="%"))
+	pπ = plot(scatter(;x=1:T, y=100*annual_π, showlegend=false), Layout(;title="Inflation", yaxis_title="%"))
+	py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
 
 	p = [pp pa; py pπ]
 	relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
