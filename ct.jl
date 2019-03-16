@@ -308,14 +308,15 @@ function iter_simul(ct::CrazyType, itp_gπ, pv, av)
 
 	exp_π = itp_gπ(pv, av)
 	obs_π = exp_π+ϵ
+	
 	pprime = Bayes(ct, obs_π, exp_π, pv, av)
+
 	aprime = ϕ(ct, av)
-	gπ′ = itp_gπ(pprime, aprime)
-	exp_π′ = pprime * aprime + (1.0-pprime) * gπ′
+	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
 	y = NKPC(ct, obs_π, exp_π′)
 
-	return pprime, aprime, obs_π, y
+	return pprime, aprime, obs_π, y, exp_π
 end
 
 function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
@@ -332,9 +333,8 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 	p_vec, a_vec, π_vec, y_vec, g_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
 	for tt = 1:T
 		p_vec[tt], a_vec[tt] = p, a
-		g_vec[tt] = itp_gπ(p,a)
-		pp, ap, πt, yt = iter_simul(ct, itp_gπ, p, a)
-		π_vec[tt], y_vec[tt] = πt, yt
+		pp, ap, πt, yt, gt = iter_simul(ct, itp_gπ, p, a)
+		π_vec[tt], y_vec[tt], g_vec[tt] = πt, yt, gt
 
 		p, a = pp, ap
 	end
