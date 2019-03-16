@@ -20,7 +20,7 @@ mutable struct CrazyType
 	Ep::Array{Float64, 2}
 end
 function CrazyType(;
-		β = 1.04^(-0.25),
+		β = 1.02^(-0.25),
 		γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
@@ -30,8 +30,8 @@ function CrazyType(;
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
-		Np = 45,
-		Na = 45
+		Np = 30,
+		Na = 30
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
@@ -54,6 +54,6 @@ end
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
 Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
-dist_ϵ(ct) = Normal(0, ct.σ^2)
+dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)

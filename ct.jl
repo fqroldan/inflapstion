@@ -16,6 +16,9 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	p′ = max(0.0, min(1.0, p′))
 
+	if isapprox(denomin, 0.0) && isapprox(numer, 0.0)
+		p′ = 0.0
+	end
 	# drift = (1.0 - pv) * 0.15
 	# drift = -(pv) * 0.15
 
