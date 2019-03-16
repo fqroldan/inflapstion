@@ -191,7 +191,7 @@ end
 function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bool=true)
 	dist = 10.
 	iter = 0
-	upd_η = 0.33
+	upd_η = 0.2
 
 	reset_guess = false
 	tol_pfi = 1e-8 / 0.9
@@ -230,7 +230,7 @@ function choose_ω(; remote::Bool=true)
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
 	print_save("\nNash inflation is $(@sprintf("%.3g",100*π_Nash))%")
-	print_save("\nGrid for a goes up to $(@sprintf("%.3g",maximum(ct.agrid)))")
+	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid)))")
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
 
@@ -364,8 +364,8 @@ machine_remote = establish_remote()
 L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
 p1
 
-ct = CrazyType(; ω = ωmin)
-Epfi!(ct);
+# ct = CrazyType(; ω = ωmin)
+# Epfi!(ct);
 
 #=
 ct = CrazyType(ω = 0)
