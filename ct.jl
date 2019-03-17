@@ -151,7 +151,7 @@ function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
 	return new_gπ, new_L, new_y, new_π, new_p
 end
 
-function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1500, verbose::Bool=true, reset_guess::Bool=false)
+function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
 	iter = 0
 	upd_η = 0.75
@@ -323,7 +323,7 @@ function iter_simul(ct::CrazyType, itp_gπ, pv, av; noshocks::Bool=false)
 
 	y = NKPC(ct, obs_π, exp_π′)
 
-	return pprime, aprime, obs_π, y, exp_π
+	return pprime, aprime, obs_π, y, exp_π, ϵ
 end
 
 function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
@@ -337,14 +337,17 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	knots = (ct.pgrid, ct.agrid)
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()))
 
-	p_vec, a_vec, π_vec, y_vec, g_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
+	p_vec, a_vec, π_vec, y_vec, g_vec, ϵ_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
 	for tt = 1:T
 		p_vec[tt], a_vec[tt] = p, a
-		pp, ap, πt, yt, gt = iter_simul(ct, itp_gπ, p, a; noshocks=noshocks)
-		π_vec[tt], y_vec[tt], g_vec[tt] = πt, yt, gt
+		pp, ap, πt, yt, gt, ϵt = iter_simul(ct, itp_gπ, p, a; noshocks=noshocks)
+		π_vec[tt], y_vec[tt], g_vec[tt], ϵ_vec[tt] = πt, yt, gt, ϵt
 
 		p, a = pp, ap
 	end
+
+	σϵ = std(ϵ_vec)
+	print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
 
 	return p_vec, a_vec, π_vec, y_vec, g_vec
 end
@@ -356,12 +359,19 @@ function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=fal
 	annual_g = (1 .+ g_vec).^4 .- 1
 	annual_a = (1 .+ a_vec).^4 .- 1
 
+	σϵ = std(annual_g-annual_π)
+	print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
+
+
 	pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
 	pa = plot([
 		scatter(;x=1:T, y=100*annual_a, showlegend=false)
 		scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
 		], Layout(;title="Target", yaxis_title="%"))
-	pπ = plot(scatter(;x=1:T, y=100*annual_π, showlegend=false), Layout(;title="Inflation", yaxis_title="%"))
+	pπ = plot([
+		scatter(;x=1:T, y=100*annual_π, showlegend=false)
+		scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
+		], Layout(;title="Inflation", yaxis_title="%"))
 	py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
 
 	p = [pp pa; py pπ]
@@ -382,19 +392,23 @@ end
 machine_remote = establish_remote()
 
 
-L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
-p1
+# L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
+# p1
 
 # ct = CrazyType(; ω = ωmin)
 # Epfi!(ct);
 
-#=
-ct = CrazyType(ω = 0)
-Epfi!(ct)
 
-p1 = makeplots_ct_pa(ct);
-p1
-=#
+ct = CrazyType(ω = 0.0125);
+Epfi!(ct)
+p2 = plot_simul(ct, noshocks=true)
+if remote
+	savejson(p2, pwd()*"/../Graphs/tests/simul.json")
+end
+
+# p1 = makeplots_ct_pa(ct);
+# p1
+
 
 
 # using JLD
