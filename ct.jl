@@ -272,6 +272,10 @@ function choose_ω(; remote::Bool=true)
 		if remote
 			savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
 		end
+		p2 = plot_simul(ct)
+		if remote
+			savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json")
+		end
 
 		# Save the corresponding value function
 		L_mat[jω, :, :] = ct.L[:, :]
@@ -303,8 +307,11 @@ end # everywhere
 
 
 
-function iter_simul(ct::CrazyType, itp_gπ, pv, av)
+function iter_simul(ct::CrazyType, itp_gπ, pv, av; noshocks::Bool=false)
 	ϵ = rand(dist_ϵ(ct))
+	if noshocks
+		ϵ = 0.0
+	end
 
 	exp_π = itp_gπ(pv, av)
 	obs_π = exp_π+ϵ
@@ -319,7 +326,7 @@ function iter_simul(ct::CrazyType, itp_gπ, pv, av)
 	return pprime, aprime, obs_π, y, exp_π
 end
 
-function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
+function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	p0 = ct.pgrid[jp0]
 
 	_, ind_a0 = findmin(ct.L[jp0, :])
@@ -333,7 +340,7 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 	p_vec, a_vec, π_vec, y_vec, g_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
 	for tt = 1:T
 		p_vec[tt], a_vec[tt] = p, a
-		pp, ap, πt, yt, gt = iter_simul(ct, itp_gπ, p, a)
+		pp, ap, πt, yt, gt = iter_simul(ct, itp_gπ, p, a; noshocks=noshocks)
 		π_vec[tt], y_vec[tt], g_vec[tt] = πt, yt, gt
 
 		p, a = pp, ap
@@ -342,8 +349,8 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
 	return p_vec, a_vec, π_vec, y_vec, g_vec
 end
 
-function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2)
-	p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0)
+function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
+	p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0; noshocks=noshocks)
 
 	annual_π = (1 .+ π_vec).^4 .- 1
 	annual_g = (1 .+ g_vec).^4 .- 1
