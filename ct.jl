@@ -92,11 +92,20 @@ end
 function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 
 	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
+	#=
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
 			minπ, maxπ, Brent()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
-	gπ, L = res.minimizer, res.minimum
+	gπ, L = res.minimizer[1], res.minimum
+	=#
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x, pv, av)
+	res = Optim.optimize(
+		gπ -> obj_f(first(gπ)),
+		[π_guess], LBFGS()
+		)
+
+	gπ, L = res.minimizer[1], res.minimum
 
 	if Optim.converged(res) == false
 		# a = Optim.iterations(res)
@@ -122,10 +131,11 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, gπ_guess; optimize::Bool=tru
     # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
-		π_guess = gπ_guess[jp, ja]
 		if optimize
+			π_guess = itp_gπ(pv, av)
 			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, π_guess, pv, av)
 		else
+			π_guess = gπ_guess[jp, ja]
 			gπ[jp, ja] = π_guess
 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av)
 		end
