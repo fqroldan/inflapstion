@@ -57,7 +57,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	# p = hvcat(2, pl[:])
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	function makeplot(p, ext::String)
 		savefig(p, pwd() * "/../Graphs/ct" * ext)
@@ -127,7 +127,7 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	p = [pL pπ; py pp]
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 12, height = 600, width = 950, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	return p
 end
