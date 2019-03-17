@@ -195,7 +195,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bool=true)
+function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bool=true, tempplots::Bool=false)
 	dist = 10.
 	iter = 0
 	upd_η = 0.2
@@ -223,6 +223,13 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bo
 		end
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
+
+		if tempplots
+			p1 = makeplots_ct_pa(ct);
+			relayout!(p1, title="iter = $iter")
+			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
+		end
+
 	end
 	return dist
 end
@@ -400,7 +407,7 @@ machine_remote = establish_remote()
 
 
 ct = CrazyType(ω = 0.0125);
-Epfi!(ct)
+Epfi!(ct, tempplots=true)
 p2 = plot_simul(ct, noshocks=true)
 if remote
 	savejson(p2, pwd()*"/../Graphs/tests/simul.json")
