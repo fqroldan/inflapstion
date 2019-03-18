@@ -38,7 +38,7 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	end
 
 	σϵ = std(ϵ_vec)
-	print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
+	# print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
 
 	return p_vec, a_vec, π_vec, y_vec, g_vec
 end

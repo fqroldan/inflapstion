@@ -162,7 +162,7 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 	# p = [pp pa; py pπ]
 	# relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
 
-	p_mat, a_mat, π_mat, y_mat, g_vec = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
+	p_mat, a_mat, π_mat, y_mat, g_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
 
 	for jn in 1:N
 	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; T=T, noshocks=noshocks)
@@ -172,38 +172,38 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 
 	# k = 2
 	# quantiles = linspace(0,1, k+2)
-	quantiles = [0.25; 0.75]
+	quantiles = [0.45; 0.55]
 	k = length(quantiles)
 	p_qnt, a_qnt, π_qnt, y_qnt, g_qnt = zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k)
 	for jk in 1:k
 	    for jt in 1:T
-	        qnt = quantiles[jk+1]
+	        qnt = quantiles[jk]
 	        p_qnt[jt,jk], a_qnt[jt,jk], π_qnt[jt,jk], y_qnt[jt,jk], g_qnt[jt,jk] = quantile(p_mat[jt, :], qnt), quantile(a_mat[jt, :], qnt), quantile(π_mat[jt, :], qnt), quantile(y_mat[jt, :], qnt), quantile(g_mat[jt, :], qnt)
 	    end
 	end
-	p_med, a_med, π_med, y_med, g_med = median(p_mat,2), median(a_mat, 2), median(π_mat, 2), median(y_mat, 2), median(g_mat, 2)
-	p_avg, a_avg, π_avg, y_avg, g_avg = mean(p_mat,2), mean(a_mat, 2), mean(π_mat, 2), mean(y_mat, 2), mean(g_mat, 2)
+	p_med, a_med, π_med, y_med, g_med = vec(median(p_mat, dims=2)), vec(median(a_mat, dims=2)), vec(median(π_mat, dims=2)), vec(median(y_mat, dims=2)), vec(median(g_mat, dims=2))
+	p_avg, a_avg, π_avg, y_avg, g_avg = vec(mean(p_mat, dims = 2)), vec(mean(a_mat, dims = 2)), vec(mean(π_mat, dims = 2)), vec(mean(y_mat, dims = 2)), vec(mean(g_mat, dims = 2))
 
 	prep = plot([
-			[scatter(;x=1:T, y=p_qnt[:,jk], opacity=0.25, line_color=col[1]) for jk in 1:k]
-			scatter(;x=1:T, y=p_avg, line_color=col[1])
-			scatter(;x=1:T, y=p_med, line_color=col[1], line_dash="dashdot")
+			[scatter(;x=1:T, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
+			scatter(;x=1:T, y=p_avg, showlegend=false, line_color=col[1])
+			scatter(;x=1:T, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
 			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
 	ptar = plot([
-			[scatter(;x=1:T, y=a_qnt[:,jk], opacity=0.25, line_color=col[2]) for jk in 1:k]
-			scatter(;x=1:T, y=a_avg, line_color=col[2])
-			scatter(;x=1:T, y=a_med, line_color=col[2], line_dash="dashdot")
+			[scatter(;x=1:T, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
+			scatter(;x=1:T, y=a_avg, showlegend=false, line_color=col[2])
+			scatter(;x=1:T, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
 			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
 	pinf = plot([
-			[scatter(;x=1:T, y=π_qnt[:,jk], opacity=0.25, line_color=col[3]) for jk in 1:k]
-			scatter(;x=1:T, y=π_avg, line_color=col[3])
-			scatter(;x=1:T, y=π_med, line_color=col[3], line_dash="dashdot")
-			scatter(;x=1:T, y=g_avg, line_color=col[5], line_dash="dot")
+			[scatter(;x=1:T, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
+			scatter(;x=1:T, y=π_avg, showlegend=false, line_color=col[3])
+			scatter(;x=1:T, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
+			scatter(;x=1:T, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
 			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
 	pout = plot([
-			[scatter(;x=1:T, y=y_qnt[:,jk], opacity=0.25, line_color=col[4]) for jk in 1:k]
-			scatter(;x=1:T, y=y_avg, line_color=col[4])
-			scatter(;x=1:T, y=y_med, line_color=col[4], line_dash="dashdot")
+			[scatter(;x=1:T, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
+			scatter(;x=1:T, y=y_avg, showlegend=false, line_color=col[4])
+			scatter(;x=1:T, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
 			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
 	p = [prep ptar; pinf pout]
 
