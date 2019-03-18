@@ -204,7 +204,7 @@ end
 function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bool=true, tempplots::Bool=false)
 	dist = 10.
 	iter = 0
-	upd_η = 0.2
+	upd_η = 0.33
 
 	reset_guess = false
 	tol_pfi = 1e-8 / 0.9

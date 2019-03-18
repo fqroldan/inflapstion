@@ -172,7 +172,7 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 
 	# k = 2
 	# quantiles = linspace(0,1, k+2)
-	quantiles = [0.45; 0.55]
+	quantiles = [0.25; 0.75]
 	k = length(quantiles)
 	p_qnt, a_qnt, π_qnt, y_qnt, g_qnt = zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k)
 	for jk in 1:k
