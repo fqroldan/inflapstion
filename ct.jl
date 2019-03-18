@@ -255,7 +255,7 @@ function choose_ω(; remote::Bool=true)
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
 	print_save("\nNash inflation is $(@sprintf("%.3g",100*π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%")
-	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid)))")
+	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid)))) annual%)")
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
 
@@ -398,7 +398,7 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 	for jn in 1:N
 	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; T=T, noshocks=noshocks)
 	    p_mat[:,jn] = p_vec
-	    a_mat[:,jn], π_mat[:,jn], y_mat[:,jn], g_max[:,jn] = annualized(a_vec), annualized(π_vec), annualized(y_vec), annualized(g_vec)
+	    a_mat[:,jn], π_mat[:,jn], y_mat[:,jn], g_max[:,jn] = annualized.(a_vec), annualized.(π_vec), annualized.(y_vec), annualized.(g_vec)
 	end
 
 	# k = 2
