@@ -136,31 +136,7 @@ end
 
 function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::Bool=false)
 	# Update simulations codes
-
 	include("simul.jl")
-	# p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0; noshocks=noshocks)
-
-	# annual_π = (1 .+ π_vec).^4 .- 1
-	# annual_g = (1 .+ g_vec).^4 .- 1
-	# annual_a = (1 .+ a_vec).^4 .- 1
-
-	# σϵ = std(annual_g-annual_π)
-	# print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
-
-
-	# pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
-	# pa = plot([
-	# 	scatter(;x=1:T, y=100*annual_a, showlegend=false)
-	# 	scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
-	# 	], Layout(;title="Target", yaxis_title="%"))
-	# pπ = plot([
-	# 	scatter(;x=1:T, y=100*annual_π, showlegend=false)
-	# 	scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
-	# 	], Layout(;title="Inflation", yaxis_title="%"))
-	# py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
-
-	# p = [pp pa; py pπ]
-	# relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
 
 	p_mat, a_mat, π_mat, y_mat, g_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
 
