@@ -255,7 +255,7 @@ function choose_ω(; remote::Bool=true)
 
 	print_save("Credibility Dynamics and Disinflation Plans\n")
 	print_save("\nNash inflation is $(@sprintf("%.3g",100*π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%")
-	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid)))) annual%)")
+	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid))))% annual)")
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
 
