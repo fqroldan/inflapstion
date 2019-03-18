@@ -201,10 +201,10 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=200, verbose::Bool=true, tempplots::Bool=false)
+function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=1000, verbose::Bool=true, tempplots::Bool=false)
 	dist = 10.
 	iter = 0
-	upd_η = 0.33
+	upd_η = 0.05
 
 	reset_guess = false
 	tol_pfi = 1e-8 / 0.9
