@@ -1,8 +1,8 @@
 using Distributed
 
+@everywhere include("type_def.jl")
 @everywhere include("ct.jl")
 @everywhere include("reporting_routines.jl")
-@everywhere include("type_def.jl")
 @everywhere include("plotting_routines.jl")
 
 write(pwd()*"/../output.txt", "")
