@@ -73,20 +73,23 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
+annualized(π::Float64) = 100*((1.0 .+ π).^4 .- 1)
+
 function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
 	a_max = Nash(ct)
+	jamax = findfirst(ct.agrid.>=a_max)
 
 	function set_col(ja, agrid, rel::Bool=false)
 		if rel
-			return ceil(Int,1+9*(agrid[ja])/(agrid[end]))
+			return ceil(Int,1+9*(agrid[ja])/a_max)
 		else
-			return ceil(Int,10*ja/length(agrid))
+			return ceil(Int,10*ja/jamax)
 		end
 	end
 
 	p1 = plot([
-		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", av))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
+		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", annualized(av)))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
 		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	return p1
 end
