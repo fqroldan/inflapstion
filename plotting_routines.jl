@@ -73,8 +73,6 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
-annualized(π::Float64) = 100*((1.0 .+ π).^4 .- 1)
-
 function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
 	a_max = Nash(ct)

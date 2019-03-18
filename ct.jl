@@ -284,13 +284,13 @@ function choose_ω(; remote::Bool=true)
 		# 	savejson(p3, pwd()*"/../Graphs/tests/ct_3_jomega_$(jω).json")
 		# end
 
-		p1 = makeplots_ct_pa(ct)
-		relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
 		if remote
+			p1 = makeplots_ct_pa(ct)
+			relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
 			savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
 		end
-		p2 = plot_simul(ct)
 		if remote
+			p2 = plot_simul(ct)
 			savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json")
 		end
 
@@ -321,7 +321,6 @@ function choose_ω(; remote::Bool=true)
 	return L_mat, ωmin, p1
 end
 end # everywhere
-
 
 
 function iter_simul(ct::CrazyType, itp_gπ, pv, av; noshocks::Bool=false)
@@ -369,30 +368,77 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	return p_vec, a_vec, π_vec, y_vec, g_vec
 end
 
-function plot_simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
-	p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0; noshocks=noshocks)
+function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::Bool=false)
+	# p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct, T=T, jp0=jp0; noshocks=noshocks)
 
-	annual_π = (1 .+ π_vec).^4 .- 1
-	annual_g = (1 .+ g_vec).^4 .- 1
-	annual_a = (1 .+ a_vec).^4 .- 1
+	# annual_π = (1 .+ π_vec).^4 .- 1
+	# annual_g = (1 .+ g_vec).^4 .- 1
+	# annual_a = (1 .+ a_vec).^4 .- 1
 
-	σϵ = std(annual_g-annual_π)
-	print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
+	# σϵ = std(annual_g-annual_π)
+	# print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
 
 
-	pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
-	pa = plot([
-		scatter(;x=1:T, y=100*annual_a, showlegend=false)
-		scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
-		], Layout(;title="Target", yaxis_title="%"))
-	pπ = plot([
-		scatter(;x=1:T, y=100*annual_π, showlegend=false)
-		scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
-		], Layout(;title="Inflation", yaxis_title="%"))
-	py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
+	# pp = plot(scatter(;x=1:T, y=p_vec, showlegend=false), Layout(;title="Reputation"))
+	# pa = plot([
+	# 	scatter(;x=1:T, y=100*annual_a, showlegend=false)
+	# 	scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
+	# 	], Layout(;title="Target", yaxis_title="%"))
+	# pπ = plot([
+	# 	scatter(;x=1:T, y=100*annual_π, showlegend=false)
+	# 	scatter(;x=1:T, y=100*annual_g, showlegend=false, line_dash="dash")
+	# 	], Layout(;title="Inflation", yaxis_title="%"))
+	# py = plot(scatter(;x=1:T, y=100*y_vec, showlegend=false), Layout(;title="Output", yaxis_title="% dev"))
 
-	p = [pp pa; py pπ]
-	relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
+	# p = [pp pa; py pπ]
+	# relayout!(p, font_family = "Fira Sans Light", height = 600, width = 950, font_size = 12)
+
+	p_mat, a_mat, π_mat, y_mat, g_vec = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
+
+	for jn in 1:N
+	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; T=T, noshocks=noshocks)
+	    p_mat[:,jn] = p_vec
+	    a_mat[:,jn], π_mat[:,jn], y_mat[:,jn], g_max[:,jn] = annualized(a_vec), annualized(π_vec), annualized(y_vec), annualized(g_vec)
+	end
+
+	# k = 2
+	# quantiles = linspace(0,1, k+2)
+	quantiles = [0.25; 0.75]
+	k = length(quantiles)
+	p_qnt, a_qnt, π_qnt, y_qnt, g_qnt = zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k)
+	for jk in 1:k
+	    for jt in 1:T
+	        qnt = quantiles[jk+1]
+	        p_qnt[jt,jk], a_qnt[jt,jk], π_qnt[jt,jk], y_qnt[jt,jk], g_qnt[jt,jk] = quantile(p_mat[jt, :], qnt), quantile(a_mat[jt, :], qnt), quantile(π_mat[jt, :], qnt), quantile(y_mat[jt, :], qnt), quantile(g_mat[jt, :], qnt)
+	    end
+	end
+	p_med, a_med, π_med, y_med, g_med = median(p_mat,2), median(a_mat, 2), median(π_mat, 2), median(y_mat, 2), median(g_mat, 2)
+	p_avg, a_avg, π_avg, y_avg, g_avg = mean(p_mat,2), mean(a_mat, 2), mean(π_mat, 2), mean(y_mat, 2), mean(g_mat, 2)
+
+	prep = plot([
+			[scatter(;x=1:T, y=p_qnt[:,jk], opacity=0.25, line_color=col[1]) for jk in 1:k]
+			scatter(;x=1:T, y=p_avg, line_color=col[1])
+			scatter(;x=1:T, y=p_med, line_color=col[1], line_dash="dashdot")
+			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
+	ptar = plot([
+			[scatter(;x=1:T, y=a_qnt[:,jk], opacity=0.25, line_color=col[2]) for jk in 1:k]
+			scatter(;x=1:T, y=a_avg, line_color=col[2])
+			scatter(;x=1:T, y=a_med, line_color=col[2], line_dash="dashdot")
+			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
+	pinf = plot([
+			[scatter(;x=1:T, y=π_qnt[:,jk], opacity=0.25, line_color=col[3]) for jk in 1:k]
+			scatter(;x=1:T, y=π_avg, line_color=col[3])
+			scatter(;x=1:T, y=π_med, line_color=col[3], line_dash="dashdot")
+			scatter(;x=1:T, y=g_avg, line_color=col[5], line_dash="dot")
+			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
+	pout = plot([
+			[scatter(;x=1:T, y=y_qnt[:,jk], opacity=0.25, line_color=col[4]) for jk in 1:k]
+			scatter(;x=1:T, y=y_avg, line_color=col[4])
+			scatter(;x=1:T, y=y_med, line_color=col[4], line_dash="dashdot")
+			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
+	p = [prep ptar; pinf pout]
+
+	relayout!(p, font_family="Fira Sans Light")
 
     return p
 end
@@ -409,19 +455,19 @@ end
 machine_remote = establish_remote()
 
 
-# L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
-# p1
+L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
+p1
 
 # ct = CrazyType(; ω = ωmin)
 # Epfi!(ct);
 
 
-ct = CrazyType(ω = 0.0125);
-Epfi!(ct, tempplots=true)
-p2 = plot_simul(ct, noshocks=true)
-if remote
-	savejson(p2, pwd()*"/../Graphs/tests/simul.json")
-end
+# ct = CrazyType(ω = 0.0125);
+# Epfi!(ct, tempplots=true)
+# p2 = plot_simul(ct, noshocks=true)
+# if remote
+# 	savejson(p2, pwd()*"/../Graphs/tests/simul.json")
+# end
 
 # p1 = makeplots_ct_pa(ct);
 # p1
