@@ -19,7 +19,9 @@ end
 machine_remote = establish_remote()
 
 ct = CrazyType(ω = 0.0);
-Epfi!(ct, tempplots=true)
+initial_report(ct)
+
+Epfi!(ct, tol=1e-3, tempplots=true)
 
 
 #=

@@ -205,12 +205,14 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	dist = 10.
 	iter = 0
 	upd_η = 0.025
+	
+	print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
 
 	reset_guess = false
-	tol_pfi = 1e-8 / 0.9
+	tol_pfi = 1e-8 / 0.99
 	while dist > tol && iter < maxiter
 		iter += 1
-		tol_pfi = max(min(tol_pfi*0.9, dist * 1e-7), 1e-12)
+		tol_pfi = max(min(tol_pfi*0.99, dist * 1e-7), 1e-12)
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
@@ -237,6 +239,12 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 		end
 
 	end
+	if verbose && dist <= tol
+		print("\nConverged in $iter iterations.")
+	elseif verbose
+		print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
+	end
+
 	return dist
 end
 
@@ -245,13 +253,7 @@ function choose_ω(; remote::Bool=true)
 	ωgrid = range(0.0, 0.125, length=Nω)
 
 	ct = CrazyType()
-	π_Nash = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
-	π_Nash = (1+π_Nash)^4 - 1
-	real_rate = (1/ct.β^4 - 1)*100
 
-	print_save("Credibility Dynamics and Disinflation Plans\n")
-	print_save("\nNash inflation is $(@sprintf("%.3g",100*π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%")
-	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid))))% annual)")
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
 
@@ -268,7 +270,6 @@ function choose_ω(; remote::Bool=true)
 		# ct.L = Lguess
 		# ct.gπ = πguess
 		t1 = time()
-		print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
 		tol = 5e-4
 		dist = Epfi!(ct, verbose = false, tol=tol)
 		flag = (dist <= tol)
