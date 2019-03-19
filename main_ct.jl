@@ -18,6 +18,11 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
+ct = CrazyType(ω = 0.0);
+Epfi!(ct, tempplots=true)
 
+
+#=
 L_mat, ωmin, p1 = choose_ω(; remote = machine_remote)
 p1
+=#

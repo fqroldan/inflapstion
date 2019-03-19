@@ -25,20 +25,20 @@ function CrazyType(;
 		κ = 0.17,
 		# κ = 0.8,
 		# κ = 0.02,
-		σ = 0.01/4,
+		σ = 0.003,
 		ystar = 0.05,
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
-		Np = 30,
-		Na = 30
+		Np = 60,
+		Na = 60
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
 	curv = 0.25
 	pgrid = range(0, 1, length=Np).^(1.0/curv)
-	curv = 0.5
+	curv = 0.75
 	agrid = range(0, (1.15*A)^curv, length=Na).^(1.0/curv)
 
 	gπ = zeros(Np, Na)
