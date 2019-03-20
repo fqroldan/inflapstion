@@ -20,30 +20,34 @@ mutable struct CrazyType
 	Eπ::Array{Float64, 2}
 	Ep::Array{Float64, 2}
 end
+
+function move_grids!(xgrid; xmin=0.0, xmax=1.0)
+	xgrid[:] = xgrid[:] * (xmax-xmin) .+ xmin
+ 	nothing
+ end
+
 function CrazyType(;
 		β = 1.04^(-0.25),
 		γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
 		# κ = 0.02,
-		σ = 0.01/3,
+		σ = 0.003,
 		ystar = 0.05,
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
-		Np = 60,
-		Na = 60
+		Np = 75,
+		Na = 75
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
-	move_grids(xgrid; xmin=0.0, xmax=1.0) = xmin .+ (xmax - xmin) * xgrid
+	pgrid = cdf.(Beta(5,4), range(0,1,length=Np))
+	agrid = cdf.(Beta(2,1), range(0,1,length=Na))
+	move_grids!(agrid, xmax=1.1*A)
 
-	pgrid = cdf.(Beta(3,2), range(0,1,length=Np))
-	agrid = cdf.(Beta(2), range(0,1,length=Na))
-	agrid = move_grids(agrid, xmax=1.1*A)
-
-	gπ = zeros(Np, Na)
+	gπ = ones(Np, Na) * A
 	L = ones(Np, Na)
 
 	Ey = zeros(Np, Na)

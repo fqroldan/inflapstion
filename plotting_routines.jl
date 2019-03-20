@@ -88,7 +88,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 
 	p1 = plot([
 		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", annualized(av)))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
-		], Layout(;title=name, fontsize=20,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
+		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	return p1
 end
 
@@ -119,16 +119,16 @@ function makeplots_ct_pa(ct::CrazyType)
 		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
-	annual_π = (1 .+ ct.gπ).^4 .- 1
+	annual_π = annualized.(gπ_over_a)
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛")
-	pπ = plot_ct_pa(ct, 100*annual_π, "gπ", ytitle="%")
+	pπ = plot_ct_pa(ct, annual_π, "gπ-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
 
 	p = [pL pπ; py pp]
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 20, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	return p
 end
@@ -164,26 +164,59 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 			[scatter(;x=1:T, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
 			scatter(;x=1:T, y=p_avg, showlegend=false, line_color=col[1])
 			scatter(;x=1:T, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
-			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 20))
+			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
 	ptar = plot([
 			[scatter(;x=1:T, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
 			scatter(;x=1:T, y=a_avg, showlegend=false, line_color=col[2])
 			scatter(;x=1:T, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
-			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 20))
+			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
 	pinf = plot([
 			[scatter(;x=1:T, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
 			scatter(;x=1:T, y=π_avg, showlegend=false, line_color=col[3])
 			scatter(;x=1:T, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
 			scatter(;x=1:T, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
-			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 20))
+			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
 	pout = plot([
 			[scatter(;x=1:T, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
 			scatter(;x=1:T, y=y_avg, showlegend=false, line_color=col[4])
 			scatter(;x=1:T, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
-			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 20))
+			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
 	p = [prep ptar; pinf pout]
 
 	relayout!(p, font_family="Fira Sans Light")
 
     return p
+end
+
+function makeplot_conv(dists::Vector)
+	T = length(dists)
+
+	function MA_t(t::Int64)
+		return [100*mean(dists[jt-t:jt]) for jt in (t+1):T]
+	end
+	shapes = [hline(5e-4*100, line_dash="dash", line_width=1, line_color="black")]
+	
+	yvec = MA_t(0)
+	ls = [scatter(;x=1:T, y=yvec, showlegend=false)]
+	push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[1]) )
+	
+	if T > 11
+		yvec = MA_t(10)
+		push!(ls, scatter(;x=11:T, y=yvec, showlegend=false))
+		push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[2]))
+		if T > 51
+			yvec = MA_t(50)
+			push!(ls, scatter(;x=51:T, y=yvec, showlegend=false))
+			push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[3]))
+			if T > 101
+				yvec = MA_t(100)
+				push!(ls, scatter(;x=101:T, y=yvec, showlegend=false))
+				push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[4]))
+			end
+		end
+	end
+	p1 = plot(ls, Layout(;shapes = shapes))
+
+	relayout!(p1, yaxis_type="log", title="‖g′-g‖/‖g‖", xaxis_title="iterations", yaxis_title="%")
+	return p1
 end

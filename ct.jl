@@ -12,7 +12,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	p′ = max(0.0, min(1.0, p′))
 
-	if isapprox(denomin, 0.0) && isapprox(numer, 0.0)
+	if isapprox(denomin, 0.0) || isapprox(numer, 0.0)
 		p′ = 0.0
 	end
 	# drift = (1.0 - pv) * 0.15
@@ -93,7 +93,6 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
 			minπ, maxπ, Brent()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
-	gπ, L = res.minimizer[1], res.minimum
 	=#
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x, pv, av)
 	res = Optim.optimize(
@@ -101,7 +100,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 		[π_guess], LBFGS(), Optim.Options(f_tol=1e-12)
 		)
 
-	gπ, L = res.minimizer[1], res.minimum
+	gπ, L = first(res.minimizer), res.minimum
 
 	if Optim.converged(res) == false
 		# a = Optim.iterations(res)
@@ -208,6 +207,8 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	
 	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)) at $(Dates.format(now(), "HH:MM"))")
 
+	dists = []
+
 	reset_guess = false
 	tol_pfi = 1e-8 / 0.99
 	while dist > tol && iter < maxiter
@@ -220,6 +221,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 		reset_guess = !flag
 
 		dist = sqrt.(sum( (ct.gπ  - old_gπ ).^2 )) / sqrt.(sum(old_gπ .^2))
+		push!(dists, dist)
 		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))"
 		if flag
 			rep_status *= "✓ "
@@ -236,6 +238,8 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 			p1 = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
+			p2 = makeplot_conv(dists);
+			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end
 
 	end
@@ -249,8 +253,9 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 end
 
 function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
-	Nω = 11
-	ωgrid = range(0.0, 0.125, length=Nω)
+	Nω = 31
+	ωgrid = cdf.(Beta(5,1), range(1,0,length=Nω))
+	move_grids!(ωgrid, xmax = 0.15)
 
 	ct = initial_guess
 
@@ -271,7 +276,7 @@ function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
 		ct.gπ = πguess
 		t1 = time()
 		tol = 5e-4
-		dist = Epfi!(ct, verbose = false, tol=tol)
+		dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true)
 		flag = (dist <= tol)
 
 		# p1, p2, p3 = makeplots_ct(ct)
