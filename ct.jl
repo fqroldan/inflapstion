@@ -206,7 +206,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	iter = 0
 	upd_η = 0.025
 	
-	print_save("\nStarting run with ω = $(@sprintf("%.3g",ωv)) at $(Dates.format(now(), "HH:MM"))")
+	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)) at $(Dates.format(now(), "HH:MM"))")
 
 	reset_guess = false
 	tol_pfi = 1e-8 / 0.99
@@ -248,11 +248,11 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	return dist
 end
 
-function choose_ω(; remote::Bool=true)
+function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
 	Nω = 11
 	ωgrid = range(0.0, 0.125, length=Nω)
 
-	ct = CrazyType()
+	ct = initial_guess
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
@@ -267,8 +267,8 @@ function choose_ω(; remote::Bool=true)
 	for (jω, ωv) in enumerate(ωgrid)
 		Lguess, πguess = ct.L, ct.gπ
 		ct = CrazyType(; ω = ωv)
-		# ct.L = Lguess
-		# ct.gπ = πguess
+		ct.L = Lguess
+		ct.gπ = πguess
 		t1 = time()
 		tol = 5e-4
 		dist = Epfi!(ct, verbose = false, tol=tol)

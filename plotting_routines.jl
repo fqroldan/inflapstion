@@ -128,7 +128,7 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	p = [pL pπ; py pp]
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 12, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 20, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	return p
 end
@@ -164,23 +164,23 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 			[scatter(;x=1:T, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
 			scatter(;x=1:T, y=p_avg, showlegend=false, line_color=col[1])
 			scatter(;x=1:T, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
-			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 20))
 	ptar = plot([
 			[scatter(;x=1:T, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
 			scatter(;x=1:T, y=a_avg, showlegend=false, line_color=col[2])
 			scatter(;x=1:T, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
-			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 20))
 	pinf = plot([
 			[scatter(;x=1:T, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
 			scatter(;x=1:T, y=π_avg, showlegend=false, line_color=col[3])
 			scatter(;x=1:T, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
 			scatter(;x=1:T, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
-			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 20))
 	pout = plot([
 			[scatter(;x=1:T, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
 			scatter(;x=1:T, y=y_avg, showlegend=false, line_color=col[4])
 			scatter(;x=1:T, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
-			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 20))
 	p = [prep ptar; pinf pout]
 
 	relayout!(p, font_family="Fira Sans Light")
