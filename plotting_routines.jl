@@ -198,20 +198,20 @@ function makeplot_conv(dists::Vector)
 	
 	yvec = MA_t(0)
 	ls = [scatter(;x=1:T, y=yvec, showlegend=false)]
-	push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[1]) )
+	push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[1]) )
 	
 	if T > 11
 		yvec = MA_t(10)
 		push!(ls, scatter(;x=11:T, y=yvec, showlegend=false))
-		push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[2]))
+		push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[2]))
 		if T > 51
 			yvec = MA_t(50)
 			push!(ls, scatter(;x=51:T, y=yvec, showlegend=false))
-			push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[3]))
+			push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[3]))
 			if T > 101
 				yvec = MA_t(100)
 				push!(ls, scatter(;x=101:T, y=yvec, showlegend=false))
-				push!(shapes, hline(minimum(y), line_dash="dash", line_width=1, line_color=col[4]))
+				push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[4]))
 			end
 		end
 	end

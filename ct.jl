@@ -252,17 +252,15 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	return dist
 end
 
-function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
-	Nω = 31
+function choose_ω!(L_mat, initial_guess::CrazyType=CrazyType(), Nω=size(L_mat,1); remote::Bool=true)
+
 	ωgrid = cdf.(Beta(5,1), range(1,0,length=Nω))
-	move_grids!(ωgrid, xmax = 0.15)
+	move_grids!(ωgrid, xmax = 0.2)
 
 	ct = initial_guess
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
-
-	L_mat = zeros(Nω, ct.Np, ct.Na)
 
 	L_min = 100.
 	ωmin = 1.0
@@ -290,8 +288,7 @@ function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
 			p1 = makeplots_ct_pa(ct)
 			relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
 			savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
-		end
-		if remote
+
 			p2 = plot_simul(ct)
 			savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json")
 		end
@@ -310,6 +307,14 @@ function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
 			ωmin = ωv
 			amin_min = amin
 		end
+
+		if remote
+			Lplot = [L_mat[jj, 2, jamin_vec[jj]] for jj in 1:jω]
+			p3 = plot([
+				scatter(;x=ωgrid[1:jω], y=Lplot)
+				])
+			savejson(p3, pwd()*"/../Graphs/tests/Loss_omega.json")
+		end
 	end
 
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
@@ -320,7 +325,7 @@ function choose_ω(initial_guess::CrazyType=CrazyType(); remote::Bool=true)
 
 	print_save("\nOverall minimum announcement a₀ = $amin_min with ω = $ωmin")
 
-	return L_mat, ωmin, p1
+	return ωmin, p1
 end
 end # everywhere
 
