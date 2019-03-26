@@ -18,9 +18,9 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-ct = CrazyType(ω = 0.2, σ = 0.003);
+ct = CrazyType(ω = 0.2);
 initial_report(ct)
-Epfi!(ct, tol=5e-4, tempplots=true)
+# Epfi!(ct, tol=1e-3, tempplots=true)
 L_mat = zeros(41, ct.Np, ct.Na)
 ωmin, p1 = choose_ω!(L_mat, ct; remote = machine_remote)
 p1
