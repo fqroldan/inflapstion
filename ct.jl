@@ -97,7 +97,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x, pv, av)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
-		[π_guess], LBFGS(), Optim.Options(f_tol=1e-12)
+		[π_guess], LBFGS()#, Optim.Options(f_tol=1e-12)
 		)
 
 	gπ, L = first(res.minimizer), res.minimum
@@ -200,10 +200,9 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::Bool=true, tempplots::Bool=false)
+function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.1, switch_η = 25)
 	dist = 10.
 	iter = 0
-	upd_η = 0.025
 	
 	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)) at $(Dates.format(now(), "HH:MM"))")
 
@@ -238,8 +237,14 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 			p1 = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
-			p2 = makeplot_conv(dists);
+			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
+		end
+
+		if iter == switch_η
+			upd_η = min(upd_η, 0.001)
+		elseif iter % switch_η == 0
+			upd_η = max(0.9*upd_η, 1e-6)
 		end
 
 	end
@@ -252,12 +257,10 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	return dist
 end
 
-function choose_ω!(L_mat, initial_guess::CrazyType=CrazyType(), Nω=size(L_mat,1); remote::Bool=true)
+function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
 
 	ωgrid = cdf.(Beta(5,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = 0.2)
-
-	ct = initial_guess
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
@@ -273,9 +276,10 @@ function choose_ω!(L_mat, initial_guess::CrazyType=CrazyType(), Nω=size(L_mat,
 		ct.L = Lguess
 		ct.gπ = πguess
 		t1 = time()
-		tol = 5e-4
-		dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true)
+		tol = 1e-3
+		dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true, upd_η = upd_η)
 		flag = (dist <= tol)
+		upd_η = 0.01
 
 		# p1, p2, p3 = makeplots_ct(ct)
 		# if remote

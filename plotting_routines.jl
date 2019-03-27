@@ -188,13 +188,16 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
     return p
 end
 
-function makeplot_conv(dists::Vector)
+function makeplot_conv(dists::Vector; switch_η=25)
 	T = length(dists)
 
 	function MA_t(t::Int64)
 		return [100*mean(dists[jt-t:jt]) for jt in (t+1):T]
 	end
-	shapes = [hline(5e-4*100, line_dash="dash", line_width=1, line_color="black")]
+
+	shapes = [vline(xchange, line_dash="dot", line_width=1, line_color="black") for xchange in 1:T if xchange%switch_η==0]
+
+	push!(shapes, hline(5e-4*100, line_dash="dash", line_width=1, line_color="black"))
 	
 	yvec = MA_t(0)
 	ls = [scatter(;x=1:T, y=yvec, showlegend=false)]
