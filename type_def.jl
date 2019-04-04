@@ -27,25 +27,26 @@ function move_grids!(xgrid; xmin=0.0, xmax=1.0)
  end
 
 function CrazyType(;
-		β = 1.04^(-0.25),
+		β = 1.02^(-0.25),
 		γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
 		# κ = 0.02,
-		σ = 0.0025,
+		σ = 0.01/3,
 		ystar = 0.05,
 		# ω = 0.271,
 		# ω = 0.05,
 		ω = 0.1,
-		Np = 45,
-		Na = 30
+		χ = 0.0,
+		Np = 30,
+		Na = 20
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
 	pgrid = cdf.(Beta(5,4), range(0,1,length=Np))
 	agrid = cdf.(Beta(2,1), range(0,1,length=Na))
-	move_grids!(agrid, xmax=1.05*A)
+	move_grids!(agrid, xmax=1.05*A, xmin=χ)
 
 	gπ = ones(Np, Na) * A
 	L = ones(Np, Na)
@@ -57,7 +58,7 @@ function CrazyType(;
 	return CrazyType(β, γ, κ, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
 end
 
-ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * a
+ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-minimum(ct.agrid)) + minimum(ct.agrid)
 Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
 dist_ϵ(ct) = Normal(0, ct.σ)

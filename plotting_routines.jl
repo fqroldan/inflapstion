@@ -1,4 +1,4 @@
-using PlotlyJS
+using PlotlyJS, Colors, ColorSchemes
 
 col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
@@ -25,6 +25,7 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 		throw(error("wrong dim"))
 	end
 	Nz = length(zgrid)
+	cvec = range(col[1], stop=col[2], length=Nz)
 	l = Array{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, Nz)
 	for (jz, zv) in enumerate(zgrid)
 		if dim == 1
@@ -36,7 +37,7 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 		end
 		name = name * " = $(@sprintf("%.2g", zv))"
 		jz % 2 == 0 ? showleg_i = showleg : showleg_i = false
-		l_new = scatter(;x=xgrid, y=y_vec, name = name, showlegend = showleg_i, marker_color=col[ceil(Int,10*jz/Nz)])
+		l_new = scatter(;x=xgrid, y=y_vec, name = name, showlegend = showleg_i, marker_color=cvec[jz])
 		l[jz] = l_new
 	end
 	p = plot([l[jz] for jz in 1:Nz], Layout(;title=title, xaxis_title=xtitle))
@@ -78,16 +79,19 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 	a_max = Nash(ct)
 	jamax = findfirst(ct.agrid.>=a_max)
 
+	colorpal = ColorSchemes.fall
+
 	function set_col(ja, agrid, rel::Bool=false)
+		weight = min(1,max(0,(ja-1)/(jamax-1)))
 		if rel
-			return ceil(Int,1+9*(agrid[ja])/a_max)
-		else
-			return ceil(Int,10*ja/jamax)
+			weight = min(1, agrid[ja] / a_max)
 		end
+		# return weighted_color_mean(weight, parse(Colorant,col[4]), parse(Colorant,col[1]))
+		return get(colorpal, weight)
 	end
 
 	p1 = plot([
-		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=col[set_col(ja,ct.agrid)], name = "a=$(@sprintf("%.3g", annualized(av)))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
+		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(av)))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
 		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	return p1
 end
@@ -205,15 +209,15 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	
 	if T > 11
 		yvec = MA_t(10)
-		push!(ls, scatter(;x=11:T, y=yvec, showlegend=false))
+		push!(ls, scatter(;x=5:T-5, y=yvec, showlegend=false))
 		push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[2]))
 		if T > 51
 			yvec = MA_t(50)
-			push!(ls, scatter(;x=51:T, y=yvec, showlegend=false))
+			push!(ls, scatter(;x=25:T-25, y=yvec, showlegend=false))
 			push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[3]))
 			if T > 101
 				yvec = MA_t(100)
-				push!(ls, scatter(;x=101:T, y=yvec, showlegend=false))
+				push!(ls, scatter(;x=50:T-50, y=yvec, showlegend=false))
 				push!(shapes, hline(minimum(yvec), line_dash="dash", line_width=1, line_color=col[4]))
 			end
 		end

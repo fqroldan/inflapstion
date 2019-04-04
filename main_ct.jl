@@ -1,10 +1,6 @@
 using Distributed
 
-@everywhere include("type_def.jl")
 @everywhere include("ct.jl")
-@everywhere include("reporting_routines.jl")
-@everywhere include("simul.jl")
-@everywhere include("plotting_routines.jl")
 
 write(pwd()*"/../output.txt", "")
 
@@ -18,9 +14,12 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-ct = CrazyType(ω = 0.2);
+ct = CrazyType(ω = 0.2, χ = 0.0);
 initial_report(ct)
 # Epfi!(ct, tol=1e-3, maxiter = 50, tempplots=true, upd_η = 0.1)
-L_mat = zeros(41, ct.Np, ct.Na)
-ωmin, p1 = choose_ω!(L_mat, ct; remote = machine_remote)
-p1
+
+Nω = 21
+Nχ = 21
+
+L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
+ωmin = choose_ω!(L_mat, ct; remote = machine_remote)
