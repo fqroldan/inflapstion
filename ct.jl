@@ -300,11 +300,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 			if remote
 				p1 = makeplots_ct_pa(ct)
-				relayout!(p1, title="ω = $(@sprintf("%.3g",ωv))")
+				relayout!(p1, title="ω = $(@sprintf("%.3g",ct.ω))", width=1200, height=900)
 				savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
 
-				p2 = plot_simul(ct)
-				savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json")
+				p2 = plot_simul(ct);
+				savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json");
 			end
 
 			# Save the corresponding value function

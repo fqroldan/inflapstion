@@ -138,7 +138,7 @@ function makeplots_ct_pa(ct::CrazyType)
 end
 
 
-function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::Bool=false)
+function plot_simul(ct::CrazyType; T::Int64=50, N=5000, jp0::Int64=2, noshocks::Bool=false)
 	# Update simulations codes
 	include("simul.jl")
 
@@ -165,25 +165,25 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=1000, jp0::Int64=2, noshocks::
 	p_avg, a_avg, π_avg, y_avg, g_avg = vec(mean(p_mat, dims = 2)), vec(mean(a_mat, dims = 2)), vec(mean(π_mat, dims = 2)), vec(mean(y_mat, dims = 2)), vec(mean(g_mat, dims = 2))
 
 	prep = plot([
-			[scatter(;x=1:T, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
-			scatter(;x=1:T, y=p_avg, showlegend=false, line_color=col[1])
-			scatter(;x=1:T, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
+			[scatter(;x=(1:T)/4, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
+			scatter(;x=(1:T)/4, y=p_avg, showlegend=false, line_color=col[1])
+			scatter(;x=(1:T)/4, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
 			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
 	ptar = plot([
-			[scatter(;x=1:T, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
-			scatter(;x=1:T, y=a_avg, showlegend=false, line_color=col[2])
-			scatter(;x=1:T, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
+			[scatter(;x=(1:T)/4, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
+			scatter(;x=(1:T)/4, y=a_avg, showlegend=false, line_color=col[2])
+			scatter(;x=(1:T)/4, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
 			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
 	pinf = plot([
-			[scatter(;x=1:T, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
-			scatter(;x=1:T, y=π_avg, showlegend=false, line_color=col[3])
-			scatter(;x=1:T, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
-			scatter(;x=1:T, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
+			[scatter(;x=(1:T)/4, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
+			scatter(;x=(1:T)/4, y=π_avg, showlegend=false, line_color=col[3])
+			scatter(;x=(1:T)/4, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
+			scatter(;x=(1:T)/4, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
 			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
 	pout = plot([
-			[scatter(;x=1:T, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
-			scatter(;x=1:T, y=y_avg, showlegend=false, line_color=col[4])
-			scatter(;x=1:T, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
+			[scatter(;x=(1:T)/4, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
+			scatter(;x=(1:T)/4, y=y_avg, showlegend=false, line_color=col[4])
+			scatter(;x=(1:T)/4, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
 			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
 	p = [prep ptar; pinf pout]
 
@@ -225,5 +225,21 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	p1 = plot(ls, Layout(;shapes = shapes))
 
 	relayout!(p1, yaxis_type="log", title="‖g′-g‖/‖g‖", xaxis_title="iterations", yaxis_title="%")
+	return p1
+end
+
+
+function plot_announcements(;slides::Bool=true)
+	xvec = 0:0.25:10
+	p1 = plot([
+		scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false) for a0 in [1.5; 0.75] for ω in [0.4; 0.8; 0.0] for χ in [0.4; 0] if ω != 0.0 || (ω==0.0 && χ==0)
+		], Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_title="%", title="Inflation announcements")
+		)
+
+	if slides
+		relayout!(p1, font_family = "Fira Sans Light", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	else
+		relayout!(p1, font_family = "STIX Two Text", font_size = 18, height = 500, width=1000)
+	end
 	return p1
 end
