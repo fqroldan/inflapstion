@@ -38,15 +38,15 @@ function CrazyType(;
 		# ω = 0.05,
 		ω = 0.1,
 		χ = 0.0,
-		Np = 30,
-		Na = 20
+		Np = 20,
+		Na = 30
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
 	pgrid = cdf.(Beta(5,4), range(0,1,length=Np))
-	agrid = cdf.(Beta(2,1), range(0,1,length=Na))
-	move_grids!(agrid, xmax=1.05*A, xmin=χ)
+	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
+	move_grids!(agrid, xmax=A, xmin=χ)
 
 	gπ = ones(Np, Na) * A
 	L = ones(Np, Na)

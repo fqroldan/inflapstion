@@ -1,4 +1,5 @@
-using PlotlyJS, Colors, ColorSchemes
+using PlotlyJS, Colors, ColorSchemes, Printf
+include("type_def.jl")
 
 col = [	"#1f77b4",  # muted blue
 		"#ff7f0e",  # safety orange
@@ -133,8 +134,9 @@ function makeplots_ct_pa(ct::CrazyType)
 	p = [pL pπ; py pp]
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(pL, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
-	return p
+	return p, pL
 end
 
 
@@ -229,17 +231,29 @@ function makeplot_conv(dists::Vector; switch_η=25)
 end
 
 
-function plot_announcements(;slides::Bool=true)
+function plot_announcements(;slides::Bool=true, exts::Vector=[])
 	xvec = 0:0.25:10
 	p1 = plot([
 		scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false) for a0 in [1.5; 0.75] for ω in [0.4; 0.8; 0.0] for χ in [0.4; 0] if ω != 0.0 || (ω==0.0 && χ==0)
 		], Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_title="%", title="Inflation announcements")
 		)
 
+	plotname = "announcements"
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		plotname *= "_slides"
+		restyle!(p1, marker_color=[get(ColorSchemes.munch,jj) for jj in range(0,1,length=5)])
 	else
 		relayout!(p1, font_family = "STIX Two Text", font_size = 18, height = 500, width=1000)
+		plotname *= "_paper"
+		restyle!(p1, marker_color=[get(ColorSchemes.southwest,jj) for jj in range(0,1,length=5)])
 	end
+
+	if length(exts) > 0
+		for (jj, ext) in enumerate(exts)
+			savefig(p1, pwd()*"/../Graphs/"*plotname*"."*ext)
+		end
+	end
+
 	return p1
 end

@@ -26,10 +26,10 @@ function time_print(tfloat::Float64)
 		t = t % 3600
 		t_print = t_print * " and $(floor(Int,t/60)) minute"
 		floor(Int,t/60) == 1 ? nothing : t_print = t_print * "s"
-		if t % 60 != 0
-			t_print = t_print * " and $(t%60) second"
-			t%60 == 1 ? nothing : t_print = t_print * "s"
-		end
+		# if t % 60 != 0
+		# 	t_print = t_print * " and $(t%60) second"
+		# 	t%60 == 1 ? nothing : t_print = t_print * "s"
+		# end
 	end
 	return t_print
 end
