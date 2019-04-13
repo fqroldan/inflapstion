@@ -6,6 +6,7 @@ mutable struct CrazyType
 	σ::Float64
 	ystar::Float64
 	ω::Float64
+	χ::Float64
 
 	pgrid::Vector{Float64}
 	agrid::Vector{Float64}
@@ -46,7 +47,7 @@ function CrazyType(;
 
 	pgrid = cdf.(Beta(5,4), range(0,1,length=Np))
 	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
-	move_grids!(agrid, xmax=A, xmin=χ)
+	move_grids!(agrid, xmax=A, xmin=0.0)
 
 	gπ = ones(Np, Na) * A
 	L = ones(Np, Na)
@@ -55,10 +56,10 @@ function CrazyType(;
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType(β, γ, κ, σ, ystar, ω, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
+	return CrazyType(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
 end
 
-ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-minimum(ct.agrid)) + minimum(ct.agrid)
+ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
 Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
 dist_ϵ(ct) = Normal(0, ct.σ)

@@ -209,7 +209,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::B
 	dist = 10.
 	iter = 0
 	
-	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(minimum(ct.agrid))))% at $(Dates.format(now(), "HH:MM"))")
+	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
 
 	dists = []
 
@@ -325,10 +325,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				all_as = vcat([aplot[jj] for jj in 1:length(aplot)], new_a)
 			end
 			p3 = plot(all_Ls)
-			relayout!(p3, title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)")
+			relayout!(p3, title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"))
 			savejson(p3, pwd()*"/../Graphs/tests/Loss_omega.json")
 	
-			p4 = plot(all_as, Layout(;title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", yaxis_title="%", mode="lines+markers"))
+			p4 = plot(all_as)
+			relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
 			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 
 			return Lmin
