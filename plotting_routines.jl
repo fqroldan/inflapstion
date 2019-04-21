@@ -75,12 +75,14 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
-function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false)
+function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false)
 
 	a_max = Nash(ct)
 	jamax = findfirst(ct.agrid.>=a_max)
 	positive_p ? xvec = ct.pgrid[2:end] : xvec = ct.pgrid
 	positive_p ? y = y[2:end, :] : nothing
+
+	few_lines ? step_a = 2 : step_a = 1
 
 	colorpal = ColorSchemes.fall
 
@@ -95,7 +97,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw:
 	end
 
 	p1 = plot([
-		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:length(ct.agrid) if ct.agrid[ja] <= a_max
+		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max
 		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 
 	if reverse_draw
