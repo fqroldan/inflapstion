@@ -39,13 +39,13 @@ function CrazyType(;
 		# ω = 0.05,
 		ω = 0.1,
 		χ = 0.0,
-		Np = 20,
+		Np = 25,
 		Na = 30
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
-	pgrid = cdf.(Beta(5,4), range(0,1,length=Np))
+	pgrid = cdf.(Beta(5,2), range(0,1,length=Np))
 	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
 	move_grids!(agrid, xmax=A, xmin=0.0)
 
@@ -67,3 +67,4 @@ pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
 
 annualized(π::Float64) = 100*((1.0 .+ π).^4 .- 1)
+deannual(x::Float64) = (x*0.01 + 1.0)^0.25 - 1.0

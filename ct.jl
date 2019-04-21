@@ -205,11 +205,11 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	return (dist <= tol)
 end
 
-function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2000, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.1, switch_η = 50)
+function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.1, switch_η = 50)
 	dist = 10.
 	iter = 0
 	
-	print_save("\nStarting run with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
+	print_save("\nRun with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
 
 	dists = []
 
@@ -266,7 +266,7 @@ end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
 
-	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
+	ωgrid = cdf.(Beta(2,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = 1.0, xmin = 0.01)
 
 	Nχ = size(L_mat, 2)
@@ -279,10 +279,6 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	ω_min = 1.0
 	a_min = 1.0
 	t0 = time()
-	# a_mat = Matrix{Float64}(undef, Nω, Nχ)
-	# jamin_vec = Matrix{Int64}(undef, Nω, Nχ)
-	# Llines = Vector{Vector{Float64}}(undef, Nχ)
-	# alines = Vector{Vector{Float64}}(undef, Nχ)
 	Lplot = []
 	aplot = []
 	for (jχ, χv) in enumerate(χgrid)
@@ -298,7 +294,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 5e-3
+			tol = 25e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
@@ -315,7 +311,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 			perm_order = sortperm(ω_vec)
 
-			new_L = scatter(;x=ω_vec[perm_order], y=L_vec[perm_order], name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
+			new_L = scatter(;x=ω_vec[perm_order], y=L_vec[perm_order], name = "χ = $(@sprintf("%.3g",annualized(χv)))%", line_shape="spline")
 			new_a = scatter(;x=ω_vec[perm_order], y=annualized.(a_vec[perm_order]), name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
 			all_Ls = new_L
 			all_as = new_a
@@ -335,21 +331,33 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			return Lmin
 		end
 
+		#=
 		res = Optim.optimize(
-			ω -> wrap_Epfi!(ct, ω, L_vec, a_vec, ω_vec, Lplot, aplot), 0.01, 1.0, GoldenSection(), abs_tol=5e-4
+			ω -> wrap_Epfi!(ct, ω, L_vec, a_vec, ω_vec, Lplot, aplot), minimum(ωgrid), maximum(ωgrid), GoldenSection(), abs_tol=5e-4
 			)
-		# upd_η = 0.005
 
 		Lmin = res.minimum
-		ωv = res.minimizer
+		ωmin = res.minimizer
 		amin = a_vec[end]
+		=#
+
+		Lmin, ωmin, amin = ones(3) * 1e8
+		for (jω, ωv) in enumerate(ωgrid)
+			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, aplot)
+
+			if L < Lmin
+				Lmin = L
+				ωmin = ωv
+				amin = a_vec[jω]
+			end
+		end
 
 		s = "\nMinimum element is $(@sprintf("%.3g",Lmin)) with a₀ = $(@sprintf("%.3g", annualized(amin)))"
-		Optim.converged(res) ? s = s*" ✓" : nothing
+		# Optim.converged(res) ? s = s*" ✓" : nothing
 		print_save(s)
 		if Lmin < L_min
 			L_min = Lmin
-			ω_min = ωv
+			ω_min = ωmin
 			a_min = amin
 		end
 
@@ -366,17 +374,6 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		push!(aplot, new_a)
 
 		#=
-		for (jω, ωv) in enumerate(ωgrid)
-			# a_mat[jω,jχ] = ct.agrid[jχ]
-
-			ct.ω = ωv
-			
-			t1 = time()
-			tol = 5e-3
-			dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true, upd_η = upd_η)
-			flag = (dist <= tol)
-			upd_η = 0.005
-
 			if remote
 				p1 = makeplots_ct_pa(ct)
 				relayout!(p1, title="ω = $(@sprintf("%.3g",ct.ω))", width=1200, height=900)
@@ -385,51 +382,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				p2 = plot_simul(ct);
 				savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json");
 			end
-
-			# Save the corresponding value function
-			L_mat[jω, jχ, :, :] = ct.L[:, :]
-			Lmin, ja = findmin(ct.L[2,:])
-			amin = ct.agrid[ja]
-			jamin_vec[jω] = ja
-			print_save(": done in $(time_print(time()-t1))")
-			s = "\nMinimum element is $(@sprintf("%.3g",Lmin)) with a₀ = $(@sprintf("%.3g", annualized(amin)))"
-			flag ? s = s*" ✓" : nothing
-			print_save(s)
-			if Lmin < L_min
-				L_min = Lmin
-				ωmin = ωv
-				amin_min = amin
-			end
-
-			Lplot = [L_mat[jj, jχ, 2, jamin_vec[jj]] for jj in 1:jω]
-			p3 = plot([
-				[scatter(;x=ωgrid, y=Llines[jj], name = "χ = $(@sprintf("%.3g",annualized(χgrid[jj])))%") for jj in 1:jχ-1]
-				scatter(;x=ωgrid[1:jω], y=Lplot, name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
-				])
-			relayout!(p3, title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)")
-			savejson(p3, pwd()*"/../Graphs/tests/Loss_omega.json")
-
-			aplot = annualized.([ct.agrid[jamin_vec[jj]] for jj in 1:jω])
-			p4 = plot([
-				[scatter(;x=ωgrid, y=alines[jj], name = "χ = $(@sprintf("%.3g",annualized(χgrid[jj])))%") for jj in 1:jχ-1]
-				scatter(;x=ωgrid[1:jω], y=aplot, name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
-				], Layout(;title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", yaxis_title="%", mode="lines+markers"))
-			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
-		end
 		=#
-		# Llines[jχ] = Lplot
-		# alines[jχ] = aplot
 	end
 
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
-	# Lplot = [L_mat[jj, 2, jamin_vec[jj]] for jj in 1:Nω]
-	# p1 = plot([
-	# 	scatter(;x=ωgrid, y=Lplot)
-	# 	])
+	print_save("\nOverall minimum announcement a₀ = $a_min with ω = $ω_min")
 
-	print_save("\nOverall minimum announcement a₀ = $a_min with ω = $ωmin")
-
-	return ωmin
+	return ω_min
 end
 end # everywhere
 

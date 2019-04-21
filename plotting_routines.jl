@@ -75,12 +75,15 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
-function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
+function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false)
 
 	a_max = Nash(ct)
 	jamax = findfirst(ct.agrid.>=a_max)
+	positive_p ? xvec = ct.pgrid[2:end] : xvec = ct.pgrid
+	positive_p ? y = y[2:end, :] : nothing
 
 	colorpal = ColorSchemes.fall
+
 
 	function set_col(ja, agrid, rel::Bool=false)
 		weight = min(1,max(0,(ja-1)/(jamax-1)))
@@ -92,8 +95,15 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="")
 	end
 
 	p1 = plot([
-		scatter(;x=ct.pgrid, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(av)))") for (ja,av) in enumerate(ct.agrid) if av <= a_max
+		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:length(ct.agrid) if ct.agrid[ja] <= a_max
 		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
+
+	if reverse_draw
+		p1 = plot([
+			scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max
+			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
+	end
+
 	return p1
 end
 
@@ -126,7 +136,7 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	annual_π = annualized.(gπ_over_a)
 
-	pL = plot_ct_pa(ct, ct.L, "𝓛")
+	pL = plot_ct_pa(ct, ct.L, "𝓛"; reverse_draw=true)
 	pπ = plot_ct_pa(ct, annual_π, "gπ-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
@@ -140,14 +150,14 @@ function makeplots_ct_pa(ct::CrazyType)
 end
 
 
-function plot_simul(ct::CrazyType; T::Int64=50, N=5000, jp0::Int64=2, noshocks::Bool=false)
+function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=2, noshocks::Bool=false, CIs::Bool=false)
 	# Update simulations codes
 	include("simul.jl")
 
 	p_mat, a_mat, π_mat, y_mat, g_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
 
 	for jn in 1:N
-	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; T=T, noshocks=noshocks)
+	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; jp0=jp0, T=T, noshocks=noshocks)
 	    p_mat[:,jn] = p_vec
 	    a_mat[:,jn], π_mat[:,jn], y_mat[:,jn], g_mat[:,jn] = annualized.(a_vec), annualized.(π_vec), annualized.(y_vec), annualized.(g_vec)
 	end
@@ -167,23 +177,24 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=5000, jp0::Int64=2, noshocks::
 	p_avg, a_avg, π_avg, y_avg, g_avg = vec(mean(p_mat, dims = 2)), vec(mean(a_mat, dims = 2)), vec(mean(π_mat, dims = 2)), vec(mean(y_mat, dims = 2)), vec(mean(g_mat, dims = 2))
 
 	prep = plot([
-			[scatter(;x=(1:T)/4, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k]
+			[scatter(;x=(1:T)/4, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=p_avg, showlegend=false, line_color=col[1])
 			scatter(;x=(1:T)/4, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
 			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
 	ptar = plot([
-			[scatter(;x=(1:T)/4, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k]
+			[scatter(;x=(1:T)/4, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=a_avg, showlegend=false, line_color=col[2])
-			scatter(;x=(1:T)/4, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
+			scatter(;x=(1:T)/4, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
+			# scatter(;x=(1:T)/4, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
 			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
 	pinf = plot([
-			[scatter(;x=(1:T)/4, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k]
+			[scatter(;x=(1:T)/4, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=π_avg, showlegend=false, line_color=col[3])
 			scatter(;x=(1:T)/4, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
 			scatter(;x=(1:T)/4, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
 			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
 	pout = plot([
-			[scatter(;x=(1:T)/4, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k]
+			[scatter(;x=(1:T)/4, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=y_avg, showlegend=false, line_color=col[4])
 			scatter(;x=(1:T)/4, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
 			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
@@ -203,7 +214,7 @@ function makeplot_conv(dists::Vector; switch_η=25)
 
 	shapes = [vline(xchange, line_dash="dot", line_width=1, line_color="black") for xchange in 1:T if xchange%switch_η==0]
 
-	push!(shapes, hline(5e-4*100, line_dash="dash", line_width=1, line_color="black"))
+	push!(shapes, hline(25e-4*100, line_dash="dash", line_width=1, line_color="black"))
 	
 	yvec = MA_t(0)
 	ls = [scatter(;x=1:T, y=yvec, showlegend=false)]
@@ -233,8 +244,14 @@ end
 
 function plot_announcements(;slides::Bool=true, exts::Vector=[])
 	xvec = 0:0.25:10
+
+	slides ? colorpal = ColorSchemes.munch : colorpal = ColorSchemes.southwest
+
+	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
+
 	p1 = plot([
-		scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false) for a0 in [1.5; 0.75] for ω in [0.4; 0.8; 0.0] for χ in [0.4; 0] if ω != 0.0 || (ω==0.0 && χ==0)
+		[scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
+		line_opt
 		], Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_title="%", title="Inflation announcements")
 		)
 
@@ -242,11 +259,9 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[])
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 		plotname *= "_slides"
-		restyle!(p1, marker_color=[get(ColorSchemes.munch,jj) for jj in range(0,1,length=5)])
 	else
 		relayout!(p1, font_family = "STIX Two Text", font_size = 18, height = 500, width=1000)
 		plotname *= "_paper"
-		restyle!(p1, marker_color=[get(ColorSchemes.southwest,jj) for jj in range(0,1,length=5)])
 	end
 
 	if length(exts) > 0
@@ -254,6 +269,33 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[])
 			savefig(p1, pwd()*"/../Graphs/"*plotname*"."*ext)
 		end
 	end
+
+	return p1
+end
+
+
+function plot_bayes(; center=1.0, dist=0.5, σ=0.5, p=0.5, distplot=4*sqrt(dist))
+
+	a = center-dist
+	g = center+dist
+
+	ϵ_vec = range(center-distplot, center+distplot, length=1001)
+
+	fa(x) = pdf.(Normal(0,σ), x .- a)
+	fg(x) = pdf.(Normal(0,σ), x .- g)
+
+	Bayes(p,x) = p .+ p.*(1.0.-p) .* (fa(x) .- fg(x)) ./ (p.*fa(x) .+ (1.0.-p).*fg(x))
+
+	p1 = plot([
+		scatter(;x=ϵ_vec, y=fa(ϵ_vec))
+		scatter(;x=ϵ_vec, y=fg(ϵ_vec))
+		scatter(;x=ϵ_vec, y=Bayes(p,ϵ_vec))
+		],
+		Layout(;yaxis_range=[-0.05;1.05])
+		)
+
+	relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+
 
 	return p1
 end
