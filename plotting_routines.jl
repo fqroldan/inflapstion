@@ -243,6 +243,21 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
+function plot_L_contour(ωgrid, χgrid, L_mat)
+
+	ctχω = contour(;
+		x = ωgrid, y = χgrid,
+		z = L_mat,
+		# contours_coloring="heatmap",
+		# contours_start=tickmin, contours_end=tickmax,
+		# colorbar_tick0 = 0., colorbar_dtick=floor(Int, 1./5),
+		# colorscale = debtcolors, 
+		# colorscale = "Reds", reversescale = true,
+		# colorbar_dtick=0.1, colorbar_xpad=14
+		)
+	p1 = plot(ctχω, Layout(;title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis_title="ω", yaxis_title="χ"))
+
+end
 
 function plot_announcements(;slides::Bool=true, exts::Vector=[])
 	xvec = 0:0.25:10

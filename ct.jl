@@ -281,6 +281,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	t0 = time()
 	Lplot = []
 	aplot = []
+	L_mat = zeros(Nω, Nχ) * NaN
 	for (jχ, χv) in enumerate(χgrid)
 		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 		ct = CrazyType(; χ = χv)
@@ -345,6 +346,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		for (jω, ωv) in enumerate(ωgrid)
 			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, aplot)
 
+			L_mat[jω, jχ] = L
+
+			pLct = plot_L_contour(ωgrid, χgrid, L_mat)
+			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
 			if L < Lmin
 				Lmin = L
 				ωmin = ωv
