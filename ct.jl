@@ -239,11 +239,13 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
 
 		if tempplots
-			p1, pL = makeplots_ct_pa(ct);
+			p1, pL, pE = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
 			relayout!(pL, title="iter = $iter")
 			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
+			relayout!(pE, title="iter = $iter")
+			savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
 			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end

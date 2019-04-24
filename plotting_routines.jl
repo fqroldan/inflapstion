@@ -111,44 +111,48 @@ end
 
 function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 
-	gπ_over_a = zeros(size(ct.gπ))
-	Ep_over_p = zeros(size(ct.Ep))
+	gπ_minus_a = zeros(size(ct.gπ))
+	Ep_minus_p = zeros(size(ct.Ep))
 	for (jp, pv) in enumerate(ct.pgrid), (ja,av) in enumerate(ct.agrid)
-		gπ_over_a[jp, ja] = ct.gπ[jp, ja] - av
-		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
+		gπ_minus_a[jp, ja] = ct.gπ[jp, ja] - av
+		Ep_minus_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
 	p1 = plot_ct(ct, (ct.gπ, ct.L), ("gπ", "𝓛"); make_pdf=make_pdf, make_png=make_png)
 
 	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"); make_pdf=make_pdf, make_png=make_png)
 
-	p3 = plot_ct(ct, (gπ_over_a, Ep_over_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png)
+	p3 = plot_ct(ct, (gπ_minus_a, Ep_minus_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png)
 
 	return p1, p2, p3
 end
 
 function makeplots_ct_pa(ct::CrazyType)
 
-	gπ_over_a = zeros(size(ct.gπ))
-	Ep_over_p = zeros(size(ct.Ep))
+	gπ_minus_a = zeros(size(ct.gπ))
+	Eπ_minus_a = zeros(size(ct.gπ))
+	Ep_minus_p = zeros(size(ct.Ep))
 	for (jp, pv) in enumerate(ct.pgrid), (ja,av) in enumerate(ct.agrid)
-		gπ_over_a[jp, ja] = ct.gπ[jp, ja] - av
-		Ep_over_p[jp, ja] = ct.Ep[jp, ja] - pv
+		gπ_minus_a[jp, ja] = ct.gπ[jp, ja] - av
+		Eπ_minus_a[jp, ja] = pv*av + (1.0-pv)*ct.gπ[jp, ja] - av
+		Ep_minus_p[jp, ja] = ct.Ep[jp, ja] - pv
 	end
 
-	annual_π = annualized.(gπ_over_a)
+	annual_π = annualized.(gπ_minus_a)
+	Eπ_a 	 = annualized.(Eπ_minus_a)
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛"; reverse_draw=true)
 	pπ = plot_ct_pa(ct, annual_π, "gπ-a", ytitle="%")
+	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
-	pp = plot_ct_pa(ct, Ep_over_p, "𝔼p'-p")
+	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼p'-p")
 
 	p = [pL pπ; py pp]
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	relayout!(pL, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
-	return p, pL
+	return p, pL, pE
 end
 
 
