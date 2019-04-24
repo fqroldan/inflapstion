@@ -250,7 +250,7 @@ end
 function plot_L_contour(ωgrid, χgrid, L_mat)
 
 	ctχω = contour(;
-		x = ωgrid, y = χgrid,
+		x = ωgrid, y = annualized.(χgrid),
 		z = L_mat,
 		# contours_coloring="heatmap",
 		# contours_start=tickmin, contours_end=tickmax,
