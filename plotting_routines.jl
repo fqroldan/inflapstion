@@ -251,8 +251,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat)
 		# contours_coloring="heatmap",
 		# contours_start=tickmin, contours_end=tickmax,
 		# colorbar_tick0 = 0., colorbar_dtick=floor(Int, 1./5),
-		# colorscale = debtcolors, 
-		# colorscale = "Reds", reversescale = true,
+		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
 	p1 = plot(ctχω, Layout(;title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis_title="ω", yaxis_title="χ"))
