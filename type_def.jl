@@ -16,6 +16,7 @@ mutable struct CrazyType
 
 	gπ::Array{Float64, 2}
 	L::Array{Float64, 2}
+	C::Array{Float64, 2}
 	
 	Ey::Array{Float64, 2}
 	Eπ::Array{Float64, 2}
@@ -51,12 +52,13 @@ function CrazyType(;
 
 	gπ = ones(Np, Na) * A
 	L = ones(Np, Na)
+	C = ones(Np, Na)
 
 	Ey = zeros(Np, Na)
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, L, Ey, Eπ, Ep)
+	return CrazyType(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, L, C, Ey, Eπ, Ep)
 end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ

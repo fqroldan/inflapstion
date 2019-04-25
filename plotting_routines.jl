@@ -146,13 +146,14 @@ function makeplots_ct_pa(ct::CrazyType)
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼p'-p")
+	pC = plot_ct_pa(ct, ct.C, "𝓒")
 
 	p = [pL pπ; py pp]
 
 	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	relayout!(pL, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
-	return p, pL, pE
+	return p, pL, pE, pC
 end
 
 

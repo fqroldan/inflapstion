@@ -29,7 +29,7 @@ end
 NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.κ) * (obs_π - ct.β * exp_π′)
 # BLPC(ct::CrazyType, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
 
-function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false)
+function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
 		pprime = 0.0
@@ -55,19 +55,20 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av; get_y::Bool=false
 	=#
 
 	L′ = itp_L(pprime, aprime)
+	C′ = itp_C(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
 	y = NKPC(ct, obs_π, exp_π′)
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
-		return y, pprime
+		return y, pprime, C′
 	end
 	return L
 end
 
-function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, pv, av; get_y::Bool=false)
+function exp_L(ct::CrazyType, itp_gπ, itp_L, itp_C, control_π, pv, av; get_y::Bool=false)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av) * pdf_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av) * pdf_ϵ(ct, ϵv)
 	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
 
 	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
@@ -76,30 +77,33 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, control_π, pv, av; get_y::Bool=fa
 	val = val / sum_prob
 
 	if get_y
-		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[1] * pdf_ϵ(ct, ϵv)
+		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[1] * pdf_ϵ(ct, ϵv)
 		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
-		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av; get_y=true)[2] * pdf_ϵ(ct, ϵv)
+		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[2] * pdf_ϵ(ct, ϵv)
 		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+		f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[3] * pdf_ϵ(ct, ϵv)
+		Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
 
 		Ey = Ey / sum_prob
 		Ep = Ep / sum_prob
+		Ec = Ec / sum_prob
 
-		return Ey, Ep
+		return Ey, Ep, Ec
 	end
 
 	return val
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
+function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 
 	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
 	#=
 	res = Optim.optimize(
-			gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
+			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
 			minπ, maxπ, GoldenSection()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
 	=#
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x, pv, av)
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
 		[π_guess], LBFGS()#, Optim.Options(f_tol=1e-12)
@@ -111,7 +115,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 		# a = Optim.iterations(res)
 		# println(a)
 		resb = Optim.optimize(
-				gπ -> exp_L(ct, itp_gπ, itp_L, gπ, pv, av),
+				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
 				minπ, maxπ, Brent(), rel_tol=1e-18, abs_tol=1e-18#, iterations=100000
 				)
 		if resb.minimum < res.minimum
@@ -121,10 +125,11 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, π_guess, pv, av)
 	return gπ, L
 end
 
-function optim_step(ct::CrazyType, itp_gπ, itp_L, gπ_guess; optimize::Bool=true)
+function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=true)
 	gπ, L  = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
 	Ey, Eπ = SharedArray{Float64}(ct.Ey), SharedArray{Float64}(ct.Eπ)
-	Ep 	   = SharedArray{Float64}(ct.Ep)
+	Ep, C  = SharedArray{Float64}(ct.Ep), SharedArray{Float64}(ct.C)
+	πN 	   = Nash(ct)
 	# gπ, L = Array{Float64}(undef, size(ct.gπ)), Array{Float64}(undef, size(ct.L))
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
 	@sync @distributed for js in 1:size(apgrid,1)
@@ -134,31 +139,64 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, gπ_guess; optimize::Bool=tru
 		π_guess = gπ_guess[jp, ja]
 		if optimize
 			# π_guess = itp_gπ(pv, av)
-			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, π_guess, pv, av)
+			gπ[jp, ja], L[jp, ja] = opt_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 		else
 			gπ[jp, ja] = π_guess
-			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av)
+			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 		end
-		Ey[jp, ja], Ep[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av; get_y=true)
+		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av; get_y=true)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
+		C[jp, ja]  = (1-ct.β)*(πN - Eπ[jp,ja])/πN + ct.β * EC′
 	end
 
-	return gπ, L, Ey, Eπ, Ep
+	return gπ, L, Ey, Eπ, Ep, C
 end
 
 function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
+	knots = (ct.pgrid[2:end], ct.agrid)
+	itp_gπ_1 = interpolate(knots, Egπ[2:end,:],  Gridded(Linear()))
+	itp_gπ_2 = extrapolate(itp_gπ_1, Line())
+	itp_L_1 = interpolate(knots, ct.L[2:end,:],  Gridded(Linear()))
+	itp_L_2 = extrapolate(itp_L_1, Line())
+
+	η = 0.9
+	plow = ct.pgrid[2] * η + ct.pgrid[1] * (1-η)
+	gπ_lowp = [itp_gπ_2(plow, av) for (ja, av) in enumerate(ct.agrid)]
+	L_lowp = [itp_L_2(plow, av) for (ja, av) in enumerate(ct.agrid)]
+
+	pgrid_large = [ct.pgrid[1]; plow; ct.pgrid[2:end]]
+
+	gπ_large = Array{Float64}(undef, ct.Np+1, ct.Na)
+	L_large = Array{Float64}(undef, ct.Np+1, ct.Na)
+	for jp in 1:ct.Np+1
+		for (ja, av) in enumerate(ct.agrid)
+			if jp > 2
+				gπ_large[jp, ja] = Egπ[jp-1,ja]
+				L_large[jp, ja] = ct.L[jp-1,ja]
+			elseif jp == 1
+				gπ_large[jp, ja] = gπ_lowp[ja]
+				L_large[jp, ja] = L_lowp[ja]
+			else
+				gπ_large[jp, ja] = Egπ[1, ja]
+				L_large[jp, ja] = ct.L[1, ja]
+			end
+		end
+	end
+	knots = (pgrid_large, ct.agrid)
+	itp_gπ = interpolate(knots, gπ_large, Gridded(Linear()))
+	itp_L  = interpolate(knots, L_large, Gridded(Linear()))
+
 	knots = (ct.pgrid, ct.agrid)
-	itp_gπ = interpolate(knots, Egπ,  Gridded(Linear()))
-	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
+	itp_C  = interpolate(knots, ct.C, Gridded(Linear()))
 
 	# itp = interpolate(ct.L, BSpline(Cubic(Line(OnGrid()))))
 	# itp_L = Interpolations.scale(itp, ct.pgrid, ct.agrid)
 	# itp = interpolate(ct.gπ, BSpline(Cubic(Line(OnGrid()))))
 	# itp_gπ = Interpolations.scale(itp, ct.pgrid, ct.agrid)
 
-	new_gπ, new_L, new_y, new_π, new_p = optim_step(ct, itp_gπ, itp_L, gπ_guess; optimize=optimize)
+	new_gπ, new_L, new_y, new_π, new_p, new_C = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
-	return new_gπ, new_L, new_y, new_π, new_p
+	return new_gπ, new_L, new_y, new_π, new_p, new_C
 end
 
 function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verbose::Bool=true, reset_guess::Bool=false)
@@ -183,7 +221,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L)
 
-		new_gπ, new_L, new_y, new_π, new_p = pf_iter(ct, Egπ, ct.gπ)
+		new_gπ, new_L, new_y, new_π, new_p, new_C = pf_iter(ct, Egπ, ct.gπ)
 
 		dist = sqrt.(sum( (new_L  - old_L ).^2 )) / sqrt.(sum(old_L .^2))
 
@@ -192,6 +230,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 		ct.Ey = new_y
 		ct.Eπ = new_π
 		ct.Ep = new_p
+		ct.C  = new_C
 
 		if verbose && iter % 10 == 0
 			print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
@@ -239,13 +278,15 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
 
 		if tempplots
-			p1, pL, pE = makeplots_ct_pa(ct);
+			p1, pL, pE, pC = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
 			relayout!(pL, title="iter = $iter")
 			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
 			relayout!(pE, title="iter = $iter")
 			savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
+			relayout!(pC, title="iter = $iter")
+			savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end
