@@ -146,18 +146,24 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::B
 		end
 		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av; get_y=true)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
-		C[jp, ja]  = (1-ct.β)*(πN - Eπ[jp,ja])/πN + ct.β * EC′
+
+		if av >= πN || isapprox(av, πN)
+			C[jp, ja] = (1-ct.β)*1 + ct.β * EC′
+		else
+			C[jp, ja] = (1-ct.β)*(πN - Eπ[jp,ja])/(πN-av) + ct.β * EC′
+		end
 	end
 
 	return gπ, L, Ey, Eπ, Ep, C
 end
 
 function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
+	#=	
 	knots = (ct.pgrid[2:end], ct.agrid)
 	itp_gπ_1 = interpolate(knots, Egπ[2:end,:],  Gridded(Linear()))
-	itp_gπ_2 = extrapolate(itp_gπ_1, Line())
+	itp_gπ_2 = extrapolate(itp_gπ_1, Flat())
 	itp_L_1 = interpolate(knots, ct.L[2:end,:],  Gridded(Linear()))
-	itp_L_2 = extrapolate(itp_L_1, Line())
+	itp_L_2 = extrapolate(itp_L_1, Flat())
 
 	η = 0.9
 	plow = ct.pgrid[2] * η + ct.pgrid[1] * (1-η)
@@ -185,14 +191,12 @@ function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
 	knots = (pgrid_large, ct.agrid)
 	itp_gπ = interpolate(knots, gπ_large, Gridded(Linear()))
 	itp_L  = interpolate(knots, L_large, Gridded(Linear()))
-
+	=#
 	knots = (ct.pgrid, ct.agrid)
+	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
+	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
 	itp_C  = interpolate(knots, ct.C, Gridded(Linear()))
 
-	# itp = interpolate(ct.L, BSpline(Cubic(Line(OnGrid()))))
-	# itp_L = Interpolations.scale(itp, ct.pgrid, ct.agrid)
-	# itp = interpolate(ct.gπ, BSpline(Cubic(Line(OnGrid()))))
-	# itp_gπ = Interpolations.scale(itp, ct.pgrid, ct.agrid)
 
 	new_gπ, new_L, new_y, new_π, new_p, new_C = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
@@ -344,7 +348,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			# end
 			dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true, upd_η=upd_η)
 			flag = (dist <= tol)
-			Lmin, ja = findmin(ct.L[2,:])
+			Lmin, ja = findmin(ct.L[3,:])
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
 			print_save(s)
