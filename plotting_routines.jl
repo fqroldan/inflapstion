@@ -248,7 +248,14 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
-function plot_L_contour(ωgrid, χgrid, L_mat)
+function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
+
+	_, jjxy = findmin(L_mat)
+
+	xmin = jjxy[1]
+	ymin = jjxy[2]
+
+	shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="red", type="circle")]
 
 	ctχω = contour(;
 		x = ωgrid, y = annualized.(χgrid),
@@ -259,8 +266,12 @@ function plot_L_contour(ωgrid, χgrid, L_mat)
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis_title="ω", yaxis_title="χ"))
+	p1 = plot(ctχω, Layout(;title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis_title="ω", yaxis_title="χ", shapes = shape_vec))
+	if slides
+		relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	end
 
+	return p1
 end
 
 function plot_announcements(;slides::Bool=true, exts::Vector=[])

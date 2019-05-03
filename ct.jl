@@ -328,7 +328,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	t0 = time()
 	Lplot = []
 	aplot = []
-	L_mat = zeros(Nω, Nχ) * NaN
+	L_mat_plot = zeros(Nω, Nχ) * NaN
 	for (jχ, χv) in enumerate(χgrid)
 		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 		ct = CrazyType(; χ = χv)
@@ -337,8 +337,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		L_vec = []
 		a_vec = []
 		ω_vec = []
-		
-		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, aplot)
+
+		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
 			ct.ω = ωv
 
 			t1 = time()
@@ -352,6 +352,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
 			print_save(s)
+
+			L_mat_save[:,:] = ct.L
 
 			push!(L_vec, Lmin)
 			push!(a_vec, ct.agrid[ja])
@@ -381,7 +383,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 		#=
 		res = Optim.optimize(
-			ω -> wrap_Epfi!(ct, ω, L_vec, a_vec, ω_vec, Lplot, aplot), minimum(ωgrid), maximum(ωgrid), GoldenSection(), abs_tol=5e-4
+			ω -> wrap_Epfi!(ct, ω, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot), minimum(ωgrid), maximum(ωgrid), GoldenSection(), abs_tol=5e-4
 			)
 
 		Lmin = res.minimum
@@ -391,16 +393,25 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 		Lmin, ωmin, amin = ones(3) * 1e8
 		for (jω, ωv) in enumerate(ωgrid)
-			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, aplot)
+			L_mat_save = zeros(ct.Np, ct.Na)
+			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
 
-			L_mat[jω, jχ] = L
+			L_mat[jω, jχ, :, :] = L_mat_save
+			L_mat_plot[jω, jχ] = L
 
-			pLct = plot_L_contour(ωgrid, χgrid, L_mat)
+			pLct = plot_L_contour(ωgrid, χgrid, L_mat_plot)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
 			if L < Lmin
 				Lmin = L
 				ωmin = ωv
 				amin = a_vec[jω]
+
+				psim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
+			end
+			if jω == 1 && jχ == 1
+				psim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
 			end
 		end
 
