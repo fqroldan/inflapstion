@@ -281,7 +281,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
 
-		if tempplots
+		if tempplots && (iter % 5 == 0 || dist <= tol)
 			p1, pL, pE, pC = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
@@ -329,6 +329,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	Lplot = []
 	aplot = []
 	L_mat_plot = zeros(Nω, Nχ) * NaN
+	Lmin = 1e8
 	for (jχ, χv) in enumerate(χgrid)
 		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 		ct = CrazyType(; χ = χv)
@@ -391,7 +392,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		amin = a_vec[end]
 		=#
 
-		Lmin, ωmin, amin = ones(3) * 1e8
+		ωmin = 1e8
+		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
 			L_mat_save = zeros(ct.Np, ct.Na)
 			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
@@ -401,10 +403,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 			pLct = plot_L_contour(ωgrid, χgrid, L_mat_plot)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
-			if L < Lmin
-				Lmin = L
-				ωmin = ωv
-				amin = a_vec[jω]
+
+			print_save("\nCurrent L = $L against current min = $Lmin")
+
+			if L < L_min
+				L_min = L_mat_plot[jω, jχ]
+				ω_min = ωv
+				a_min = a_vec[jω]
 
 				psim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
@@ -418,11 +423,6 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		s = "\nMinimum element is $(@sprintf("%.3g",Lmin)) with a₀ = $(@sprintf("%.3g", annualized(amin)))"
 		# Optim.converged(res) ? s = s*" ✓" : nothing
 		print_save(s)
-		if Lmin < L_min
-			L_min = Lmin
-			ω_min = ωmin
-			a_min = amin
-		end
 
 		perm_order = sortperm(ω_vec)
 

@@ -250,10 +250,13 @@ end
 
 function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
 
-	_, jjxy = findmin(L_mat)
+	L_filled, temp = findmin(L_mat[.!isnan.(L_mat)])
+	jjxy = findfirst(L_mat.==L_filled)
 
-	xmin = jjxy[1]
-	ymin = jjxy[2]
+	# _, jjxy = findmin(L_mat)
+
+	xmin = ωgrid[jjxy[1]]
+	ymin = annualized(χgrid[jjxy[2]])
 
 	shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="red", type="circle")]
 
