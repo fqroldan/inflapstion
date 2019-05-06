@@ -411,12 +411,14 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				ω_min = ωv
 				a_min = a_vec[jω]
 
-				psim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
+				savejson(pLsim,pwd()*"/../Graphs/tests/simul_Lopt.json")
 			end
 			if jω == 1 && jχ == 1
-				psim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
+				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
 			end
 		end
 

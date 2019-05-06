@@ -1,4 +1,4 @@
-using PlotlyJS, Colors, ColorSchemes, Printf
+using PlotlyJS, Colors, ColorSchemes, Printf, ORCA
 include("type_def.jl")
 
 col = [	"#1f77b4",  # muted blue
@@ -161,11 +161,12 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=2, noshocks:
 	# Update simulations codes
 	include("simul.jl")
 
-	p_mat, a_mat, π_mat, y_mat, g_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
+	p_mat, a_mat, π_mat, y_mat, g_mat, L_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
 
 	for jn in 1:N
-	    p_vec, a_vec, π_vec, y_vec, g_vec = simul(ct; jp0=jp0, T=T, noshocks=noshocks)
+	    p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(ct; jp0=jp0, T=T, noshocks=noshocks)
 	    p_mat[:,jn] = p_vec
+	    L_mat[:,jn] = L_vec
 	    a_mat[:,jn], π_mat[:,jn], y_mat[:,jn], g_mat[:,jn] = annualized.(a_vec), annualized.(π_vec), annualized.(y_vec), annualized.(g_vec)
 	end
 
@@ -173,15 +174,15 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=2, noshocks:
 	# quantiles = linspace(0,1, k+2)
 	quantiles = [0.25; 0.75]
 	k = length(quantiles)
-	p_qnt, a_qnt, π_qnt, y_qnt, g_qnt = zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k)
+	p_qnt, a_qnt, π_qnt, y_qnt, g_qnt, L_qnt = zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k), zeros(T,k)
 	for jk in 1:k
 	    for jt in 1:T
 	        qnt = quantiles[jk]
-	        p_qnt[jt,jk], a_qnt[jt,jk], π_qnt[jt,jk], y_qnt[jt,jk], g_qnt[jt,jk] = quantile(p_mat[jt, :], qnt), quantile(a_mat[jt, :], qnt), quantile(π_mat[jt, :], qnt), quantile(y_mat[jt, :], qnt), quantile(g_mat[jt, :], qnt)
+	        p_qnt[jt,jk], a_qnt[jt,jk], π_qnt[jt,jk], y_qnt[jt,jk], g_qnt[jt,jk], L_qnt[jt,jk] = quantile(p_mat[jt, :], qnt), quantile(a_mat[jt, :], qnt), quantile(π_mat[jt, :], qnt), quantile(y_mat[jt, :], qnt), quantile(g_mat[jt, :], qnt), quantile(L_mat[jt, :], qnt)
 	    end
 	end
-	p_med, a_med, π_med, y_med, g_med = vec(median(p_mat, dims=2)), vec(median(a_mat, dims=2)), vec(median(π_mat, dims=2)), vec(median(y_mat, dims=2)), vec(median(g_mat, dims=2))
-	p_avg, a_avg, π_avg, y_avg, g_avg = vec(mean(p_mat, dims = 2)), vec(mean(a_mat, dims = 2)), vec(mean(π_mat, dims = 2)), vec(mean(y_mat, dims = 2)), vec(mean(g_mat, dims = 2))
+	p_med, a_med, π_med, y_med, g_med, L_med = vec(median(p_mat, dims=2)), vec(median(a_mat, dims=2)), vec(median(π_mat, dims=2)), vec(median(y_mat, dims=2)), vec(median(g_mat, dims=2)), vec(median(L_mat, dims=2))
+	p_avg, a_avg, π_avg, y_avg, g_avg, L_avg = vec(mean(p_mat, dims = 2)), vec(mean(a_mat, dims = 2)), vec(mean(π_mat, dims = 2)), vec(mean(y_mat, dims = 2)), vec(mean(g_mat, dims = 2)), vec(mean(L_mat, dims = 2))
 
 	prep = plot([
 			[scatter(;x=(1:T)/4, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k if CIs]
@@ -209,7 +210,12 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=2, noshocks:
 
 	relayout!(p, font_family="Fira Sans Light")
 
-    return p
+	pL = plot([
+		scatter(;x=(1:T)/4, y=L_avg, showlegend=false, line_color=col[4])
+		scatter(;x=(1:T)/4, y=L_med, showlegend=false, line_color=col[4], line_dash="dashdot")
+		], Layout(;title="𝓛", font_family = "Fira Sans Light", font_size = 16))
+
+    return p, pL
 end
 
 function makeplot_conv(dists::Vector; switch_η=25)
@@ -277,20 +283,40 @@ function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
 	return p1
 end
 
-function plot_announcements(;slides::Bool=true, exts::Vector=[])
+function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=false, add_opt::Bool=false, cond_t::Bool=false)
 	xvec = 0:0.25:10
+
+	cond_t ? cond = true : nothing
 
 	slides ? colorpal = ColorSchemes.munch : colorpal = ColorSchemes.southwest
 
 	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
 
-	p1 = plot([
-		[scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
-		line_opt
-		], Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_title="%", title="Inflation announcements")
-		)
+	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
 
 	plotname = "announcements"
+	if cond
+		lines = [lines[43]]
+		plotname *= "_cond"
+	end
+
+	if add_opt
+		push!(lines, line_opt)
+		plotname *= "_w_opt"
+	end
+
+	shapes = []
+	annotations = []
+	if cond_t
+		x0 = 2.5
+		y0 = 1.367879
+		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color="red", fillcolor="red", type="circle")]
+		annotations = [attr(; x=x0, y=y0, text="𝑎ₜᶜ", xanchor="right")]
+	end
+
+	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
+		)
+
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 		plotname *= "_slides"
@@ -303,6 +329,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[])
 		for (jj, ext) in enumerate(exts)
 			savefig(p1, pwd()*"/../Graphs/"*plotname*"."*ext)
 		end
+		return nothing
 	end
 
 	return p1

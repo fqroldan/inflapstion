@@ -27,10 +27,12 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 
 	knots = (ct.pgrid, ct.agrid)
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()))
+	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
 
-	p_vec, a_vec, π_vec, y_vec, g_vec, ϵ_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
+	p_vec, a_vec, π_vec, y_vec, g_vec, ϵ_vec, L_vec = zeros(T), zeros(T), zeros(T), zeros(T), zeros(T), zeros(T), zeros(T)
 	for tt = 1:T
 		p_vec[tt], a_vec[tt] = p, a
+		L_vec[tt] = itp_L(p, a)
 		pp, ap, πt, yt, gt, ϵt = iter_simul(ct, itp_gπ, p, a; noshocks=noshocks)
 		π_vec[tt], y_vec[tt], g_vec[tt], ϵ_vec[tt] = πt, yt, gt, ϵt
 
@@ -40,5 +42,5 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	σϵ = std(ϵ_vec)
 	# print("\nStd of shocks = $(@sprintf("%.3g", σϵ))")
 
-	return p_vec, a_vec, π_vec, y_vec, g_vec
+	return p_vec, a_vec, π_vec, y_vec, g_vec, L_vec
 end
