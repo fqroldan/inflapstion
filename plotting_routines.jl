@@ -295,9 +295,15 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
 
 	plotname = "announcements"
+	annotations = []
 	if cond
 		lines = [lines[43]]
 		plotname *= "_cond"
+		te = 9*4+1
+		xe = lines[1][:x][te]
+		ye = lines[1][:y][te]
+		col_line = lines[1][:marker][:color]
+		push!(annotations, attr(; x=xe, y=ye+0.05, text="𝑐", font_color=col_line, showarrow=false))
 	end
 
 	if add_opt
@@ -306,12 +312,13 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 	end
 
 	shapes = []
-	annotations = []
 	if cond_t
-		x0 = 2.5
-		y0 = 1.367879
-		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color="red", fillcolor="red", type="circle")]
-		annotations = [attr(; x=x0, y=y0, text="𝑎ₜᶜ", xanchor="right")]
+		tt = 11
+		x0 = lines[1][:x][tt]
+		y0 = lines[1][:y][tt]
+		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=get(ColorSchemes.darkrainbow, 0.12), fillcolor=get(ColorSchemes.darkrainbow, 0.12), type="circle")]
+		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="𝑎ₜᶜ", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Fira Sans Light"))
+		plotname *="_t"
 	end
 
 	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
