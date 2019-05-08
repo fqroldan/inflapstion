@@ -21,3 +21,8 @@ Nω = 11
 Nχ = 11
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 ωmin = choose_ω!(L_mat, ct; remote = machine_remote)
+
+
+# for (jp, pv) in enumerate(ct.pgrid)
+# 	findmin(L_mat[:,:,jp,:])
+# end
