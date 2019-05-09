@@ -188,27 +188,27 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=2, noshocks:
 			[scatter(;x=(1:T)/4, y=p_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[1]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=p_avg, showlegend=false, line_color=col[1])
 			scatter(;x=(1:T)/4, y=p_med, showlegend=false, line_color=col[1], line_dash="dashdot")
-			], Layout(;title="Reputation", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Reputation", yaxis_zeroline=false, font_family = "Fira Sans Light", font_size = 16))
 	ptar = plot([
 			[scatter(;x=(1:T)/4, y=a_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[2]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=a_avg, showlegend=false, line_color=col[2])
 			scatter(;x=(1:T)/4, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
 			# scatter(;x=(1:T)/4, y=a_med, showlegend=false, line_color=col[2], line_dash="dashdot")
-			], Layout(;title="Target", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Target", yaxis_zeroline=false, font_family = "Fira Sans Light", font_size = 16))
 	pinf = plot([
 			[scatter(;x=(1:T)/4, y=π_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[3]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=π_avg, showlegend=false, line_color=col[3])
 			scatter(;x=(1:T)/4, y=π_med, showlegend=false, line_color=col[3], line_dash="dashdot")
 			scatter(;x=(1:T)/4, y=g_avg, showlegend=false, line_color=col[5], line_dash="dot")
-			], Layout(;title="Inflation", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Inflation", yaxis_zeroline=false, font_family = "Fira Sans Light", font_size = 16))
 	pout = plot([
 			[scatter(;x=(1:T)/4, y=y_qnt[:,jk], showlegend=false, opacity=0.25, line_color=col[4]) for jk in 1:k if CIs]
 			scatter(;x=(1:T)/4, y=y_avg, showlegend=false, line_color=col[4])
 			scatter(;x=(1:T)/4, y=y_med, showlegend=false, line_color=col[4], line_dash="dashdot")
-			], Layout(;title="Output", font_family = "Fira Sans Light", font_size = 16))
+			], Layout(;title="Output", yaxis_zeroline=false, font_family = "Fira Sans Light", font_size = 16))
 	p = [prep ptar; pinf pout]
 
-	relayout!(p, font_family="Fira Sans Light")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 	pL = plot([
 		scatter(;x=(1:T)/4, y=L_avg, showlegend=false, line_color=col[4])
@@ -366,5 +366,37 @@ function plot_bayes(; center=1.0, dist=0.5, σ=0.5, p=0.5, distplot=4*sqrt(dist)
 	relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
 
+	return p1
+end
+
+function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false)
+
+	ωvec = zeros(ct.Np)
+	avec = zeros(ct.Np)
+	χvec = zeros(ct.Np)
+
+	for jp in 1:ct.Np
+		_, jj = findmin(L_mat[:,:,jp,:])
+		ωvec[jp] = ωgrid[jj[1]]
+		χvec[jp] = χgrid[jj[2]]
+		avec[jp] = ct.agrid[jj[3]]
+	end
+
+	pω = plot(scatter(;x=ct.pgrid[3:end], y=ωvec[3:end], line_width=2.5, name="ω", marker_color=get(ColorSchemes.southwest, 0.0)));
+	pχa= plot([
+		scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="a", marker_color=get(ColorSchemes.southwest, 0.5))
+		scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="χ", marker_color=get(ColorSchemes.southwest, 0.99))
+		], Layout(;yaxis_title="%", xaxis_title="𝑝"));
+
+	relayout!(pω,  xaxis_zeroline=false, yaxis_zeroline=false)
+	relayout!(pχa, xaxis_zeroline=false, yaxis_zeroline=false)
+
+	p1 = [pω; pχa]
+	relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", title="Preferred plans")
+	relayout!(p1, height=600, width=900, font_family="Fira Sans Light", font_size=16, legend=attr(;orientation="h", x=0.1))
+
+	if make_pdf
+		savefig(p1, pwd()*"/../Graphs/plans.pdf")
+	end
 	return p1
 end

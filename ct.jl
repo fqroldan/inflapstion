@@ -328,7 +328,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	t0 = time()
 	Lplot = []
 	aplot = []
-	L_mat_plot = zeros(Nω, Nχ) * NaN
+	L_mat_ctour = zeros(Nω, Nχ) * NaN
 	Lmin = 1e8
 	for (jχ, χv) in enumerate(χgrid)
 		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
@@ -399,15 +399,15 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
 
 			L_mat[jω, jχ, :, :] = L_mat_save
-			L_mat_plot[jω, jχ] = L
+			L_mat_ctour[jω, jχ] = L
 
-			pLct = plot_L_contour(ωgrid, χgrid, L_mat_plot)
+			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
 
-			print_save("\nCurrent L = $L against current min = $Lmin")
+			# print_save("\nCurrent L = $L against current min = $Lmin")
 
 			if L < L_min
-				L_min = L_mat_plot[jω, jχ]
+				L_min = L_mat_ctour[jω, jχ]
 				ω_min = ωv
 				a_min = a_vec[jω]
 
@@ -452,6 +452,9 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
 	print_save("\nOverall minimum announcement a₀ = $a_min with ω = $ω_min")
+
+
+	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
 
 	return ω_min
 end

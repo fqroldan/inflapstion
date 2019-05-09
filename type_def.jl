@@ -41,7 +41,7 @@ function CrazyType(;
 		ω = 0.1,
 		χ = 0.0,
 		Np = 30,
-		Na = 25
+		Na = 30
 		)
 
 	A = κ / (1.0 - β + κ^2*γ) * ystar
