@@ -21,8 +21,10 @@ function simul(ct::CrazyType; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
 	p0 = ct.pgrid[jp0]
 
 	_, ind_a0 = findmin(ct.L[3, :])
-	a0 = ct.agrid[ind_a0]
 
+	# ind_a0 = floor(Int, ct.Na*0.25)
+
+	a0 = ct.agrid[ind_a0]
 	p, a = p0, a0
 
 	knots = (ct.pgrid, ct.agrid)
