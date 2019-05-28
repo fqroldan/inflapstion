@@ -106,7 +106,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
-		[π_guess], LBFGS()#, Optim.Options(f_tol=1e-12)
+		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
 		)
 
 	gπ, L = first(res.minimizer), res.minimum
@@ -313,7 +313,7 @@ end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
 
-	ωgrid = cdf.(Beta(2,1), range(1,0,length=Nω))
+	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = 1.0, xmin = 0.01)
 
 	Nχ = size(L_mat, 2)
