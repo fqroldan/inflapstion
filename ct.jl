@@ -240,6 +240,14 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 			print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 		end
 	end
+	dist = 10.
+	iter = 0
+	while dist > tol && iter < maxiter
+		iter += 1
+		_, _, _, _, _, new_C = pf_iter(ct, Egπ, ct.gπ; optimize=false)
+		ct.C  = upd_η2 * new_C  + (1.0-upd_η2) * ct.C
+	end
+
 	if verbose && dist <= tol
 		print("\nConverged in $iter iterations.")
 	elseif verbose
