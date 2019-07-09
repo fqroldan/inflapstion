@@ -240,11 +240,14 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 			print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 		end
 	end
-	dist = 10.
-	iter = 0
-	while dist > tol && iter < maxiter
-		iter += 1
+
+	dist2 = 10.
+	iter2 = 0
+	while dist > tol && iter2 < maxiter
+		iter2 += 1
+		old_C = copy(ct.C)
 		_, _, _, _, _, new_C = pf_iter(ct, Egπ, ct.gπ; optimize=false)
+		dist2 = sqrt.(sum( (new_C  - old_C ).^2 )) / sqrt.(sum(old_C .^2))
 		ct.C  = upd_η2 * new_C  + (1.0-upd_η2) * ct.C
 	end
 
@@ -297,8 +300,8 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
 			relayout!(pE, title="iter = $iter")
 			savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
-			relayout!(pC, title="iter = $iter")
-			savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
+			# relayout!(pC, title="iter = $iter")
+			# savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end
@@ -315,7 +318,9 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	elseif verbose
 		print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 	end
-
+	p1, pL, pE, pC = makeplots_ct_pa(ct);
+	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
+	
 	return dist
 end
 
