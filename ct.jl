@@ -300,8 +300,6 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
 			relayout!(pE, title="iter = $iter")
 			savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
-			# relayout!(pC, title="iter = $iter")
-			# savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end
@@ -342,6 +340,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	Lplot = []
 	aplot = []
 	L_mat_ctour = zeros(Nω, Nχ) * NaN
+	C_mat_ctour = zeros(Nω, Nχ) * NaN
 	Lmin = 1e8
 	for (jχ, χv) in enumerate(χgrid)
 		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
@@ -356,7 +355,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 20e-4
+			tol = 15e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
@@ -377,6 +376,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 			new_L = scatter(;x=ω_vec[perm_order], y=L_vec[perm_order], name = "χ = $(@sprintf("%.3g",annualized(χv)))%", line_shape="spline")
 			new_a = scatter(;x=ω_vec[perm_order], y=annualized.(a_vec[perm_order]), name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
+
 			all_Ls = new_L
 			all_as = new_a
 			if length(Lplot) == 0
@@ -414,8 +414,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			L_mat[jω, jχ, :, :] = L_mat_save
 			L_mat_ctour[jω, jχ] = L
 
+			C_mat_ctour[jω, jχ] = 1 * ct.C 
+
 			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
+
+			pCct = plot_L_contour(ωgrid, χgrid, C_mat_ctour)
+			savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
 
 			# print_save("\nCurrent L = $L against current min = $Lmin")
 
