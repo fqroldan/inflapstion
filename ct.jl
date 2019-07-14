@@ -362,6 +362,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true, upd_η=upd_η)
 			flag = (dist <= tol)
 			Lmin, ja = findmin(ct.L[3,:])
+			Cmin = ct.C[3,ja]
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
 			print_save(s)
@@ -392,29 +393,19 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
 			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 
-			return Lmin
+			return Lmin, Cmin
 		end
-
-		#=
-		res = Optim.optimize(
-			ω -> wrap_Epfi!(ct, ω, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot), minimum(ωgrid), maximum(ωgrid), GoldenSection(), abs_tol=5e-4
-			)
-
-		Lmin = res.minimum
-		ωmin = res.minimizer
-		amin = a_vec[end]
-		=#
 
 		ωmin = 1e8
 		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
 			L_mat_save = zeros(ct.Np, ct.Na)
-			L = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
+			L, C = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
 
 			L_mat[jω, jχ, :, :] = L_mat_save
 			L_mat_ctour[jω, jχ] = L
 
-			C_mat_ctour[jω, jχ] = 1 * ct.C 
+			C_mat_ctour[jω, jχ] = C 
 
 			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
