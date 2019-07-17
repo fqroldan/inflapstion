@@ -153,7 +153,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	relayout!(pL, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 
-	return p, pL, pE, pC
+	return p, pL, pπ, pC
 end
 
 

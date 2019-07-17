@@ -298,14 +298,14 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
 			relayout!(pL, title="iter = $iter")
 			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
-			relayout!(pE, title="iter = $iter")
-			savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
+			# relayout!(pE, title="iter = $iter")
+			# savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
 			p2 = makeplot_conv(dists; switch_η=switch_η);
 			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
 		end
 
 		if iter == floor(Int, switch_η*0.4)
-			upd_η = min(upd_η, 0.0025)
+			upd_η = min(upd_η, 0.004)
 		elseif iter % switch_η == 0
 			upd_η = max(0.9*upd_η, 1e-6)
 		end
@@ -316,8 +316,9 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	elseif verbose
 		print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 	end
-	p1, pL, pE, pC = makeplots_ct_pa(ct);
+	p1, pL, pπ, pC = makeplots_ct_pa(ct);
 	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
+	savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
 	
 	return dist
 end
