@@ -1,13 +1,18 @@
 using Distributed
 
-@everywhere using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates
+# @everywhere 
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates
 
-@everywhere include("type_def.jl")
-@everywhere include("reporting_routines.jl")
-@everywhere include("simul.jl")
-@everywhere include("plotting_routines.jl")
+# @everywhere 
+include("type_def.jl")
+# @everywhere 
+include("reporting_routines.jl")
+# @everywhere 
+include("simul.jl")
+# @everywhere 
+include("plotting_routines.jl")
 
-@everywhere begin
+# @everywhere begin
 function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	numer = pv * pdf_ϵ(ct, obs_π - av)
@@ -126,13 +131,16 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 end
 
 function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=true)
-	gπ, L  = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
-	Ey, Eπ = SharedArray{Float64}(ct.Ey), SharedArray{Float64}(ct.Eπ)
-	Ep, C  = SharedArray{Float64}(ct.Ep), SharedArray{Float64}(ct.C)
+	# gπ, L  = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
+	# Ey, Eπ = SharedArray{Float64}(ct.Ey), SharedArray{Float64}(ct.Eπ)
+	# Ep, C  = SharedArray{Float64}(ct.Ep), SharedArray{Float64}(ct.C)
+	gπ, L  = zeros(size(ct.gπ)), zeros(size(ct.L))
+	Ey, Eπ = zeros(size(ct.Ey)), zeros(size(ct.Eπ))
+	Ep, C  = zeros(size(ct.Ep)), zeros(size(ct.C))
 	πN 	   = Nash(ct)
-	# gπ, L = Array{Float64}(undef, size(ct.gπ)), Array{Float64}(undef, size(ct.L))
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
-	@sync @distributed for js in 1:size(apgrid,1)
+	Threads.@threads for js in 1:size(apgrid,1)
+	# @sync @distributed  for js in 1:size(apgrid,1)
     # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
@@ -468,7 +476,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 	return ω_min
 end
-end # everywhere
+# end # everywhere
 
 # ct = CrazyType(; ω = ωmin)
 # Epfi!(ct);
