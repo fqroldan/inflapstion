@@ -283,7 +283,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
-		flag = pfi!(ct, old_gπ; verbose = verbose, reset_guess=reset_guess, tol=tol_pfi);
+		flag = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
 		dist = sqrt.(sum( (ct.gπ  - old_gπ ).^2 )) / sqrt.(sum(old_gπ .^2))
@@ -364,7 +364,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 15e-4
+			tol = 10e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
