@@ -1,6 +1,6 @@
 using Distributed
 
-@everywhere include("ct.jl")
+include("ct.jl")
 
 write(pwd()*"/../output.txt", "")
 
