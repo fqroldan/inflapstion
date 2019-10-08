@@ -2,7 +2,7 @@ using Distributed
 
 include("ct.jl")
 
-write(pwd()*"/../output.txt", "Credibility Dynamics and Disinflation Plans\n\n")
+write(pwd()*"/../output.txt", "")
 
 function establish_remote()
 	machine_name = ""
