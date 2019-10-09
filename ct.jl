@@ -368,7 +368,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
-			dist = Epfi!(ct, verbose = false, tol=tol, tempplots=true, upd_η=upd_η)
+			dist = Epfi!(ct, verbose = true, tol=tol, tempplots=true, upd_η=upd_η)
 			flag = (dist <= tol)
 			Lmin, ja = findmin(ct.L[3,:])
 			Cmin = ct.C[3,ja]
