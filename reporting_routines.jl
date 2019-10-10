@@ -1,7 +1,15 @@
-function print_save(s::String)
+function print_save(s::String, temp=false)
 	print(s)
-	output = read(pwd()*"/../output.txt", String)
-	write(pwd()*"/../output.txt", output * s)
+
+	filename = pwd()*"/../output.txt"
+	output = read(filename, String)
+
+	if temp
+		filename = pwd() * "/../output_temp.txt"
+		output = read(filename, String)
+	end
+
+	write(filename, output * s)
 
 	nothing
 end

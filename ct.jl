@@ -293,7 +293,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 			rep_status *= "✓ "
 		end
 		if verbose #&& iter % 10 == 0
-			print_save(rep_status*"\n")
+			print_save(rep_status*"\n", true)
 		else
 			print(rep_status)
 		end
@@ -320,9 +320,9 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 
 	end
 	if verbose && dist <= tol
-		print("\nConverged in $iter iterations.")
+		print_save("\nConverged in $iter iterations.",2)
 	elseif verbose
-		print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
+		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",2)
 	end
 	p1, pL, pπ, pC = makeplots_ct_pa(ct);
 	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
@@ -369,6 +369,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			# 	upd_η = 0.005
 			# end
 			dist = Epfi!(ct, verbose = true, tol=tol, tempplots=true, upd_η=upd_η)
+			write(pwd()*"/../output_temp.txt", "")
+			
 			flag = (dist <= tol)
 			Lmin, ja = findmin(ct.L[3,:])
 			Cmin = ct.C[3,ja]
