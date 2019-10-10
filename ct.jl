@@ -226,7 +226,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	while dist > tol && iter < maxiter
 		iter += 1
 
-		for jj in 1:2
+		for jj in 1:7
 			_, new_L, _, _, _ = pf_iter(ct, Egπ, ct.gπ; optimize=false)
 			ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		end
