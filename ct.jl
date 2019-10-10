@@ -74,20 +74,20 @@ end
 function exp_L(ct::CrazyType, itp_gπ, itp_L, itp_C, control_π, pv, av; get_y::Bool=false)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av) * pdf_ϵ(ct, ϵv)
-	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
-	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
 	val = val / sum_prob
 
 	if get_y
 		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[1] * pdf_ϵ(ct, ϵv)
-		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[2] * pdf_ϵ(ct, ϵv)
-		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 		f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av; get_y=true)[3] * pdf_ϵ(ct, ϵv)
-		Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-12, atol=0, maxevals=0)
+		Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
 		Ey = Ey / sum_prob
 		Ep = Ep / sum_prob
@@ -121,7 +121,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 		# println(a)
 		resb = Optim.optimize(
 				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
-				minπ, maxπ, Brent(), rel_tol=1e-18, abs_tol=1e-18#, iterations=100000
+				minπ, maxπ, Brent(), rel_tol=1e-12, abs_tol=1e-12#, iterations=100000
 				)
 		if resb.minimum < res.minimum
 			gπ, L = resb.minimizer, resb.minimum
@@ -226,7 +226,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	while dist > tol && iter < maxiter
 		iter += 1
 
-		for jj in 1:5
+		for jj in 1:2
 			_, new_L, _, _, _ = pf_iter(ct, Egπ, ct.gπ; optimize=false)
 			ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		end
