@@ -226,7 +226,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	while dist > tol && iter < maxiter
 		iter += 1
 
-		for jj in 1:7
+		for jj in 1:10
 			_, new_L, _, _, _ = pf_iter(ct, Egπ, ct.gπ; optimize=false)
 			ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		end
@@ -315,7 +315,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		if iter == floor(Int, switch_η*0.4)
 			upd_η = min(upd_η, 0.004)
 		elseif iter % switch_η == 0
-			upd_η = max(0.89*upd_η, 1e-6)
+			upd_η = max(0.85*upd_η, 1e-6)
 		end
 
 	end
