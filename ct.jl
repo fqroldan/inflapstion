@@ -217,7 +217,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	upd_η2 = 0.75
 
 	rep = "\nStarting PFI (tol = $(@sprintf("%0.3g",tol)))"
-	verbose ? print_save(rep) : print(rep)
+	verbose ? print_save(rep,true) : print(rep)
 
     if reset_guess
 	    ct.gπ = zeros(size(ct.gπ))
@@ -320,9 +320,9 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 
 	end
 	if verbose && dist <= tol
-		print_save("\nConverged in $iter iterations.",2)
+		print_save("\nConverged in $iter iterations.",true)
 	elseif verbose
-		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",2)
+		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
 	p1, pL, pπ, pC = makeplots_ct_pa(ct);
 	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
