@@ -364,7 +364,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 10e-4
+			tol = 5e-3
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
