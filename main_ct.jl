@@ -3,7 +3,7 @@ using Distributed
 include("ct.jl")
 
 write(pwd()*"/../output.txt", "")
-write(pwd()*"/../output_temp.txt", "")
+write(pwd()*"/../temp.txt", "")
 
 function establish_remote()
 	machine_name = ""

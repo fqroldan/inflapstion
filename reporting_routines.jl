@@ -5,7 +5,7 @@ function print_save(s::String, temp=false)
 	output = read(filename, String)
 
 	if temp
-		filename = pwd() * "/../output_temp.txt"
+		filename = pwd() * "/../temp.txt"
 		output = read(filename, String)
 	end
 
