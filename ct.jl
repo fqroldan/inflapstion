@@ -315,7 +315,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		if iter == floor(Int, switch_η*0.4)
 			upd_η = min(upd_η, 0.002)
 		elseif iter % switch_η == 0
-			upd_η = max(0.785*upd_η, 1e-6)
+			upd_η = max(0.785*upd_η, 1e-4)
 		end
 		if verbose
 			print_save("new upd_η = $(@sprintf("%0.3g", upd_η))", true)
