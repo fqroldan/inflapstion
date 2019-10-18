@@ -1,7 +1,7 @@
 using Distributed
 
 # @everywhere 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD
 
 # @everywhere 
 include("type_def.jl")
