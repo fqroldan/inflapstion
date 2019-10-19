@@ -434,7 +434,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				ω_min = ωv
 				a_min = a_vec[jω]
 
-				save("ct_opt.jld", "ct", ct)
+				save("../../ct_opt.jld", "ct", ct)
 
 				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
