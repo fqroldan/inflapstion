@@ -18,8 +18,12 @@ machine_remote = establish_remote()
 ct = CrazyType(ω = 0.2, χ = 0.0);
 
 try
-	ct = load("../../ct_opt.jld", ct);
+	ct = load("../../ct_1.jld", ct)
 catch
+	try
+		ct = load("../../ct_opt.jld", ct);
+	catch
+	end
 end
 
 initial_report(ct)

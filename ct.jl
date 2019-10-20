@@ -429,6 +429,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 
 			# print_save("\nCurrent L = $L against current min = $Lmin")
 
+			if jχ == 1 && jω == 2
+				save("../../ct_1.jld", "ct", ct)
+			end
+
 			if L < L_min
 				L_min = L_mat_ctour[jω, jχ]
 				ω_min = ωv
