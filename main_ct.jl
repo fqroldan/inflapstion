@@ -19,12 +19,12 @@ function create_or_load()
 	ct = CrazyType(ω = 0.2, χ = 0.0);
 	try
 		print_save("trying for ct_1")
-		ct = load("../../ct_1.jld", ct)
+		ct = load("../../ct_1.jld", "ct")
 		print_save("Loaded first file of previous run")
 	catch
 		try
 			print_save("failed. ")
-			ct = load("../../ct_opt.jld", ct);
+			ct = load("../../ct_opt.jld", "ct");
 			print_save("Loaded optimum ω of previous run")
 		catch
 		end
