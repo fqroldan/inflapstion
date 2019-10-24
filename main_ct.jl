@@ -15,18 +15,28 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-ct = CrazyType(ω = 0.2, χ = 0.0);
-
-try
-	ct = load("../../ct_1.jld", ct)
-catch
+function create_or_load()
+	print_save("..")
+	ct = CrazyType(ω = 0.2, χ = 0.0);
+	print_save("ok 1")
 	try
-		ct = load("../../ct_opt.jld", ct);
+		print_save("trying for ct_1")
+		ct = load("../../ct_1.jld", ct)
+		print_save("Loaded first file of previous run")
 	catch
+		try
+			ct = load("../../ct_opt.jld", ct);
+			print_save("Loaded optimum ω of previous run")
+		catch
+		end
 	end
+	return ct
 end
 
+ct = create_or_load()
+
 initial_report(ct)
+
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
 Nω = 15
 Nχ = 15 
