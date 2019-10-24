@@ -18,15 +18,17 @@ machine_remote = establish_remote()
 function create_or_load()
 	ct = CrazyType(ω = 0.2, χ = 0.0);
 	try
-		print_save("trying for ct_1")
+		print_save("Loading first file of previous run: ")
 		ct = load("../../ct_1.jld", "ct")
-		print_save("Loaded first file of previous run")
+		print_save("✓\n")
 	catch
+		print_save("failed.")
 		try
-			print_save("failed. ")
+			print_save("Loading optimum of previous run :")
 			ct = load("../../ct_opt.jld", "ct");
-			print_save("Loaded optimum ω of previous run")
+			print_save("✓\n")
 		catch
+			print_save("failed. Using new type as guess.\n")
 		end
 	end
 	return ct
