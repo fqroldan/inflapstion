@@ -301,7 +301,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		ct.gπ = upd_η * ct.gπ + (1.0-upd_η) * old_gπ;
 
 		if tempplots && (iter % 5 == 0 || dist <= tol)
-			p1, pL, pE, pC = makeplots_ct_pa(ct);
+			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
 			relayout!(pL, title="iter = $iter")
@@ -327,7 +327,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	p1, pL, pπ, pC = makeplots_ct_pa(ct);
+	p1, pL, pπ, pC, pp = makeplots_ct_pa(ct);
 	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 	savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
 	
@@ -371,7 +371,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
-			dist = Epfi!(ct, verbose = true, tol=tol, tempplots=true, upd_η=upd_η)
+			dist = Epfi!(ct, verbose = true, tol=tol, tempplots=false, upd_η=upd_η)
 			write(pwd()*"/../temp.txt", "")
 			
 			flag = (dist <= tol)
@@ -439,6 +439,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				a_min = a_vec[jω]
 
 				save("../../ct_opt.jld", "ct", ct)
+
+				p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
+				relayout!(pL, title="iter = $iter")
+				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
+				savejson(pπ, pwd()*"/../Graphs/tests/opt_g.json")
+				savejson(pp, pwd()*"/../Graphs/tests/opt_p.json")
+
 
 				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
