@@ -441,7 +441,6 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 				save("../../ct_opt.jld", "ct", ct)
 
 				p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
-				relayout!(pL, title="iter = $iter")
 				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
 				savejson(pπ, pwd()*"/../Graphs/tests/opt_g.json")
 				savejson(pp, pwd()*"/../Graphs/tests/opt_p.json")
