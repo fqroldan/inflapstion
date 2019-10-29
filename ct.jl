@@ -367,7 +367,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 5e-3
+			tol = 1e-3
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
@@ -376,7 +376,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 			
 			flag = (dist <= tol)
 			Lmin, ja = findmin(ct.L[3,:])
-			Cmin = ct.C[3,ja]
+			# Cmin = ct.C[3,ja]
+			Cmin = ct.C[3,end]
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
 			print_save(s)
