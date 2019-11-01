@@ -355,10 +355,6 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	C_mat_ctour = zeros(Nω, Nχ) * NaN
 	Lmin = 1e8
 	for (jχ, χv) in enumerate(χgrid)
-		old_L, old_gπ = copy(ct.L), copy(ct.gπ)
-		ct = CrazyType(; χ = χv)
-		ct.L, ct.gπ = old_L, old_gπ
-
 		L_vec = []
 		a_vec = []
 		ω_vec = []
@@ -414,6 +410,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		ωmin = 1e8
 		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
+			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
+			ct = CrazyType(; χ = χv)
+			ct.L, ct.gπ = old_L, old_gπ
+			
 			L_mat_save = zeros(ct.Np, ct.Na)
 			L, C = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
 
