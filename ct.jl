@@ -32,7 +32,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 end
 
 NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.κ) * (obs_π - ct.β * exp_π′)
-# BLPC(ct::CrazyType, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
+BLPC(ct::CrazyType, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
@@ -64,6 +64,7 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Boo
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
 	y = NKPC(ct, obs_π, exp_π′)
+	# y = BLPC(ct, obs_π, exp_π′)
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
 		return y, pprime, C′
