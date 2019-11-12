@@ -268,7 +268,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 end
 
 decay_η(ct::CrazyType{Forward}, η) = max(0.785*η, 1e-4)
-decay_η(ct::CrazyType{Backward}, η) = max(0.785*η, 5e-3)
+decay_η(ct::CrazyType{Backward}, η) = max(0.8*η, 2e-3)
 
 function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 50)
 	dist = 10.
