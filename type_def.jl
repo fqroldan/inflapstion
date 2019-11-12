@@ -78,7 +78,7 @@ end
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
 
 Nash(ct::CrazyType{Forward}) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
-Nash(ct::CrazyType{Backward}) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
+Nash(ct::CrazyType{Backward}) = ct.κ / ct.γ * ct.ystar
 
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
