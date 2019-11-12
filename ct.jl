@@ -31,8 +31,8 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	return p′
 end
 
-NKPC(ct::CrazyType, obs_π, exp_π′) = (1.0/ct.κ) * (obs_π - ct.β * exp_π′)
-BLPC(ct::CrazyType, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
+PC(ct::CrazyType{Forward}, obs_π, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
+PC(ct::CrazyType{Backward}, obs_π, exp_π)  = (1/ct.κ) * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
@@ -63,8 +63,7 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Boo
 	C′ = itp_C(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	y = NKPC(ct, obs_π, exp_π′)
-	# y = BLPC(ct, obs_π, exp_π′)
+	y = PC(ct, obs_π, exp_π′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
 		return y, pprime, C′
@@ -268,6 +267,9 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 	return (dist <= tol)
 end
 
+decay_η(ct::CrazyType{Forward}, η) = max(0.785*η, 1e-4)
+decay_η(ct::CrazyType{Backward}, η) = max(0.785*η, 5e-3)
+
 function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 50)
 	dist = 10.
 	iter = 0
@@ -316,7 +318,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		if iter == floor(Int, switch_η*0.4)
 			upd_η = min(upd_η, 0.002)
 		elseif iter % switch_η == 0
-			upd_η = max(0.785*upd_η, 1e-4)
+			upd_η = decay_η(ct, upd_η) # Automatically uses the updating method for fwd or bwd
 		end
 		if verbose
 			print_save("new upd_η = $(@sprintf("%0.3g", upd_η))", true)

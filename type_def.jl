@@ -1,5 +1,15 @@
 using Distributions
-mutable struct CrazyType
+
+abstract type PhillipsCurve
+end
+
+abstract type Forward <: PhillipsCurve
+end
+
+abstract type Backward <: PhillipsCurve
+end
+
+mutable struct CrazyType{T<:PhillipsCurve}
 	β::Float64
 	γ::Float64
 	κ::Float64
@@ -28,7 +38,7 @@ function move_grids!(xgrid; xmin=0.0, xmax=1.0)
  	nothing
  end
 
-function CrazyType(;
+function CrazyType(T::DataType;
 		β = 1.02^(-0.25),
 		γ = 60.0,
 		κ = 0.17,
@@ -44,6 +54,10 @@ function CrazyType(;
 		Na = 30
 		)
 
+	if T == Backward
+		κ = 1/κ
+	end
+
 	A = κ / (1.0 - β + κ^2*γ) * ystar
 
 	pgrid = cdf.(Beta(5,2), range(0,1,length=Np))
@@ -58,11 +72,13 @@ function CrazyType(;
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, L, C, Ey, Eπ, Ep)
+	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, L, C, Ey, Eπ, Ep)
 end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
-Nash(ct::CrazyType) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
+
+Nash(ct::CrazyType{Forward}) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
+Nash(ct::CrazyType{Backward}) = ct.κ / (1.0 - ct.β + ct.κ^2*ct.γ) * ct.ystar
 
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
