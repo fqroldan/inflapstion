@@ -77,11 +77,10 @@ end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
 
-Nash(T::Backward, β, γ, κ, ystar) = κ / γ * ystar
-Nash(T::Forward, β, γ, κ, ystar) = κ / (1.0 - β + κ^2*γ) * ystar
+Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, κ / γ * ystar)
 
-Nash(ct::CrazyType{Forward}) = Nash(Forward, ct.κ, ct.γ, ct.ystar, ct.β)
-Nash(ct::CrazyType{Backward}) = Nash(Backward, ct.κ, ct.γ, ct.ystar, ct.β)
+Nash(ct::CrazyType{Forward}) = Nash(Forward, ct.β, ct.γ, ct.κ, ct.ystar)
+Nash(ct::CrazyType{Backward}) = Nash(Backward, ct.β, ct.γ, ct.κ, ct.ystar)
 
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
