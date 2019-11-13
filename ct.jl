@@ -374,7 +374,7 @@ function choose_ω!(L_mat, ct::CrazyType, T::DataType, Nω=size(L_mat,1); remote
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 1e-3
+			tol = 5e-3
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
