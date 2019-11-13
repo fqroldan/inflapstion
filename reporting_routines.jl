@@ -44,7 +44,7 @@ end
 
 function initial_report(ct::CrazyType)
 
-	π_Nash = annualized(Nash(ct)) * 100
+	π_Nash = annualized(Nash(ct))
 	real_rate = (1/ct.β^4 - 1) * 100
 	print_save("Credibility Dynamics and Disinflation Plans\n")
 	print_save("\nStarting run on $(Threads.nthreads()) threads at $(Dates.format(now(),"HH:MM"))")
