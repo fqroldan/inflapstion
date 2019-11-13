@@ -102,7 +102,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw:
 
 	if reverse_draw
 		p1 = plot([
-			scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max
+			scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max
 			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
 	end
 
