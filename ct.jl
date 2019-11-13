@@ -337,7 +337,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	return dist
 end
 
-function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+function choose_ω!(L_mat, ct::CrazyType{T}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
 
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = 1.0, xmin = 0.01)
@@ -414,7 +414,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
-			ct = CrazyType(; χ = χv)
+			ct = CrazyType(T; χ = χv)
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
