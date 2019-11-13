@@ -39,8 +39,8 @@ ct = create_or_load()
 initial_report(ct)
 
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
-Nω = 20
-Nχ = 20 
+Nω = 15
+Nχ = 15 
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 ωmin = choose_ω!(L_mat, ct; remote = machine_remote)
