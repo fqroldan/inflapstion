@@ -81,8 +81,7 @@ which_PC(ct::CrazyType{T}) where T <: PhillipsCurve = T
 
 Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, κ / γ * ystar)
 
-Nash(ct::CrazyType{Forward}) = Nash(Forward, ct.β, ct.γ, ct.κ, ct.ystar)
-Nash(ct::CrazyType{Backward}) = Nash(Backward, ct.β, ct.γ, ct.κ, ct.ystar)
+Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
 
 dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)

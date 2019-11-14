@@ -268,7 +268,6 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 end
 
 decay_η(ct::CrazyType, η) = max(0.785*η, 1e-4)
-# decay_η(ct::CrazyType{Backward}, η) = max(0.8*η, 5e-4)
 
 function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 50)
 	dist = 10.
@@ -337,15 +336,17 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	return dist
 end
 
-function choose_ω!(L_mat, ct::CrazyType{Forward}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
-	choose_ω!(L_mat, ct, Forward, Nω; remote=remote, upd_η=upd_η)
-end
+# function choose_ω!(L_mat, ct::CrazyType{Forward}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+# 	choose_ω!(L_mat, ct, Forward, Nω; remote=remote, upd_η=upd_η)
+# end
 
-function choose_ω!(L_mat, ct::CrazyType{Backward}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
-	choose_ω!(L_mat, ct, Backward, Nω; remote=remote, upd_η=upd_η)
-end
+# function choose_ω!(L_mat, ct::CrazyType{Backward}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+# 	choose_ω!(L_mat, ct, Backward, Nω; remote=remote, upd_η=upd_η)
+# end
 
-function choose_ω!(L_mat, ct::CrazyType, T::DataType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+
+	T = which_PC(ct)
 
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = 1.0, xmin = 0.01)
