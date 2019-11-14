@@ -19,13 +19,19 @@ function create_or_load()
 	ct = CrazyType(Backward, ω = 0.2, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
-		ct = load("../../ct_1.jld", "ct")
+		ctt = load("../../ct_1.jld", "ct")
+		if typeof(ctt) == typeof(ct)
+			ct=ctt
+		end
 		print_save("✓\n")
 	catch
 		print_save("failed.")
 		try
 			print_save("Loading optimum of previous run :")
-			ct = load("../../ct_opt.jld", "ct");
+			ctt = load("../../ct_opt.jld", "ct");
+			if typeof(ctt) == typeof(ct)
+				ct=ctt
+			end
 			print_save("✓\n")
 		catch
 			print_save("failed. Using new type as guess.\n")
