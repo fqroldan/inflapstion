@@ -15,8 +15,8 @@ function establish_remote()
 end
 machine_remote = establish_remote()
 
-function create_or_load()
-	ct = CrazyType(Backward, ω = 0.2, χ = 0.0);
+function create_or_load(T::DataType)
+	ct = CrazyType(T, ω = 0.2, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../../ct_1.jld", "ct")
@@ -40,7 +40,7 @@ function create_or_load()
 	return ct
 end
 
-ct = create_or_load()
+ct = create_or_load(Backward)
 
 initial_report(ct)
 
