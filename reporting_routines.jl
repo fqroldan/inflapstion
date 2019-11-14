@@ -46,10 +46,11 @@ function initial_report(ct::CrazyType)
 
 	π_Nash = annualized(Nash(ct))
 	real_rate = (1/ct.β^4 - 1) * 100
-	print_save("Credibility Dynamics and Disinflation Plans\n")
-	print_save("\nStarting run on $(Threads.nthreads()) threads at $(Dates.format(now(),"HH:MM"))")
-	print_save("\nNash inflation is $(@sprintf("%.3g",π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%")
-	print_save("\nGrid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid))))% annual)")
+	print_save("Credibility Dynamics and Disinflation Plans\n\n")
+	print_save("Starting run on $(Threads.nthreads()) threads at $(Dates.format(now(),"HH:MM"))\n")
+	print_save("Nash inflation is $(@sprintf("%.3g",π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%. ")
+	print_save("Version with a $(which_PC(ct)) Phillips curve \n")
+	print_save("Grid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid))))% annual)")
 
 	nothing
 end

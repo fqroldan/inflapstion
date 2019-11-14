@@ -77,6 +77,8 @@ end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
 
+which_PC(ct::CrazyType{T}) where T <: PhillipsCurve = T
+
 Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, κ / γ * ystar)
 
 Nash(ct::CrazyType{Forward}) = Nash(Forward, ct.β, ct.γ, ct.κ, ct.ystar)
