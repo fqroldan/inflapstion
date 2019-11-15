@@ -349,7 +349,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, 
 	T = which_PC(ct)
 
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
-	move_grids!(ωgrid, xmax = 1.0, xmin = 0.01)
+	move_grids!(ωgrid, xmax = 1.5, xmin = 0.01)
 
 	Nχ = size(L_mat, 2)
 	χgrid = range(0.0, 0.5*Nash(ct), length = Nχ)
