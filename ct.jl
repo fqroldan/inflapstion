@@ -13,6 +13,18 @@ include("simul.jl")
 include("plotting_routines.jl")
 
 # @everywhere begin
+
+function output_bayes(ct::CrazyType, gπ, pv, av)
+
+	exp_π = pv*av + (1-pv)*gπ
+
+	for (jj, πv) in enumerate(-1:0.001:1.5)
+
+		pp = Bayes(ct, πv, exp_π, pv, av)
+		# yv[jj] = PC(ct, )
+	end
+end
+
 function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	numer = pv * pdf_ϵ(ct, obs_π - av)
@@ -31,8 +43,8 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	return p′
 end
 
-PC(ct::CrazyType{Forward}, obs_π, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::CrazyType{Backward}, obs_π, exp_π)  = ct.κ * (obs_π - exp_π)
+PC(ct::CrazyType{Forward}, obs_π, exp_π, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
+PC(ct::CrazyType{Backward}, obs_π, exp_π, exp_π′)  = ct.κ * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
@@ -63,7 +75,7 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Boo
 	C′ = itp_C(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	y = PC(ct, obs_π, exp_π′) # Automatically uses method for forward or backward
+	y = PC(ct, obs_π, exp_π, exp_π′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
 		return y, pprime, C′
