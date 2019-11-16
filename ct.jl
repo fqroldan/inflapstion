@@ -340,7 +340,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		end
 
 		if iter == floor(Int, switch_η*0.4)
-			upd_η = min(upd_η, 0.005)
+			upd_η = min(upd_η, 0.05)
 		elseif iter % switch_η == 0
 			upd_η = decay_η(ct, upd_η) # Automatically uses the updating method for fwd or bwd
 		end
