@@ -12,7 +12,7 @@ function iter_simul(ct::CrazyType, itp_gπ, pv, av; noshocks::Bool=false)
 	aprime = ϕ(ct, av)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	y = PC(ct, obs_π, exp_π′)
+	y = PC(ct, obs_π, exp_π, exp_π′)
 
 	return pprime, aprime, obs_π, y, exp_π, ϵ
 end
