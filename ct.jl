@@ -14,15 +14,28 @@ include("plotting_routines.jl")
 
 # @everywhere begin
 
-function output_bayes(ct::CrazyType, gπ, pv, av)
+function output_bayes(ct::CrazyType, pv, av, itp_gπ)
 
-	exp_π = pv*av + (1-pv)*gπ
+	exp_π = pv*av + (1-pv)*itp_gπ(pv, av)
 
-	for (jj, πv) in enumerate(-1:0.001:1.5)
+	aprime = ϕ(ct, av)
+	π_myopic = pv * aprime + (1.0-pv) * itp_gπ(pv, aprime)
 
-		pp = Bayes(ct, πv, exp_π, pv, av)
-		# yv[jj] = PC(ct, )
+	Nv = 500
+	yv = zeros(Nv)
+	ym = zeros(Nv)
+	for (jj, πv) in enumerate(range(-1, 1.5, length=Nv))
+
+		pprime = Bayes(ct, πv, exp_π, pv, av)
+		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+		yv[jj] = PC(ct, πv, exp_π, exp_π′)
+		ym[jj] = PC(ct, πv, exp_π, π_myopic)
 	end
+
+	plot([
+		scatter(;x=range(-1, 1.5, length=Nv), y=yv-ym)
+		# scatter(;x=range(-1, 1.5, length=Nv), y=ym)
+		])
 end
 
 function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
