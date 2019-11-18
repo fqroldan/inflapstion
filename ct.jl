@@ -359,7 +359,7 @@ end
 # 	choose_ω!(L_mat, ct, Backward, Nω; remote=remote, upd_η=upd_η)
 # end
 
-function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	T = which_PC(ct)
 
