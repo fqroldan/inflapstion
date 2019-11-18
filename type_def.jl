@@ -56,6 +56,7 @@ function CrazyType(T::DataType;
 
 	if T == Backward
 		κ = 1/κ
+		γ = 1.75
 	end
 
 	A = Nash(T, β, γ, κ, ystar)
