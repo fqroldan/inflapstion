@@ -56,17 +56,17 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 	return p′
 end
 
-PC(ct::CrazyType{Forward}, obs_π, exp_π, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::CrazyType{Backward}, obs_π, exp_π, exp_π′) = 1/ct.κ  * (obs_π - exp_π)
+PC(ct::CrazyType{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
+PC(ct::CrazyType{Backward}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
-	exp_π  = itp_gπ(pv, av)
+	πe  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
 		pprime = 0.0
 	elseif isapprox(pv, 1.0)
 		pprime = 1.0
 	else
-		pprime = Bayes(ct, obs_π, exp_π, pv, av)
+		pprime = Bayes(ct, obs_π, πe, pv, av)
 	end
 	aprime = ϕ(ct, av)
 
@@ -74,7 +74,7 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Boo
 	C′ = itp_C(pprime, aprime)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	y = PC(ct, obs_π, exp_π, exp_π′) # Automatically uses method for forward or backward
+	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	if get_y
 		return y, pprime, C′
@@ -235,7 +235,8 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 		ct.L = ones(ct.Np, ct.Na)
 	end
 
-	old_gπ = copy(ct.gπ)
+	old_gπ = copy(Egπ)
+	new_gπ = zeros(size(old_gπ))
 
 	while dist > tol && iter < maxiter
 		iter += 1
@@ -279,7 +280,7 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 		print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
 	end
 
-	return (dist <= tol), old_gπ
+	return (dist <= tol), new_gπ
 end
 
 decay_η(ct::CrazyType, η) = max(0.785*η, 1e-4)
@@ -303,7 +304,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		dist = sqrt.(sum( (new_gπ  - old_gπ ).^2 )) / sqrt.(sum(old_gπ .^2))
+		dist = sqrt.(sum( (new_gπ  - ct.gπ ).^2 )) / sqrt.(sum(ct.gπ .^2))
 		push!(dists, dist)
 		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))"
 		if flag
@@ -315,7 +316,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 			print(rep_status)
 		end
 
-		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * old_gπ;
+		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ;
 
 		if tempplots && (iter % 5 == 0 || dist <= tol)
 			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
@@ -395,7 +396,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 1e-3
+			tol = 25e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
