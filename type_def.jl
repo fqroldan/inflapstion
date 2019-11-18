@@ -55,7 +55,6 @@ function CrazyType(T::DataType;
 		)
 
 	if T == Backward
-		κ = 1/κ
 		γ = 1.75
 	end
 
@@ -80,7 +79,7 @@ end
 
 which_PC(ct::CrazyType{T}) where T <: PhillipsCurve = T
 
-Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, κ / γ * ystar)
+Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, ystar / (κ*γ))
 
 Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
 

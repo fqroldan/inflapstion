@@ -57,7 +57,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 end
 
 PC(ct::CrazyType{Forward}, obs_π, exp_π, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::CrazyType{Backward}, obs_π, exp_π, exp_π′) = ct.κ * (obs_π - exp_π)
+PC(ct::CrazyType{Backward}, obs_π, exp_π, exp_π′) = 1/ct.κ  * (obs_π - exp_π)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
