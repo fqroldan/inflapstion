@@ -33,7 +33,7 @@ function output_bayes(ct::CrazyType, pv, av, itp_gπ)
 	end
 
 	plot([
-		scatter(;x=range(-1, 1.5, length=Nv), y=yv-ym)
+		scatter(;x=range(-1, 1.5, length=Nv), y=yv)
 		# scatter(;x=range(-1, 1.5, length=Nv), y=ym)
 		])
 end
@@ -69,20 +69,6 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Boo
 		pprime = Bayes(ct, obs_π, exp_π, pv, av)
 	end
 	aprime = ϕ(ct, av)
-
-	#=
-	σ_η = 0.05
-	η_vec = range(-1.96*σ_η, 1.96*σ_η, length = 9)
-	pη = pdf.(Normal(0,σ_η), η_vec)
-	pη = pη / sum(pη)
-
-	ap_vec = aprime .* (1.0 .+ η_vec)
-	L′ = 0.0
-	for (jap, apv) in enumerate(ap_vec)
-		apv = max(min(apv, maximum(ct.agrid)), minimum(ct.agrid))
-		L′ += itp_L(pprime, apv)# * pη[jap]
-	end
-	=#
 
 	L′ = itp_L(pprime, aprime)
 	C′ = itp_C(pprime, aprime)
