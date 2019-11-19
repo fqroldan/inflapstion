@@ -60,15 +60,17 @@ PC(ct::CrazyType{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β
 PC(ct::CrazyType{Backward}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
 
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
-	πe  = itp_gπ(pv, av)
+	exp_π  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
 		pprime = 0.0
 	elseif isapprox(pv, 1.0)
 		pprime = 1.0
 	else
-		pprime = Bayes(ct, obs_π, πe, pv, av)
+		pprime = Bayes(ct, obs_π, exp_π, pv, av)
 	end
 	aprime = ϕ(ct, av)
+
+	πe = pv*av + (1-pv)*exp_π
 
 	L′ = itp_L(pprime, aprime)
 	C′ = itp_C(pprime, aprime)
