@@ -261,9 +261,9 @@ function pfi!(ct::CrazyType, Egπ; tol::Float64=1e-12, maxiter::Int64=1000, verb
 		ct.Ep = new_p
 		ct.C  = new_C
 
-		if verbose && iter % 10 == 0
-			print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
-		end
+		# if verbose && iter % 10 == 0
+		# 	print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
+		# end
 	end
 
 	dist2 = 10.
@@ -333,7 +333,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 		end
 
 		if iter == floor(Int, switch_η*0.4)
-			upd_η = min(upd_η, 0.05)
+			upd_η = min(upd_η, 0.01)
 		elseif iter % switch_η == 0
 			upd_η = decay_η(ct, upd_η) # Automatically uses the updating method for fwd or bwd
 		end
