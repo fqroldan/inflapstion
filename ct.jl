@@ -366,11 +366,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	T = which_PC(ct)
 
-	ωmax = 1.0
-	# if T == Backward
-	# 	ωmax = 3.0
-	# elseif T == Forward
-	# end
+	if T == Backward
+		ωmax = 3.0
+	elseif T == Forward
+		ωmax = 1.0
+	end
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = ωmax, xmin = 0.01)
 
