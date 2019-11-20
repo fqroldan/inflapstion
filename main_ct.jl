@@ -30,7 +30,7 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = create_or_load(Backward)
+ct = create_or_load(Forward)
 
 initial_report(ct)
 
