@@ -382,6 +382,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	L_min = 100.
 	ω_min = 1.0
+	χ_min = 1.0
 	a_min = 1.0
 	t0 = time()
 	Lplot = []
@@ -472,6 +473,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			if L < L_min
 				L_min = L_mat_ctour[jω, jχ]
 				ω_min = ωv
+				χ_min = χv
 				a_min = a_vec[jω]
 
 				save("../../ct_opt.jld", "ct", ct)
@@ -522,12 +524,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	end
 
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
-	print_save("\nOverall minimum announcement a₀ = $(annualized(a_min)) with ω = $ω_min")
-
+	print_save("\nOverall minimum announcement c = (a₀, ω, χ) = $(annualized(a_min)), $ω_min, $(annualized(χ_min))")
 
 	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
 
-	return ω_min
+	nothing
 end
 # end # everywhere
 
