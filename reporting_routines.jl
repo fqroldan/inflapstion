@@ -51,6 +51,7 @@ function initial_report(ct::CrazyType)
 	print_save("Nash inflation is $(@sprintf("%.3g",π_Nash))%, real rate is $(@sprintf("%.3g",real_rate))%. ")
 	print_save("Version with a $(which_PC(ct)) Phillips curve \n")
 	print_save("Grid for 𝑎 goes up to $(@sprintf("%.3g",maximum(ct.agrid))) ($(@sprintf("%.3g",annualized(maximum(ct.agrid))))% annual)")
+	print_save("σ = $(ct.σ)")
 
 	nothing
 end
