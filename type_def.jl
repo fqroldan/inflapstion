@@ -89,5 +89,5 @@ dist_ϵ(ct) = Normal(0, ct.σ)
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
 
-annualized(π::Float64) = 100*((1.0 .+ π).^4 .- 1)
-deannual(x::Float64) = (x*0.01 + 1.0)^0.25 - 1.0
+annualized(π::Real) = 100*((1.0 .+ π).^4 .- 1)
+deannual(x::Real) = (x*0.01 + 1.0)^0.25 - 1.0
