@@ -24,7 +24,7 @@ function output_bayes(ct::CrazyType, pv, av, itp_gπ)
 	Nv = 500
 	yv = zeros(Nv)
 	ym = zeros(Nv)
-	for (jj, πv) in enumerate(range(-1, 1.5, length=Nv))
+	for (jj, πv) in enumerate(range(deannual(-1), deannual(1.5), length=Nv))
 
 		pprime = Bayes(ct, πv, exp_π, pv, av)
 		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
@@ -33,8 +33,8 @@ function output_bayes(ct::CrazyType, pv, av, itp_gπ)
 	end
 
 	plot([
-		scatter(;x=range(-1, 1.5, length=Nv), y=yv)
-		# scatter(;x=range(-1, 1.5, length=Nv), y=ym)
+		scatter(;x=annualized.(range(deannual(-2), deannual(2.5), length=Nv)), y=yv-ym)
+		# scatter(;x=annualized.(range(deannual(-2), deannual(2.5), length=Nv)), y=ym)
 		])
 end
 
