@@ -10,8 +10,8 @@ function create_or_load(T::DataType)
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../../ct_1.jld", "ct")
-		if typeof(ctt) == typeof(ct)
-			ct=ctt
+		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
+			ct.gπ=ctt.gπ
 		end
 		print_save("✓\n")
 	catch
@@ -19,8 +19,8 @@ function create_or_load(T::DataType)
 		try
 			print_save("Loading optimum of previous run :")
 			ctt = load("../../ct_opt.jld", "ct");
-			if typeof(ctt) == typeof(ct)
-				ct=ctt
+			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
+				ct.gπ=ctt.gπ
 			end
 			print_save("✓\n")
 		catch
