@@ -14,27 +14,39 @@ include("plotting_routines.jl")
 
 # @everywhere begin
 
-function output_bayes(ct::CrazyType, pv, av, itp_gπ)
+function output_bayes(ct::CrazyType, pv, av)
+	knots = (ct.pgrid, ct.agrid);
+	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()));
 
-	exp_π = pv*av + (1-pv)*itp_gπ(pv, av)
+	# exp_π = pv*av + (1-pv)*itp_gπ(pv, av)
+	exp_π = itp_gπ(pv, av)
+
+	println("gπ = [$(annualized(itp_gπ(pv, av))-1.96*ct.σ), $(annualized(itp_gπ(pv, av))+1.96*ct.σ)], av = $(annualized(av))")
+
+	println("$(pdf_ϵ(ct, exp_π - av ))")
+	println("$(pdf_ϵ(ct, 0.0 ))")
 
 	aprime = ϕ(ct, av)
 	π_myopic = pv * aprime + (1.0-pv) * itp_gπ(pv, aprime)
 
-	Nv = 500
+	Nv = 50
 	yv = zeros(Nv)
 	ym = zeros(Nv)
-	for (jj, πv) in enumerate(range(deannual(-1), deannual(1.5), length=Nv))
+	πvec = range(av - 1.96*ct.σ, av + 1.96*ct.σ, length=Nv)
+	for (jj, πv) in enumerate(πvec)
 
 		pprime = Bayes(ct, πv, exp_π, pv, av)
 		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 		yv[jj] = PC(ct, πv, exp_π, exp_π′)
 		ym[jj] = PC(ct, πv, exp_π, π_myopic)
+
+		yv[jj] = pdf_ϵ(ct, πv - av)
+
 	end
 
 	plot([
-		scatter(;x=annualized.(range(deannual(-2), deannual(2.5), length=Nv)), y=yv-ym)
-		# scatter(;x=annualized.(range(deannual(-2), deannual(2.5), length=Nv)), y=ym)
+		scatter(;x=annualized.(πvec), y=yv)
+		# scatter(;x=annualized.(πvec), y=ym)
 		])
 end
 
@@ -47,7 +59,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	p′ = max(0.0, min(1.0, p′))
 
-	if isapprox(denomin, 0.0) || isapprox(numer, 0.0)
+	if isapprox(denomin, 0.0)
 		p′ = 0.0
 	end
 	# drift = (1.0 - pv) * 0.15
