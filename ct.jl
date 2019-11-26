@@ -40,7 +40,8 @@ function output_bayes(ct::CrazyType, pv, av)
 		yv[jj] = PC(ct, πv, exp_π, exp_π′)
 		ym[jj] = PC(ct, πv, exp_π, π_myopic)
 
-		yv[jj] = pdf_ϵ(ct, πv - av)
+		# yv[jj] = pdf_ϵ(ct, πv - av)
+		# yv[jj] = pprime
 
 	end
 
