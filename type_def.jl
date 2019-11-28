@@ -40,7 +40,7 @@ function move_grids!(xgrid; xmin=0.0, xmax=1.0)
 
 function CrazyType(T::DataType;
 		β = 1.02^(-0.25),
-		γ = 30.0,
+		γ = 40.0,
 		# γ = 60.0,
 		κ = 0.17,
 		# κ = 0.8,
