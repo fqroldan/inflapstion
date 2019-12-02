@@ -72,6 +72,20 @@ end
 PC(ct::CrazyType{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
 PC(ct::CrazyType{Backward}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
 
+function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
+	aprime = ϕ(ct, av)
+
+	πe = pv*av + (1-pv)*exp_π
+	exp_π′ = itp_gπ(0.0, aprime)
+
+	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
+	L′ = itp_L(0.0, aprime)
+
+	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
+
+	return L
+end
+
 function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av; get_y::Bool=false)
 	exp_π  = itp_gπ(pv, av)
 	if isapprox(pv, 0.0)
@@ -127,19 +141,20 @@ end
 
 function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 
-	minπ, maxπ = -0.25, 1.1*maximum(ct.agrid)
-	#=
+	minπ = max(0, π_guess - 3.09*ct.σ)
+	maxπ = min(1.1*maximum(ct.agrid), π_guess + 3.09*ct.σ)
+	
 	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
 			minπ, maxπ, GoldenSection()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
-	=#
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
+	
+#=	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
 		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
 		)
-
+=#
 	gπ, L = first(res.minimizer), res.minimum
 
 	if Optim.converged(res) == false
@@ -153,6 +168,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 			gπ, L = resb.minimizer, resb.minimum
 		end
 	end
+
 	return gπ, L
 end
 
