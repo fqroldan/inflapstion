@@ -144,17 +144,18 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 	minπ = max(0, π_guess - 3.09*ct.σ)
 	maxπ = min(1.1*maximum(ct.agrid), π_guess + 3.09*ct.σ)
 	
-	res = Optim.optimize(
+#=	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
 			minπ, maxπ, GoldenSection()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
 			)
+=#
 	
-#=	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
-		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
+		[av], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
 		)
-=#
+
 	gπ, L = first(res.minimizer), res.minimum
 
 	if Optim.converged(res) == false
