@@ -143,6 +143,9 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 
 	minπ = max(0, π_guess - 3.09*ct.σ)
 	maxπ = min(1.1*maximum(ct.agrid), π_guess + 3.09*ct.σ)
+	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
+		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
+	end
 	
 #=	res = Optim.optimize(
 			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
@@ -160,7 +163,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 
 	if Optim.converged(res) == false
 		# a = Optim.iterations(res)
-		print_save("π∈ [$minπ, $maxπ]")
+		# print_save("π∈ [$minπ, $maxπ]")
 		# println(a)
 		resb = Optim.optimize(
 				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
