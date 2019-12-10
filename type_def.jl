@@ -6,7 +6,7 @@ end
 abstract type Forward <: PhillipsCurve
 end
 
-abstract type Backward <: PhillipsCurve
+abstract type Simultaneous <: PhillipsCurve
 end
 
 mutable struct CrazyType{T<:PhillipsCurve}
@@ -57,7 +57,7 @@ function CrazyType(T::DataType;
 		Na = 30
 		)
 
-	if T == Backward
+	if T == Simultaneous
 		# γ = 1.75
 	end
 

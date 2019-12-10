@@ -70,7 +70,7 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 end
 
 PC(ct::CrazyType{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::CrazyType{Backward}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
+PC(ct::CrazyType{Simultaneous}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
 
 function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
 	aprime = ϕ(ct, av)
@@ -392,8 +392,8 @@ end
 # 	choose_ω!(L_mat, ct, Forward, Nω; remote=remote, upd_η=upd_η)
 # end
 
-# function choose_ω!(L_mat, ct::CrazyType{Backward}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
-# 	choose_ω!(L_mat, ct, Backward, Nω; remote=remote, upd_η=upd_η)
+# function choose_ω!(L_mat, ct::CrazyType{Simultaneous}, Nω=size(L_mat,1); remote::Bool=true, upd_η=0.1)
+# 	choose_ω!(L_mat, ct, Simultaneous, Nω; remote=remote, upd_η=upd_η)
 # end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
@@ -401,7 +401,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	T = which_PC(ct)
 	Na = length(ct.agrid)
 
-	if T == Backward
+	if T == Simultaneous
 		ωmax = 3.0
 	elseif T == Forward
 		ωmax = 1.0
