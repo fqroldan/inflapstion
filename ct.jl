@@ -399,6 +399,7 @@ end
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	T = which_PC(ct)
+	Na = length(ct.agrid)
 
 	if T == Backward
 		ωmax = 3.0
@@ -421,15 +422,17 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	t0 = time()
 	Lplot = []
 	aplot = []
+	C_mat = zeros(Na, Nω, Nχ) * NaN
 	L_mat_ctour = zeros(Nω, Nχ) * NaN
 	C_mat_ctour = zeros(Nω, Nχ) * NaN
 	Lmin = 1e8
+	ja_min = 1
 	for (jχ, χv) in enumerate(χgrid)
 		L_vec = []
 		a_vec = []
 		ω_vec = []
 
-		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
+		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
 			ct.ω = ωv
 
 			t1 = time()
@@ -442,8 +445,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			
 			flag = (dist <= tol)
 			Lmin, ja = findmin(ct.L[3,:])
-			# Cmin = ct.C[3,ja]
-			Cmin = ct.C[3,end]
+			Cmin = ct.C[3,ja]
+			# Cmin = ct.C[3,end]
+
+			C_mat[:,jω,jχ] = ct.C[3,:]
+			
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
 			print_save(s)
@@ -474,7 +480,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
 			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 
-			return Lmin, Cmin
+			return Lmin, Cmin, ja
 		end
 
 		ωmin = 1e8
@@ -485,7 +491,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
-			L, C = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, aplot)
+			L, C, ja = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
 
 			L_mat[jω, jχ, :, :] = L_mat_save
 			L_mat_ctour[jω, jχ] = L
@@ -495,8 +501,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour)
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
 
-			pCct = plot_L_contour(ωgrid, χgrid, C_mat_ctour)
-			savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
+			# pCct = plot_L_contour(ωgrid, χgrid, C_mat_ctour)
+			# savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
 
 			# print_save("\nCurrent L = $L against current min = $Lmin")
 
@@ -509,6 +515,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				ω_min = ωv
 				χ_min = χv
 				a_min = a_vec[jω]
+				ja_min = ja
 
 				save("../../ct_opt.jld", "ct", ct)
 
@@ -527,6 +534,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
 				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
 			end
+
+			pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:])
+			savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
+
 		end
 
 		s = "\nMinimum element is $(@sprintf("%.3g",Lmin)) with a₀ = $(@sprintf("%.3g", annualized(amin)))"
