@@ -343,7 +343,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 end
 
 
-function plot_bayes(; center=1.0, dist=0.5, σ=0.5, p=0.5, distplot=4*sqrt(dist))
+function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist))
 
 	a = center-dist
 	g = center+dist
@@ -355,15 +355,21 @@ function plot_bayes(; center=1.0, dist=0.5, σ=0.5, p=0.5, distplot=4*sqrt(dist)
 
 	Bayes(p,x) = p .+ p.*(1.0.-p) .* (fa(x) .- fg(x)) ./ (p.*fa(x) .+ (1.0.-p).*fg(x))
 
+	_, jj = findmin((fa(ϵ_vec) - fg(ϵ_vec)).^2)
+	ϵstar = ϵ_vec[jj]
+
+	shapes = [vline(ϵstar, fa(ϵstar), Bayes(p,ϵstar), line_dash="dashdot")]
+	annotations = [attr(x=ϵstar, xanchor="left", y=(Bayes(p,ϵstar)+fa(ϵstar))/2, yanchor="center", text="π*", showarrow=false)]
+
 	p1 = plot([
-		scatter(;x=ϵ_vec, y=fa(ϵ_vec))
-		scatter(;x=ϵ_vec, y=fg(ϵ_vec))
-		scatter(;x=ϵ_vec, y=Bayes(p,ϵ_vec))
+		scatter(;x=ϵ_vec, y=fa(ϵ_vec), name="<i>f(a-π)")
+		scatter(;x=ϵ_vec, y=fg(ϵ_vec), name="<i>f(g-π)")
+		scatter(;x=ϵ_vec, y=Bayes(p,ϵ_vec), name="<i>B(p,π,a,g)", line_width=2)
 		],
-		Layout(;yaxis_range=[-0.05;1.05])
+		Layout(;yaxis_range=[-0.05;1.05], xaxis_range=[0,3], shapes=shapes, annotations=annotations)
 		)
 
-	relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", width=1200, height=500)
 
 
 	return p1
