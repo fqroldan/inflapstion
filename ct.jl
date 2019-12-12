@@ -576,6 +576,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	print_save("\nOverall minimum announcement c = (a₀, ω, χ) = $(annualized(a_min)), $ω_min, $(annualized(χ_min))")
 
 	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
+	savejson(p1, pwd()*"/../Graphs/tests/plans.json")
 
 	nothing
 end

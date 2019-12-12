@@ -404,7 +404,7 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 
 	p1 = [pω; pχa]
 	relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", title="Preferred plans")
-	relayout!(p1, height=600, width=900, font_family="Fira Sans Light", font_size=16, legend=attr(;orientation="h", x=0.1))
+	relayout!(p1, height=600, width=900, font_family="Lato", font_size=16, legend=attr(;orientation="h", x=0.1))
 
 	if make_pdf
 		savefig(p1, pwd()*"/../Graphs/plans.pdf")
