@@ -142,7 +142,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	Eπ_a 	 = annualized.(Eπ_minus_a)
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛"; reverse_draw=true)
-	pπ = plot_ct_pa(ct, annual_π, "gπ-a", ytitle="%")
+	pπ = plot_ct_pa(ct, annual_π, "<i>gπ-a", ytitle="%")
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼p'-p")
@@ -150,8 +150,13 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	p = [pL pπ; py pp]
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
-	relayout!(pL, font_family = "Fira Sans Light", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(pL, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+
+	relayout!(pp, font_family="Lato", xaxis_title="<i>p", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	restyle!(pp, showlegend=false)
+	relayout!(pπ, font_family="Lato", xaxis_title="<i>p", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	restyle!(pπ, showlegend=false)
 
 	return p, pL, pπ, pC, pp
 end
@@ -275,7 +280,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis_title="ω", yaxis_title="χ", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title="lim<sub><i>p</i></sub> min<sub><i>a</sub></i> 𝓛<i>(p,a,ω,χ)</i>", xaxis_title="Decay  (ω)", yaxis_title="Asymptote  (χ)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	end
@@ -317,7 +322,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		x0 = lines[1][:x][tt]
 		y0 = lines[1][:y][tt]
 		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=get(ColorSchemes.darkrainbow, 0.12), fillcolor=get(ColorSchemes.darkrainbow, 0.12), type="circle")]
-		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="𝑎ₜᶜ", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Fira Sans Light"))
+		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="𝑎ₜᶜ", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Lato"))
 		plotname *="_t"
 	end
 
@@ -325,7 +330,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		)
 
 	if slides
-		relayout!(p1, font_family = "Fira Sans Light", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 		plotname *= "_slides"
 	else
 		relayout!(p1, font_family = "STIX Two Text", font_size = 18, height = 500, width=1000)
