@@ -333,7 +333,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	tol_pfi = 1e-3 / 0.99
 	while dist > tol && iter < maxiter
 		iter += 1
-		tol_pfi = max(tol_pfi*0.9, 1e-5)
+		tol_pfi = max(tol_pfi*0.95, 5e-6)
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
@@ -436,7 +436,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 50e-4
+			tol = 25e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
