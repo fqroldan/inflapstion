@@ -321,7 +321,7 @@ end
 
 decay_η(ct::CrazyType, η) = max(0.8*η, 5e-5)
 
-function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 40)
+function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 30)
 	dist = 10.
 	iter = 0
 	
@@ -333,7 +333,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	tol_pfi = 1e-3 / 0.99
 	while dist > tol && iter < maxiter
 		iter += 1
-		tol_pfi = max(tol_pfi*0.95, 5e-6)
+		tol_pfi = max(tol_pfi*0.96, 4e-6)
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
