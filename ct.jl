@@ -436,7 +436,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 25e-4
+			tol = 10e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
@@ -529,10 +529,14 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
 				savejson(pLsim,pwd()*"/../Graphs/tests/simul_Lopt.json")
 			end
-			if jω == 1 && jχ == 1
+			if jω == length(ωgrid) && jχ == 1
 				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
 				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
+				_, pL, pπ, _, pp = makeplots_ct_pa(ct);
+				savejson(pL, pwd()*"/../Graphs/tests/first_L.json")
+				savejson(pπ, pwd()*"/../Graphs/tests/first_g.json")
+				savejson(pp, pwd()*"/../Graphs/tests/first_p.json")
 			end
 
 			pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:])
