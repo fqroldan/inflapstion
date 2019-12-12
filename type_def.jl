@@ -63,7 +63,7 @@ function CrazyType(T::DataType;
 
 	A = Nash(T, β, γ, κ, ystar)
 
-	pgrid = cdf.(Beta(5,2), range(0,1,length=Np))
+	pgrid = cdf.(Beta(5,3), range(0,1,length=Np))
 	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
 	move_grids!(agrid, xmax=A, xmin=0.0)
 

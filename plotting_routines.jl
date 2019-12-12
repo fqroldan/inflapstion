@@ -142,7 +142,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	Eπ_a 	 = annualized.(Eπ_minus_a)
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛"; reverse_draw=true)
-	pπ = plot_ct_pa(ct, annual_π, "<i>gπ-a", ytitle="%")
+	pπ = plot_ct_pa(ct, annual_π, "<i>g<sup>⋆</sup> - a", ytitle="%")
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼<i>p'-p")
@@ -155,7 +155,7 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	relayout!(pp, font_family="Lato", xaxis_title="<i>p", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	restyle!(pp, showlegend=false)
-	relayout!(pπ, font_family="Lato", xaxis_title="<i>p", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(pπ, font_family="Lato", xaxis_title="<i>p", yaxis_title="%", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	restyle!(pπ, showlegend=false)
 
 	return p, pL, pπ, pC, pp
