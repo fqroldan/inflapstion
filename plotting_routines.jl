@@ -145,7 +145,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	pπ = plot_ct_pa(ct, annual_π, "<i>gπ-a", ytitle="%")
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
-	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼p'-p")
+	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼<i>p'-p")
 	pC = plot_ct_pa(ct, ct.C, "𝓒")
 
 	p = [pL pπ; py pp]
