@@ -259,7 +259,7 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
-function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
+function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false)
 
 	L_filled, temp = findmin(L_mat[.!isnan.(L_mat)])
 	jjxy = findfirst(L_mat.==L_filled)
@@ -280,7 +280,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; slides::Bool=false)
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title="lim<sub><i>p</i></sub> min<sub><i>a</sub></i> 𝓛<i>(p,a,ω,χ)</i>", xaxis_title="Decay  (ω)", yaxis_title="Asymptote  (χ)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title="lim<sub><i>p→0</i></sub> min<sub><i>a</sub></i>"*name_y*"<i>(p,a,ω,χ)</i>", xaxis_title="Decay  (ω)", yaxis_title="Asymptote  (χ)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	end

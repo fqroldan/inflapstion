@@ -498,7 +498,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 			C_mat_ctour[jω, jχ] = C 
 
-			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour)
+			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour, name_y="𝓛")
 			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
 
 			# pCct = plot_L_contour(ωgrid, χgrid, C_mat_ctour)
@@ -539,7 +539,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				savejson(pp, pwd()*"/../Graphs/tests/first_p.json")
 			end
 
-			pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:])
+			pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:], name_y="C")
 			savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
 
 		end
