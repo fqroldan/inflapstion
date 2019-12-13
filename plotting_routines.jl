@@ -17,11 +17,11 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 	if dim == 1
 		xgrid = ct.pgrid
 		zgrid = ct.agrid
-		xtitle= "𝑝"
+		xtitle= "<i>p</i>"
 	elseif dim == 2
 		xgrid = ct.agrid
 		zgrid = ct.pgrid
-		xtitle= "𝑎"
+		xtitle= "<i>a"
 	else
 		throw(error("wrong dim"))
 	end
@@ -31,10 +31,10 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 	for (jz, zv) in enumerate(zgrid)
 		if dim == 1
 			y_vec = y_mat[:, jz]
-			name = "𝑎"
+			name = "<i>a"
 		elseif dim == 2
 			y_vec = y_mat[jz, :]
-			name = "𝑝"
+			name = "<i>p</i>"
 		end
 		name = name * " = $(@sprintf("%.2g", zv))"
 		jz % 2 == 0 ? showleg_i = showleg : showleg_i = false
@@ -98,12 +98,12 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw:
 
 	p1 = plot([
 		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max
-		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
+		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
 
 	if reverse_draw
 		p1 = plot([
 			scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max
-			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "𝑝", yaxis_title=ytitle))
+			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
 	end
 
 	return p1
@@ -122,7 +122,7 @@ function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 
 	p2 = plot_ct(ct, (ct.Ey, ct.Eπ), ("𝔼y", "𝔼π"); make_pdf=make_pdf, make_png=make_png)
 
-	p3 = plot_ct(ct, (gπ_minus_a, Ep_minus_p), ("gπ-a", "𝔼p'-p"); make_pdf=make_pdf, make_png=make_png)
+	p3 = plot_ct(ct, (gπ_minus_a, Ep_minus_p), ("gπ-a", "𝔼[<i>p'-p</i>]"); make_pdf=make_pdf, make_png=make_png)
 
 	return p1, p2, p3
 end
@@ -145,7 +145,7 @@ function makeplots_ct_pa(ct::CrazyType)
 	pπ = plot_ct_pa(ct, annual_π, "<i>g<sup>⋆</sup> - a", ytitle="%")
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
-	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼<i>p'-p")
+	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼[<i>p'-p</i>]")
 	pC = plot_ct_pa(ct, ct.C, "𝓒")
 
 	p = [pL pπ; py pp]
@@ -308,7 +308,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		xe = lines[1][:x][te]
 		ye = lines[1][:y][te]
 		col_line = lines[1][:marker][:color]
-		push!(annotations, attr(; x=xe, y=ye+0.05, text="𝑐", font_color=col_line, showarrow=false))
+		push!(annotations, attr(; x=xe, y=ye+0.05, text="<i>c", font_color=col_line, showarrow=false))
 	end
 
 	if add_opt
@@ -322,7 +322,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		x0 = lines[1][:x][tt]
 		y0 = lines[1][:y][tt]
 		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=get(ColorSchemes.darkrainbow, 0.12), fillcolor=get(ColorSchemes.darkrainbow, 0.12), type="circle")]
-		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="𝑎ₜᶜ", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Lato"))
+		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="<i>a<sub>t</sub><sup>c</sup>", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Lato"))
 		plotname *="_t"
 	end
 
@@ -397,7 +397,7 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 	pχa= plot([
 		scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="a", marker_color=get(ColorSchemes.southwest, 0.5))
 		scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="χ", marker_color=get(ColorSchemes.southwest, 0.99))
-		], Layout(;yaxis_title="%", xaxis_title="𝑝"));
+		], Layout(;yaxis_title="%", xaxis_title="<i>p</i>"));
 
 	relayout!(pω,  xaxis_zeroline=false, yaxis_zeroline=false)
 	relayout!(pχa, xaxis_zeroline=false, yaxis_zeroline=false)
