@@ -333,7 +333,7 @@ function Epfi!(ct::CrazyType; tol::Float64=5e-4, maxiter::Int64=2500, verbose::B
 	tol_pfi = 1e-3 / 0.99
 	while dist > tol && iter < maxiter
 		iter += 1
-		tol_pfi = max(tol_pfi*0.97, 2e-6)
+		tol_pfi = max(tol_pfi*0.98, 2e-6)
 
 		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
 
