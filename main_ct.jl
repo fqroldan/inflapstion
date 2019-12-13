@@ -35,7 +35,7 @@ ct = create_or_load(Forward)
 initial_report(ct)
 
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
-Nω = 20
+Nω = 30
 Nχ = 15 
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
