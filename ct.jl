@@ -487,7 +487,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
+			if jω == 1 && jχ > 1
+				old_ct = load("../../ct_1_temp.jld", "ct")
+				old_L, old_gπ = copy(old_ct.L), copy(old_ct.gπ)
+			end
+
 			ct = CrazyType(T; χ = χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
+			
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
@@ -505,6 +511,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			# savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
 
 			# print_save("\nCurrent L = $L against current min = $Lmin")
+
+			if jω == 1
+				save("../../ct_1_temp.jld", "ct", ct)
+			end
+
 
 			if jχ == 1 && jω == 2
 				save("../../ct_1.jld", "ct", ct)
