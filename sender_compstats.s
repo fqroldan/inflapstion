@@ -20,10 +20,10 @@ mkdir -p cddp_compstats/
 cd cddp_compstats
 
 N=20
-rclone copy remote_dropbox:NYU/InflAPStion/Codes/compstats.s ./
+rclone copy remote_dropbox:NYU/InflAPStion/Codes/compstats_cddp.s ./
 echo start
 
 touch compstats.txt
-sbatch --export=N=$N --array=1-$N compstats_aps.s
+sbatch --export=N=$N --array=1-$N compstats_cddp.s
 
 echo all jobs sent
