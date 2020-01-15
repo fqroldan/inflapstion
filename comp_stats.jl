@@ -18,7 +18,7 @@ function prepare_results(run_number)
 end
 
 run_number, Nruns = qload(ARGS)
-prepare_resuts(run_number)
+prepare_results(run_number)
 
 include("ct.jl")
 σvec = range(0.005/4, 0.02/4, length=Nruns)
