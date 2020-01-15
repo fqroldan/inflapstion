@@ -3,7 +3,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=7
 #SBATCH --mem=60GB
-#SBATCH --job-name=InflAPStion
+#SBATCH --job-name=cddp_%a
 #SBATCH --time=5-10:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=froldan@nyu.edu
