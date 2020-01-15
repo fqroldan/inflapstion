@@ -18,6 +18,8 @@ module load rclone/1.38
 rm cddp_compstats -rf
 mkdir -p cddp_compstats/
 cd cddp_compstats
+cp ./ct_1.jld cddp_compstats/
+cp ./ct_opt.jld cddp_compstats/
 
 N=20
 rclone copy remote_dropbox:NYU/InflAPStion/Codes/compstats_cddp.s ./
