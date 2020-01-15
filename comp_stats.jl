@@ -12,7 +12,7 @@ function qload(s)
 end
 function prepare_results(run_number)
 	if run_number == 1
-		write("../../compstats.txt", "a,omega,chi,Lmin\n")
+		write("../../compstats.txt", "sigma,a,omega,chi,Lmin\n")
 	end
 	nothing
 end
@@ -56,9 +56,9 @@ ct = create_or_load(Forward)
 
 initial_report(ct)
 
-function fill_in_results(a, ω, χ, Lmin)
+function fill_in_results(σ, a, ω, χ, Lmin)
 	s = read("../../compstats.txt", String)
-	write("../../compstats.txt", s*"$(a), $(ω), $(χ), $(Lmin)\n")
+	write("../../compstats.txt", s*"$(σ), $(a), $(ω), $(χ), $(Lmin)\n")
 	nothing
 end
 
@@ -70,6 +70,6 @@ L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 
 a, ω, χ = choose_ω!(L_mat, ct)
 Lmin = minimum(L_mat[:,:,3,:])
-fill_in_results(a, ω, χ, Lmin)
+fill_in_results(σs, a, ω, χ, Lmin)
 
 nothing
