@@ -589,8 +589,9 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
 	savejson(p1, pwd()*"/../Graphs/tests/plans.json")
 
-	nothing
+	return annualized(a_min), ω_min, annualized(χ_min)
 end
+
 # end # everywhere
 
 # ct = CrazyType(; ω = ωmin)

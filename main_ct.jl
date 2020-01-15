@@ -39,7 +39,9 @@ Nω = 30
 Nχ = 15 
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
-choose_ω!(L_mat, ct)
+a, ω, χ = choose_ω!(L_mat, ct)
+
+nothing
 
 
 # for (jp, pv) in enumerate(ct.pgrid)
