@@ -18,7 +18,7 @@ module load rclone/1.38
 echo $x
 echo $N
 
-mkdir -p run$x/
+mkdir -p run$x/Graphs/tests/
 cd run$x/
 
 git clone https://github.com/fqroldan/inflapstion.git
