@@ -17,7 +17,7 @@ function create_or_load(T::DataType)
 	catch
 		print_save("failed.")
 		try
-			print_save("Loading optimum of previous run :")
+			print_save("Loading optimum of previous run: ")
 			ctt = load("../../ct_opt.jld", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ct.gπ=ctt.gπ
