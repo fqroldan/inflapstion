@@ -487,7 +487,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		amin = 1e8
 		for (jω, ωv) in enumerate(ωgrid)
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
-			ct = CrazyType(T; χ = χv)
+			ct = CrazyType(T; χ = χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
