@@ -32,10 +32,6 @@ function create_or_load(T::DataType)
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../../ct_1.jld", "ct")
-		print_save("$(typeof(ctt))")
-		print_save("\n")
-		print_save("$(typeof(ct))")
-		print_save("\n")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ctt.σ = σs
 			ct.gπ = ctt.gπ
@@ -46,10 +42,6 @@ function create_or_load(T::DataType)
 		try
 			print_save("Loading optimum of previous run: ")
 			ctt = load("../../ct_opt.jld", "ct");
-			print_save("$(typeof(ctt))")
-			print_save("\n")
-			print_save("$(typeof(ct))")
-			print_save("\n")
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ctt.σ = σs
 				ct.gπ = ctt.gπ
