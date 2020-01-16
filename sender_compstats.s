@@ -19,6 +19,7 @@ rm cddp_compstats -rf
 mkdir -p cddp_compstats/
 cd cddp_compstats
 cp ./ct_1.jld cddp_compstats/
+cp ./ct_1_temp.jld cddp_compstats/
 cp ./ct_opt.jld cddp_compstats/
 
 N=20

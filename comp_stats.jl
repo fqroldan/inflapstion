@@ -42,7 +42,7 @@ function create_or_load(T::DataType)
 		end
 		print_save("✓\n")
 	catch
-		print_save("failed.")
+		print_save("failed. ")
 		try
 			print_save("Loading optimum of previous run: ")
 			ctt = load("../../ct_opt.jld", "ct");
