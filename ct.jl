@@ -480,7 +480,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
 			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 
-			return Lmin, Cmin, ja
+			return Lmin, Cmin, ja, flag
 		end
 
 		ωmin = 1e8
@@ -497,7 +497,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
-			L, C, ja = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
+			L, C, ja, flag = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
 
 			L_mat[jω, jχ, :, :] = L_mat_save
 			L_mat_ctour[jω, jχ] = L
@@ -517,7 +517,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			end
 
 
-			if jχ == 1 && jω == 2
+			if jχ == 1 && jω == 2 && flag
 				save("../../ct_1.jld", "ct", ct)
 			end
 
