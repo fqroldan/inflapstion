@@ -514,11 +514,13 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 			if jω == 1
 				save("../../ct_1_temp.jld", "ct", ct)
+				save("../ct_1_temp.jld", "ct", ct)
 			end
 
 
 			if jχ == 1 && jω == 2 && flag
 				save("../../ct_1.jld", "ct", ct)
+				save("../ct_1.jld", "ct", ct)
 			end
 
 			if L < L_min

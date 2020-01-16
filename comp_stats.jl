@@ -31,7 +31,7 @@ function create_or_load(T::DataType)
 	ct = CrazyType(T, σ = σs, ω = 0.2, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
-		ctt = load("../../ct_1.jld", "ct")
+		ctt = load("../ct_1_temp.jld", "ct")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ctt.σ = σs
 			ct.gπ = ctt.gπ
@@ -40,15 +40,26 @@ function create_or_load(T::DataType)
 	catch
 		print_save("failed. ")
 		try
-			print_save("Loading optimum of previous run: ")
-			ctt = load("../../ct_opt.jld", "ct");
+			print_save("Loading first file of generic run: ")
+			ctt = load("../../ct_1.jld", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ctt.σ = σs
 				ct.gπ = ctt.gπ
 			end
 			print_save("✓\n")
 		catch
-			print_save("failed. Using new type as guess.\n")
+			print_save("failed. .\n")
+			try
+				print_save("Loading optimum of generic run: ")
+				ctt = load("../../ct_opt.jld", "ct");
+				if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
+					ctt.σ = σs
+					ct.gπ = ctt.gπ
+				end
+				print_save("✓\n")
+			catch
+				print_save("failed. Using new type as guess.\n")
+			end
 		end
 	end
 	return ct

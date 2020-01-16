@@ -15,11 +15,11 @@
 module purge
 module load rclone/1.38
 
-rm cddp_compstats -rf
+# rm cddp_compstats -rf
 mkdir -p cddp_compstats/
-cp ./ct_1.jld cddp_compstats/
-cp ./ct_1_temp.jld cddp_compstats/
-cp ./ct_opt.jld cddp_compstats/
+cp -n ./ct_1.jld cddp_compstats/
+cp -n ./ct_1_temp.jld cddp_compstats/
+cp -n ./ct_opt.jld cddp_compstats/
 cd cddp_compstats
 
 N=20
