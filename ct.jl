@@ -488,7 +488,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		for (jω, ωv) in enumerate(ωgrid)
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 			if jω == 1 && jχ > 1
-				old_ct = load("../../ct_1_temp.jld", "ct")
+				old_ct = load("../ct_1_temp.jld", "ct")
 				old_L, old_gπ = copy(old_ct.L), copy(old_ct.gπ)
 			end
 
