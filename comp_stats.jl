@@ -21,7 +21,7 @@ run_number, Nruns = qload(ARGS)
 prepare_results(run_number)
 
 include("ct.jl")
-σvec = range(0.005/4, 0.02/4, length=Nruns)
+σvec = range(0.0075/4, 0.02/4, length=Nruns)
 σs = σvec[run_number]
 
 write(pwd()*"/../output.txt", "")
