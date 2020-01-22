@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=7
 #SBATCH --mem=60GB
 #SBATCH --job-name=cddp_%a
-#SBATCH --time=5-10:00:00
+#SBATCH --time=2-10:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=froldan@nyu.edu
 #SBATCH --output=cddp_%A_%a.out
