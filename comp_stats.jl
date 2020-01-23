@@ -10,19 +10,22 @@ function qload(s)
 
 	return s1, s2
 end
-function prepare_results(run_number)
+function prepare_results(run_number, Nruns, smin, smax)
 	if run_number == 1
-		write("../../compstats.txt", "sigma,a,omega,chi,Lmin\n")
+		write("../../comments_compstats.txt", "Nruns = $Nruns. σ between $smin and $smax")
+		write("../../output_compstats.txt", "sigma,a,omega,chi,Lmin\n")
 	end
 	nothing
 end
 
 run_number, Nruns = qload(ARGS)
-prepare_results(run_number)
 
 include("ct.jl")
-σvec = range(0.0075/4, 0.02/4, length=Nruns)
+smin, smax = 0.0075, 0.02
+σvec = range(smin/4, smax/4, length=Nruns)
 σs = σvec[run_number]
+
+prepare_results(run_number, Nruns, smin, smax)
 
 write(pwd()*"/../output.txt", "")
 write(pwd()*"/../temp.txt", "")
