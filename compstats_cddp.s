@@ -21,6 +21,7 @@ echo $N
 mkdir -p run$x/Graphs/tests/
 cd run$x/
 
+rm inflapstion -rf
 git clone https://github.com/fqroldan/inflapstion.git
 cd inflapstion
 
