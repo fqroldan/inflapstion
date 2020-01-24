@@ -393,10 +393,10 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 		avec[jp] = ct.agrid[jj[3]]
 	end
 
-	pω = plot(scatter(;x=ct.pgrid[3:end], y=ωvec[3:end], line_width=2.5, name="ω", marker_color=get(ColorSchemes.southwest, 0.0)));
+	pω = plot(scatter(;x=ct.pgrid[3:end], y=ωvec[3:end], line_width=2.5, name="<i>ω", marker_color=get(ColorSchemes.southwest, 0.0)));
 	pχa= plot([
-		scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="a", marker_color=get(ColorSchemes.southwest, 0.5))
-		scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="χ", marker_color=get(ColorSchemes.southwest, 0.99))
+		scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="<i>a", marker_color=get(ColorSchemes.southwest, 0.5))
+		scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="<i>χ", marker_color=get(ColorSchemes.southwest, 0.99))
 		], Layout(;yaxis_title="%", xaxis_title="<i>p</i>"));
 
 	relayout!(pω,  xaxis_zeroline=false, yaxis_zeroline=false)

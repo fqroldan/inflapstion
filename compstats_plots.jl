@@ -5,29 +5,29 @@ function makeplot_compstats(param::String; slides::Bool=true)
 	df = CSV.read("../HPC_output/compstats_"*param*".txt");
 	df = sort(df, Symbol(param));
 
-	varnames = ["σ"; "a<sub>0"; "ω"; "χ"; "L"]
+	varnames = ["<i>σ"; "<i>ω"; "<i>a<sub>0"; "<i>χ"]
+
 
 	palette = ColorSchemes.southwest
 
-	yax = [""; "y1"; "y2"; "y1"; "y3"]
+	yax = [""; "y2"; "y1"; "y1"]
 
-	ps = [scatter(x=df[!,1]*4, y=df[!,jj], marker_color=get(palette, (jj-1)/(length(yax)-1)), name=varnames[jj], xaxis="x", yaxis=yax[jj]) for jj in 2:5]
+	ps = [scatter(x=df[!,1]*4, y=df[!,jj], marker_color=get(palette, (jj-1)/(length(yax)-1)), name=varnames[jj], xaxis="x", yaxis=yax[jj]) for jj in 2:length(yax)]
 	# pω = scatter(x=df[!,1]*4, y=df[!,3], name=varnames[3], xaxis="x", yaxis="y2")
 
 	layout = Layout(
 		xaxis=attr(domain=[0,1],anchor="y", title="<i>$(varnames[1])"),
-		yaxis1=attr(domain=[0,0.33]),
-		yaxis2=attr(domain=[0.33,0.66]),
-		yaxis3=attr(domain=[0.67,1], anchor="x"),
+		yaxis1=attr(domain=[0,0.45], title="%"),
+		yaxis2=attr(domain=[0.55,1], anchor="x"),
 		legend=attr(orientation="h", x=0.05)
 		)
 
-	p1 = plot(ps[[1;3;2;4]], layout)
+	p1 = plot(ps, layout)
 
 	if slides
-		relayout!(p1, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", font_family="Lato", fontsize=16, width=700, height=400)
+		relayout!(p1, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", font_family="Lato", font_size=16, width=900, height=600)
 	else
-		relayout!(p1, font_family="Linux Libertine", fontsize=16, width=1200, height=900)
+		relayout!(p1, font_family="Linux Libertine", font_size=16, width=700, height=400)
 	end
 
 	return p1
