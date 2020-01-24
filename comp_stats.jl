@@ -13,7 +13,7 @@ end
 function prepare_results(run_number, Nruns, smin, smax, param)
 	if run_number == 1
 		write("../../comments_compstats.txt", "Nruns = $Nruns. σ between $smin and $smax")
-		write("../../output_compstats.txt", param*",a,omega,chi,Lmin\n")
+		write("../../output_compstats.txt", param*",omega,a,chi,Lmin\n")
 	end
 	nothing
 end
@@ -22,7 +22,7 @@ run_number, Nruns = qload(ARGS)
 
 include("ct.jl")
 
-param = "beta"
+param = "sigma"
 if param == "sigma"
 	smin, smax = 0.0075, 0.02
 elseif param == "beta"
@@ -83,9 +83,9 @@ ct = create_or_load(Forward, param)
 
 initial_report(ct)
 
-function fill_in_results(par, a, ω, χ, Lmin)
+function fill_in_results(par, ω, a, χ, Lmin)
 	s = read("../../output_compstats.txt", String)
-	write("../../output_compstats.txt", s*"$(par), $(a), $(ω), $(χ), $(Lmin)\n")
+	write("../../output_compstats.txt", s*"$(par), $(ω), $(a), $(χ), $(Lmin)\n")
 	nothing
 end
 
@@ -97,6 +97,6 @@ L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 
 a, ω, χ = choose_ω!(L_mat, ct)
 Lmin = minimum(L_mat[:,:,3,:])
-fill_in_results(σs, a, ω, χ, Lmin)
+fill_in_results(σs, ω, a, χ, Lmin)
 
 nothing

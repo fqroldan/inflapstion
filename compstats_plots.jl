@@ -1,38 +1,34 @@
-using CSV, DataFrames, PlotlyJS
+using CSV, DataFrames, PlotlyJS, ColorSchemes
 
-function makeplot_compstats(param::String)
+function makeplot_compstats(param::String; slides::Bool=true)
 
 	df = CSV.read("../HPC_output/compstats_"*param*".txt");
-	df = sort(df, Symbol(param))
+	df = sort(df, Symbol(param));
 
-	names = ["σ"; "a<sub>0"; "ω"; "χ"]
+	varnames = ["σ"; "a<sub>0"; "ω"; "χ"; "L"]
 
-	paχ = [scatter(x=df[!,1]*4, y=df[!,jj], name=names[jj], xaxis="x", yaxis="y1") for jj in [2;4]]
-	pω = scatter(x=df[!,1]*4, y=df[!,3], name=names[3], xaxis="x", yaxis="y2")
+	palette = ColorSchemes.southwest
+
+	yax = [""; "y1"; "y2"; "y1"; "y3"]
+
+	ps = [scatter(x=df[!,1]*4, y=df[!,jj], marker_color=get(palette, (jj-1)/(length(yax)-1)), name=varnames[jj], xaxis="x", yaxis=yax[jj]) for jj in 2:5]
+	# pω = scatter(x=df[!,1]*4, y=df[!,3], name=varnames[3], xaxis="x", yaxis="y2")
 
 	layout = Layout(
-		xaxis=attr(domain=[0,1],anchor="y", title="<i>$(names[1])"),
-		yaxis1=attr(domain=[0,0.45]),
-		yaxis2=attr(domain=[0.55,1], anchor="x"),
+		xaxis=attr(domain=[0,1],anchor="y", title="<i>$(varnames[1])"),
+		yaxis1=attr(domain=[0,0.33]),
+		yaxis2=attr(domain=[0.33,0.66]),
+		yaxis3=attr(domain=[0.67,1], anchor="x"),
 		legend=attr(orientation="h", x=0.05)
 		)
 
-	p1 = plot([pω; paχ], layout)
+	p1 = plot(ps[[1;3;2;4]], layout)
 
-
-
-
-
-	pv = Vector{GenericTrace{Dict{Symbol,Any}}}(undef, 2*Nv)
-
-	for jj in 1:Nv
-		weight = (jj-1)/(Nv-1)
-		pv[2*jj-1] = scatter(;x=(1:T)/1, y=X_vec[jj,:], line_dash="solid", name="true " * names[jj], marker_color=get(colorpal, weight), xaxis="x", yaxis="y$(jj)")
-		pv[2*jj] = scatter(;x=(1:T)/1, y=x_vec[jj,:], line_dash="dashdot", name="estimated " * names[jj], marker_color=get(colorpal, weight), xaxis="x", yaxis="y$(jj)")
+	if slides
+		relayout!(p1, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", font_family="Lato", fontsize=16, width=700, height=400)
+	else
+		relayout!(p1, font_family="Linux Libertine", fontsize=16, width=1200, height=900)
 	end
-	layout=Layout(
-		xaxis=attr(domain=[0,1], anchor="y", title="<i>Years"),
-		yaxis_domain=[0,0.33],
-		yaxis2_domain=[0.33,0.67],
-		yaxis3=attr(domain=[0.67,1], anchor="x")
-		)
+
+	return p1
+end
