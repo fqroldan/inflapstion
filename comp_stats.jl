@@ -74,7 +74,7 @@ initial_report(ct)
 
 function fill_in_results(σ, a, ω, χ, Lmin)
 	s = read("../../compstats.txt", String)
-	write("../../compstats.txt", s*"$(σ), $(a), $(ω), $(χ), $(Lmin)\n")
+	write("../../output_compstats.txt", s*"$(σ), $(a), $(ω), $(χ), $(Lmin)\n")
 	nothing
 end
 
