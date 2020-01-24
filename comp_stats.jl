@@ -10,10 +10,10 @@ function qload(s)
 
 	return s1, s2
 end
-function prepare_results(run_number, Nruns, smin, smax)
+function prepare_results(run_number, Nruns, smin, smax, param)
 	if run_number == 1
 		write("../../comments_compstats.txt", "Nruns = $Nruns. σ between $smin and $smax")
-		write("../../output_compstats.txt", "sigma,a,omega,chi,Lmin\n")
+		write("../../output_compstats.txt", param*",a,omega,chi,Lmin\n")
 	end
 	nothing
 end
@@ -21,22 +21,35 @@ end
 run_number, Nruns = qload(ARGS)
 
 include("ct.jl")
-smin, smax = 0.0075, 0.02
+
+param = "beta"
+if param == "sigma"
+	smin, smax = 0.0075, 0.02
+elseif param == "beta"
+	smin, smax = 0.99, 0.999
+elseif param == "kappa"
+	smin, smax = 0.1, 0.25
+end
 σvec = range(smin/4, smax/4, length=Nruns)
 σs = σvec[run_number]
 
-prepare_results(run_number, Nruns, smin, smax)
+prepare_results(run_number, Nruns, smin, smax, param)
 
 write(pwd()*"/../output.txt", "")
 write(pwd()*"/../temp.txt", "")
 
-function create_or_load(T::DataType)
-	ct = CrazyType(T, σ = σs, ω = 0.2, χ = 0.0);
+function create_or_load(T::DataType, param)
+	if param == "sigma"
+		ct = CrazyType(T, σ = σs, ω = 0.2, χ = 0.0);
+	elseif param == "beta"
+		ct = CrazyType(T, β = σs, ω = 0.2, χ = 0.0);
+	elseif param == "kappa"
+		ct = CrazyType(T, κ = σs, ω = 0.2, χ = 0.0);
+	end
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../ct_1_temp.jld", "ct")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
-			ctt.σ = σs
 			ct.gπ = ctt.gπ
 		end
 		print_save("✓\n")
@@ -46,7 +59,6 @@ function create_or_load(T::DataType)
 			print_save("Loading first file of generic run: ")
 			ctt = load("../../ct_1.jld", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
-				ctt.σ = σs
 				ct.gπ = ctt.gπ
 			end
 			print_save("✓\n")
@@ -56,7 +68,6 @@ function create_or_load(T::DataType)
 				print_save("Loading optimum of generic run: ")
 				ctt = load("../../ct_opt.jld", "ct");
 				if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
-					ctt.σ = σs
 					ct.gπ = ctt.gπ
 				end
 				print_save("✓\n")
@@ -68,13 +79,13 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = create_or_load(Forward)
+ct = create_or_load(Forward, param)
 
 initial_report(ct)
 
-function fill_in_results(σ, a, ω, χ, Lmin)
+function fill_in_results(par, a, ω, χ, Lmin)
 	s = read("../../compstats.txt", String)
-	write("../../output_compstats.txt", s*"$(σ), $(a), $(ω), $(χ), $(Lmin)\n")
+	write("../../output_compstats.txt", s*"$(par), $(a), $(ω), $(χ), $(Lmin)\n")
 	nothing
 end
 
