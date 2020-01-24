@@ -84,7 +84,7 @@ ct = create_or_load(Forward, param)
 initial_report(ct)
 
 function fill_in_results(par, a, ω, χ, Lmin)
-	s = read("../../compstats.txt", String)
+	s = read("../../output_compstats.txt", String)
 	write("../../output_compstats.txt", s*"$(par), $(a), $(ω), $(χ), $(Lmin)\n")
 	nothing
 end
