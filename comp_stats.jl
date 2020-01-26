@@ -13,7 +13,7 @@ end
 function prepare_results(run_number, Nruns, smin, smax, param)
 	if run_number == 1
 		write("../../comments_compstats.txt", "Nruns = $Nruns. σ between $smin and $smax")
-		write("../../output_compstats.txt", param*",omega,a,chi,Lmin\n")
+		write("../../output_compstats.csv", param*",omega,a,chi,Lmin\n")
 	end
 	nothing
 end
@@ -24,7 +24,7 @@ include("ct.jl")
 
 param = "sigma"
 if param == "sigma"
-	smin, smax = 0.0075, 0.02
+	smin, smax = 0.0075, 0.015
 elseif param == "beta"
 	smin, smax = 0.99, 0.999
 elseif param == "kappa"
@@ -84,8 +84,8 @@ ct = create_or_load(Forward, param)
 initial_report(ct)
 
 function fill_in_results(par, ω, a, χ, Lmin)
-	s = read("../../output_compstats.txt", String)
-	write("../../output_compstats.txt", s*"$(par), $(ω), $(a), $(χ), $(Lmin)\n")
+	s = read("../../output_compstats.csv", String)
+	write("../../output_compstats.csv", s*"$(par), $(ω), $(a), $(χ), $(Lmin)\n")
 	nothing
 end
 
