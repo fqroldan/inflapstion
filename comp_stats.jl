@@ -48,7 +48,7 @@ function create_or_load(T::DataType, param)
 	end
 	try
 		print_save("Loading first file of previous run: ")
-		ctt = load("../ct_1_temp.jld", "ct")
+		ctt = load("../ct_1.jld", "ct")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ct.gπ = ctt.gπ
 		end
@@ -57,7 +57,7 @@ function create_or_load(T::DataType, param)
 		print_save("failed. ")
 		try
 			print_save("Loading first file of generic run: ")
-			ctt = load("../../ct_1.jld", "ct");
+			ctt = load("../../ct_1_temp.jld", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ct.gπ = ctt.gπ
 			end
