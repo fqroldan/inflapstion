@@ -24,7 +24,7 @@ include("ct.jl")
 
 param = "sigma"
 if param == "sigma"
-	smin, smax = 0.0075, 0.015
+	smin, smax = 0.0075, 0.0125
 elseif param == "beta"
 	smin, smax = 0.99, 0.999
 elseif param == "kappa"

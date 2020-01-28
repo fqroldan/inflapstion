@@ -1,8 +1,12 @@
 using CSV, DataFrames, PlotlyJS, ColorSchemes
 
-function makeplot_compstats(param::String; slides::Bool=true)
+function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 
-	df = CSV.read("../HPC_output/compstats_"*param*".csv");
+	if temp 
+		df = CSV.read("../HPC_output/output_compstats.csv");
+	else
+		df = CSV.read("../HPC_output/compstats_"*param*".csv");
+	end
 	df = sort(df, Symbol(param));
 
 	varnames = ["<i>σ"; "<i>ω"; "<i>a<sub>0"; "<i>χ"]
