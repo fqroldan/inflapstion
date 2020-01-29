@@ -24,14 +24,15 @@ include("ct.jl")
 
 param = "sigma"
 if param == "sigma"
-	smin, smax = 0.0075, 0.0125
+	smin, smax = 0.75/400, 1.25/400
 elseif param == "beta"
 	smin, smax = 0.99, 0.999
 elseif param == "kappa"
 	smin, smax = 0.1, 0.25
 end
-σvec = range(smin/4, smax/4, length=Nruns)
+σvec = range(smin, smax, length=Nruns)
 σs = σvec[run_number]
+show_σs = σs * ifelse(param=="sigma", 400, 1)
 
 prepare_results(run_number, Nruns, smin, smax, param)
 
@@ -97,6 +98,6 @@ L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 
 a, ω, χ = choose_ω!(L_mat, ct)
 Lmin = minimum(L_mat[:,:,3,:])
-fill_in_results(σs, ω, a, χ, Lmin)
+fill_in_results(show_σs, ω, a, χ, Lmin)
 
 nothing
