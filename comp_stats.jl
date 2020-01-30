@@ -26,7 +26,7 @@ param = "beta"
 if param == "sigma"
 	smin, smax = 0.75/400, 1.25/400
 elseif param == "beta"
-	smin, smax = 0.99, 0.999
+	smin, smax = 1.01^(-0.25), 1.03^(-0.25)
 elseif param == "kappa"
 	smin, smax = 0.1, 0.25
 end
