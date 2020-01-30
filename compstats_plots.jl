@@ -16,7 +16,7 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 
 	yax = [""; "y2"; "y1"; "y1"]
 
-	ps = [scatter(x=df[!,1]*100, y=df[!,jj], marker_color=get(palette, (jj-1)/(length(yax)-1)), name=varnames[jj], xaxis="x", yaxis=yax[jj]) for jj in 2:length(yax)]
+	ps = [scatter(x=df[!,1], y=df[!,jj], marker_color=get(palette, (jj-1)/(length(yax)-1)), name=varnames[jj], xaxis="x", yaxis=yax[jj]) for jj in 2:length(yax)]
 	# pω = scatter(x=df[!,1]*4, y=df[!,3], name=varnames[3], xaxis="x", yaxis="y2")
 
 	layout = Layout(
