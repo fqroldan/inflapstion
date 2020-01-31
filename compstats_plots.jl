@@ -11,6 +11,10 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 
 	varnames = ["<i>σ"; "<i>ω"; "<i>a<sub>0"; "<i>χ"]
 
+	if param == "beta"
+		df[!,1] = 100(df[!,1].^-4 .- 1)
+	end
+
 
 	palette = ColorSchemes.southwest
 

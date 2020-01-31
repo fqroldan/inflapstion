@@ -26,13 +26,20 @@ param = "beta"
 if param == "sigma"
 	smin, smax = 0.75/400, 1.25/400
 elseif param == "beta"
-	smin, smax = 1.01^(-0.25), 1.03^(-0.25)
+	smin, smax = 1.01^(-0.25), 1.05^(-0.25)
 elseif param == "kappa"
 	smin, smax = 0.1, 0.25
 end
 σvec = range(smin, smax, length=Nruns)
 σs = σvec[run_number]
-show_σs = σs * ifelse(param=="sigma", 400, 1)
+
+if param == "sigma"
+	show_σs = σs * 400
+elseif param == "beta"
+	show_σs = 100 * (σs^-4 - 1)
+else
+	show_σs = σs
+end
 
 prepare_results(run_number, Nruns, smin, smax, param)
 
