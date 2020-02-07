@@ -9,6 +9,8 @@ mutable struct MultiType
 	z::Float64
 	ν::Array{Float64, 3}
 
+	μ::Array{Float64, 3}
+
 	L_mat::Array{Float64, 4}
 end
 

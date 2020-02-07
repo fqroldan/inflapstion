@@ -597,7 +597,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
 	ν *= 1/sum(ν)
-	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, L_mat)
+	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, ν, L_mat)
 
 	return annualized(a_min), ω_min, annualized(χ_min), mt
 end
@@ -644,7 +644,8 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 	end
 end
 
-function find_equil(mt::MultiType)
+function find_equil!(mt::MultiType, z0=1e-2)
+	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 
 	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
@@ -664,9 +665,9 @@ function find_equil(mt::MultiType)
 	L_star = res.minimum
 	k_star = res.minimizer
 
-	mu = eval_k_to_mu(mt.ct, k_star, L_mat; get_mu = true)
+	mt.μ = eval_k_to_mu(mt.ct, k_star, L_mat; get_mu = true)
 
-	return mu
+	nothing
 end
 
 # end # everywhere

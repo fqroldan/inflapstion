@@ -41,8 +41,8 @@ print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
-mu = find_equil(mt)
-save("../../mu.jld", "mu", mu)
+find_equil!(mt)
+save("../../mt.jld", "mt", mt)
 
 nothing
 
