@@ -103,7 +103,7 @@ Nχ = 25
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 
-a, ω, χ = choose_ω!(L_mat, ct)
+a, ω, χ, _ = choose_ω!(L_mat, ct)
 Lmin = minimum(L_mat[:,:,3,:])
 fill_in_results(show_σs, ω, a, χ, Lmin)
 

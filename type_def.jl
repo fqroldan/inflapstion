@@ -1,5 +1,18 @@
 using Distributions
 
+mutable struct MultiType
+	ct::CrazyType
+
+	ωgrid::Vector{Float64}
+	χgrid::Vector{Float64}
+
+	z::Float64
+	ν::Array{Float64, 3}
+
+	L_mat::Array{Float64, 4}
+end
+
+
 abstract type PhillipsCurve
 end
 

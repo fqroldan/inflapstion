@@ -39,7 +39,10 @@ Nω = 30
 Nχ = 15 
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
-a, ω, χ = choose_ω!(L_mat, ct)
+a, ω, χ, mt = choose_ω!(L_mat, ct)
+
+mu = find_equil(mt)
+save("../../mu.jld", "mu", mu)
 
 nothing
 

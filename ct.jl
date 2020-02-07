@@ -397,6 +397,7 @@ end
 # end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
+	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
 
 	T = which_PC(ct)
 	Na = length(ct.agrid)
@@ -532,6 +533,8 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				ja_min = ja
 
 				save("../../ct_opt.jld", "ct", ct)
+				ct_best.ω, ct_best.χ = ωv, χv
+				ct_best.L, ct.best.gπ = ct.L, ct.gπ
 
 				_, pL, pπ, _, pp = makeplots_ct_pa(ct);
 				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
@@ -592,7 +595,78 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
 	savejson(p1, pwd()*"/../Graphs/tests/plans.json")
 
-	return annualized(a_min), ω_min, annualized(χ_min)
+	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
+	ν *= 1/sum(ν)
+	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, L_mat)
+
+	return annualized(a_min), ω_min, annualized(χ_min), mt
+end
+
+Bayes_plan(ν, z, μ) = z*ν / (z*ν + (1-z)*μ)
+
+function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
+
+	ωgrid, χgrid, L_mat = mt.ωgrid, mt.χgrid, mt.L_mat
+	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+
+	p0 = zeros(length(ωgrid), length(χgrid), length(agrid))
+	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
+		if L_mat[jω, jχ, end, ja] > k
+			pv = 0.0
+			μ[jω, jχ, ja] = 0.0
+		else
+			res = Optim.optimize(
+				p -> (itp_L(ωv, χv, p, av) - k)^2, 0, 1, GoldenSection())
+
+			disp = sqrt(res.minimum)
+			if disp > 1e-4
+				print_save("WARNING: Couldn't find p_0 at state ($ωv, $χv, $av)")
+			end
+			pv = res.minimizer
+
+			νv = mt.ν[jω, jχ, ja]
+			res = Optim.optimize(
+				μ -> (Bayes_plan(νv, z, μ) - pv)^2, 0, 1, GoldenSection())
+			disp = res.minimum
+			if disp > 1e-4
+				print_save("WARNING: Couldn't find p_0 at state ($ωv, $χv, $av)")
+			end
+			μv = res.minimizer
+
+			μ[jω, jχ, ja] = μv
+		end
+		p_0[jω, jχ, ja] = pv
+	end
+	if get_mu 
+		return μ
+	else
+		return sum(μ)
+	end
+end
+
+function find_equil(mt::MultiType)
+	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+
+	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
+	k_min = minimum(L_mat) # lower loss 
+	V = var(L_mat[:,:,1;:])
+	if V > 1e-4
+		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V))")
+	end
+
+	knots = (ωgrid, χgrid, pgrid, agrid)
+	itp_L = interpolate(knots, L_mat, Gridded(Linear()))
+
+	res = Optim.optimize(
+		k -> eval_k_to_mu(mt, k, itp_L),
+		k_min, k_max, GoldenSection())
+
+	L_star = res.minimum
+	k_star = res.minimizer
+
+	mu = eval_k_to_mu(mt.ct, k_star, L_mat; get_mu = true)
+
+	return mu
 end
 
 # end # everywhere
