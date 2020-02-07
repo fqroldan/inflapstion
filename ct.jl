@@ -646,8 +646,9 @@ end
 function find_equil!(mt::MultiType, z0=1e-2)
 	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 
-	jp0 = floor(Int, length(mt.ct.pgrid)*0.8)
+	jp0 = floor(Int, length(mt.ct.pgrid)*0.9)
 
 	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
 	k_min = minimum(L_mat[:,:,jp0,:]) # lower loss 
