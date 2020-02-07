@@ -397,10 +397,8 @@ end
 # end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
-	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
-
 	T = which_PC(ct)
-	Na = length(ct.agrid)
+	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
 
 	if T == Simultaneous
 		ωmax = 3.0
@@ -410,6 +408,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = ωmax, xmin = 0.01)
 
+	Na = length(ct.agrid)
 	Nχ = size(L_mat, 2)
 	χgrid = range(0.0, 0.5*Nash(ct), length = Nχ)
 
@@ -650,7 +649,7 @@ function find_equil!(mt::MultiType, z0=1e-2)
 
 	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
 	k_min = minimum(L_mat) # lower loss 
-	V = var(L_mat[:,:,1;:])
+	V = var(L_mat[:,:,1,:])
 	if V > 1e-4
 		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V))")
 	end
