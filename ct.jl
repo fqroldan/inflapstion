@@ -533,7 +533,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 				save("../../ct_opt.jld", "ct", ct)
 				ct_best.ω, ct_best.χ = ωv, χv
-				ct_best.L, ct.best.gπ = ct.L, ct.gπ
+				ct_best.L, ct_best.gπ = ct.L, ct.gπ
 
 				_, pL, pπ, _, pp = makeplots_ct_pa(ct);
 				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
@@ -647,8 +647,10 @@ function find_equil!(mt::MultiType, z0=1e-2)
 	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 
+	jp0 = floor(Int, length(mt.ct.pgrid)*0.8)
+
 	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
-	k_min = minimum(L_mat) # lower loss 
+	k_min = minimum(L_mat[:,:,jp0,:]) # lower loss 
 	V = var(L_mat[:,:,1,:])
 	if V > 1e-4
 		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V))")
