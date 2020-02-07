@@ -1,20 +1,5 @@
 using Distributions
 
-mutable struct MultiType
-	ct::CrazyType
-
-	ωgrid::Vector{Float64}
-	χgrid::Vector{Float64}
-
-	z::Float64
-	ν::Array{Float64, 3}
-
-	μ::Array{Float64, 3}
-
-	L_mat::Array{Float64, 4}
-end
-
-
 abstract type PhillipsCurve
 end
 
@@ -47,6 +32,21 @@ mutable struct CrazyType{T<:PhillipsCurve}
 	Eπ::Array{Float64, 2}
 	Ep::Array{Float64, 2}
 end
+
+mutable struct MultiType
+	ct::CrazyType
+
+	ωgrid::Vector{Float64}
+	χgrid::Vector{Float64}
+
+	z::Float64
+	ν::Array{Float64, 3}
+
+	μ::Array{Float64, 3}
+
+	L_mat::Array{Float64, 4}
+end
+
 
 function move_grids!(xgrid; xmin=0.0, xmax=1.0)
 	xgrid[:] = xgrid[:] * (xmax-xmin) .+ xmin
