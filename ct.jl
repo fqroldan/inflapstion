@@ -405,7 +405,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	elseif T == Forward
 		ωmax = 1.25
 	end
-	ωgrid = cdf.(Beta(1,1), range(0,1,length=Nω))
+	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = ωmax, xmin = 0.01)
 
 	Na = length(ct.agrid)
@@ -486,8 +486,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 		ωmin = 1e8
 		amin = 1e8
-		# for (jω, ωv) in enumerate(ωgrid)
-		for jω in length(ωgrid):-1:1
+		for (jω, ωv) in enumerate(ωgrid)
 			ωv = ωgrid[jω]
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 			if jω == 1 && jχ > 1
@@ -659,8 +658,8 @@ function find_equil!(mt::MultiType, z0=1e-2)
 		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V))")
 	end
 
-	knots = (ωgrid, χgrid, pgrid, agrid)
-	itp_L = interpolate(knots, L_mat, Gridded(Linear()))
+	knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
+	itp_L = interpolate(knots, L_mat[end:-1:1,:,:,:], Gridded(Linear()))
 
 	res = Optim.optimize(
 		k -> eval_k_to_mu(mt, k, itp_L),
