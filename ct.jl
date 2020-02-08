@@ -405,7 +405,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	elseif T == Forward
 		ωmax = 1.25
 	end
-	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
+	ωgrid = cdf.(Beta(1,1), range(0,1,length=Nω))
 	move_grids!(ωgrid, xmax = ωmax, xmin = 0.01)
 
 	Na = length(ct.agrid)
@@ -486,7 +486,9 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 		ωmin = 1e8
 		amin = 1e8
-		for (jω, ωv) in enumerate(ωgrid)
+		# for (jω, ωv) in enumerate(ωgrid)
+		for jω in length(ωgrid):1
+			ωv = ωgrid[jω]
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 			if jω == 1 && jχ > 1
 				old_ct = load("../ct_1_temp.jld", "ct")
