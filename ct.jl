@@ -487,7 +487,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		ωmin = 1e8
 		amin = 1e8
 		# for (jω, ωv) in enumerate(ωgrid)
-		for jω in length(ωgrid):1
+		for jω in length(ωgrid):-1:1
 			ωv = ωgrid[jω]
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 			if jω == 1 && jχ > 1
@@ -627,7 +627,7 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 
 			νv = mt.ν[jω, jχ, ja]
 			res = Optim.optimize(
-				μ -> (Bayes_plan(νv, z, μ) - pv)^2, 0, 1, GoldenSection())
+				μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
 			disp = res.minimum
 			if disp > 1e-4
 				print_save("WARNING: Couldn't find p_0 at state ($ωv, $χv, $av)")
