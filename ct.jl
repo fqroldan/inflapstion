@@ -609,7 +609,8 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 	ωgrid, χgrid, L_mat = mt.ωgrid, mt.χgrid, mt.L_mat
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 
-	p0 = zeros(length(ωgrid), length(χgrid), length(agrid))
+	μ, p0 = [zeros(length(ωgrid), length(χgrid), length(agrid)) for jj in 1:2]
+
 	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
 		if L_mat[jω, jχ, end, ja] > k
 			pv = 0.0
@@ -620,7 +621,7 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 
 			disp = sqrt(res.minimum)
 			if disp > 1e-4
-				print_save("WARNING: Couldn't find p_0 at state ($ωv, $χv, $av)")
+				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
 			pv = res.minimizer
 
@@ -629,13 +630,13 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 				μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
 			disp = res.minimum
 			if disp > 1e-4
-				print_save("WARNING: Couldn't find p_0 at state ($ωv, $χv, $av)")
+				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
 			μv = res.minimizer
 
 			μ[jω, jχ, ja] = μv
 		end
-		p_0[jω, jχ, ja] = pv
+		p0[jω, jχ, ja] = pv
 	end
 	if get_mu 
 		return μ
@@ -668,7 +669,7 @@ function find_equil!(mt::MultiType, z0=1e-2)
 	L_star = res.minimum
 	k_star = res.minimizer
 
-	mt.μ = eval_k_to_mu(mt.ct, k_star, L_mat; get_mu = true)
+	mt.μ = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
 
 	nothing
 end
