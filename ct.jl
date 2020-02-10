@@ -644,7 +644,6 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 end
 
 function find_plan_μ(mt::MultiType)
-	z = mt.z
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 
