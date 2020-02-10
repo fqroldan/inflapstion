@@ -649,8 +649,8 @@ function find_plan_μ(mt::MultiType)
 
 	mean_ω, mean_χ, mean_a = zeros(3)
 	m2_ω, m2_χ, m2_a = zeros(3)
-	sum_prob = 0.0
 
+	sum_prob = sum(mt.μ)
 	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
 
 		mean_ω += mt.μ[jω, jχ, ja] * ωv
@@ -660,8 +660,6 @@ function find_plan_μ(mt::MultiType)
 		m2_ω += mt.μ[jω, jχ, ja] * ωv^2
 		m2_χ += mt.μ[jω, jχ, ja] * annualized(χv)^2
 		m2_a += mt.μ[jω, jχ, ja] * annualized(av)^2
-
-		sum_prob += mt.μ[jω, jχ, ja]
 	end
 
 	mean_ω *= 1/sum_prob
@@ -670,7 +668,6 @@ function find_plan_μ(mt::MultiType)
 	m2_ω *= 1/sum_prob
 	m2_χ *= 1/sum_prob
 	m2_a *= 1/sum_prob
-
 
 	sd_ω = sqrt(m2_ω - mean_ω^2)
 	sd_χ = sqrt(m2_χ - mean_χ^2)
@@ -709,7 +706,7 @@ function find_equil!(mt::MultiType, z0=1e-2)
 
 	mt.μ = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
 
-	nothing
+	return k
 end
 
 function mimic_z(mt::MultiType, N=50)

@@ -98,13 +98,19 @@ function fill_in_results(par, ω, a, χ, Lmin)
 end
 
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
-Nω = 35
-Nχ = 25
+Nω = 30
+Nχ = 20
 print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
+a, ω, χ, mt = choose_ω!(L_mat, ct)
 
-a, ω, χ, _ = choose_ω!(L_mat, ct)
-Lmin = minimum(L_mat[:,:,3,:])
-fill_in_results(show_σs, ω, a, χ, Lmin)
+# Lmin = minimum(L_mat[:,:,3,:])
+# fill_in_results(show_σs, ω, a, χ, Lmin)
+
+Lavg = find_equil!(mt)
+mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt)
+fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg)
+
 
 nothing
+
