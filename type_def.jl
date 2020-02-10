@@ -68,7 +68,7 @@ function CrazyType(T::DataType;
 		# ω = 0.05,
 		ω = 0.1,
 		χ = 0.0,
-		Np = 30,
+		Np = 45,
 		Na = 30
 		)
 
