@@ -411,3 +411,41 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 	end
 	return p1
 end
+
+
+function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
+
+	data, datanames, zgrid = mimic_z(mt, N)
+
+	cols = [RGB{Float64}(0.396811,0.31014,0.204105), RGB{Float64}(0.817882,0.7260905,0.426991), RGB{Float64}(0.35082,0.595178,0.853742)]
+	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)
+
+	yax = ["y2", "y1", "y1"]
+	for jj in 1:3
+		col = cols[jj]
+		push!(ls, scatter(;x = zgrid, y = data[:,jj]+data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, showlegend=false, line_width=0.01, hoverinfo="skip"))
+		push!(ls, scatter(;x = zgrid, y = data[:,jj]-data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, fill="tonexty", showlegend=false, line_width=0.01, hoverinfo="skip"))
+		push!(ls, scatter(;x=zgrid, y=data[:, jj], yaxis=yax[jj], marker_color=col, name="𝔼[<i>"*datanames[jj]*"</i>]"))
+	end
+
+	layout = Layout(
+		yaxis = attr(domain=[0, 0.45], zeroline=false),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false),
+		xaxis = attr(zeroline=false),
+		legend = attr(orientation="h", x=0.05),
+		font_size=16, font_family="Linux Libertine"
+		)
+
+	p1 = plot(ls, layout)
+
+	if slides
+		relayout!(p1, font_family="Lato", paper_bgcolor="#fafafa", plot_bgcolor="#fafafa")
+	end
+	return p1
+end
+
+function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
+	p1 = plot_mimic_z(mt, N; slides=slides)
+	savejson(p1, "../Graphs/tests/plot_mimic.json")
+	nothing
+end

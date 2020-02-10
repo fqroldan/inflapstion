@@ -12,8 +12,6 @@ include("simul.jl")
 # @everywhere 
 include("plotting_routines.jl")
 
-# @everywhere begin
-
 function output_bayes(ct::CrazyType, pv, av)
 	knots = (ct.pgrid, ct.agrid);
 	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()));
@@ -645,10 +643,48 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 	end
 end
 
+function find_plan_μ(mt::MultiType)
+	z = mt.z
+	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+	ωgrid, χgrid = mt.ωgrid, mt.χgrid
+
+	mean_ω, mean_χ, mean_a = zeros(3)
+	m2_ω, m2_χ, m2_a = zeros(3)
+	sum_prob = 0.0
+
+	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
+
+		mean_ω += mt.μ[jω, jχ, ja] * ωv
+		mean_χ += mt.μ[jω, jχ, ja] * annualized(χv)
+		mean_a += mt.μ[jω, jχ, ja] * annualized(av)
+
+		m2_ω += mt.μ[jω, jχ, ja] * ωv^2
+		m2_χ += mt.μ[jω, jχ, ja] * annualized(χv)^2
+		m2_a += mt.μ[jω, jχ, ja] * annualized(av)^2
+
+		sum_prob += mt.μ[jω, jχ, ja]
+	end
+
+	mean_ω *= 1/sum_prob
+	mean_χ *= 1/sum_prob
+	mean_a *= 1/sum_prob
+	m2_ω *= 1/sum_prob
+	m2_χ *= 1/sum_prob
+	m2_a *= 1/sum_prob
+
+
+	sd_ω = sqrt(m2_ω - mean_ω^2)
+	sd_χ = sqrt(m2_χ - mean_χ^2)
+	sd_a = sqrt(m2_a - mean_a^2)
+
+	return mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a
+end
+
 function find_equil!(mt::MultiType, z0=1e-2)
 	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
+	L_mat = mt.L_mat
 
 	jp0 = floor(Int, length(mt.ct.pgrid)*0.9)
 
@@ -663,10 +699,13 @@ function find_equil!(mt::MultiType, z0=1e-2)
 	itp_L = interpolate(knots, L_mat[end:-1:1,:,:,:], Gridded(Linear()))
 
 	res = Optim.optimize(
-		k -> eval_k_to_mu(mt, k, itp_L),
+		k -> (eval_k_to_mu(mt, k, itp_L)-1)^2,
 		k_min, k_max, GoldenSection())
 
-	L_star = res.minimum
+	if res.minimum > 1e-4
+		print_save("WARNING: Couldn't find μ at z = $zv")
+	end
+
 	k_star = res.minimizer
 
 	mt.μ = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
@@ -674,25 +713,18 @@ function find_equil!(mt::MultiType, z0=1e-2)
 	nothing
 end
 
-# end # everywhere
+function mimic_z(mt::MultiType, N=50)
 
-# ct = CrazyType(; ω = ωmin)
-# Epfi!(ct);
+	zgrid = range(mt.ct.pgrid[3], 0.9, length=N)
 
+	data = zeros(N,6)
+	datanames = ["ω", "χ", "a", "s_ω", "s_χ", "s_a"]
 
-# ct = CrazyType(ω = 0.0125);
-# Epfi!(ct, tempplots=true)
-# p2 = plot_simul(ct, noshocks=true)
-# if remote
-# 	savejson(p2, pwd()*"/../Graphs/tests/simul.json")
-# end
+	for (jz, zv) in enumerate(zgrid)
+		find_equil!(mt, zv)
+		data[jz,:] .= find_plan_μ(mt)
+		println(zv)
+	end
 
-# p1 = makeplots_ct_pa(ct);
-# p1
-
-
-
-# using JLD
-# save("ct.jld", "ct", ct)
-
-# plot_simul(ct, T=50)
+	return data, datanames, zgrid
+end
