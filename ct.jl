@@ -492,7 +492,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				old_L, old_gπ = copy(old_ct.L), copy(old_ct.gπ)
 			end
 
-			ct = CrazyType(T; χ = χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
+			ct = CrazyType(T; χ=χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
 			
 			ct.L, ct.gπ = old_L, old_gπ
 			
@@ -711,7 +711,8 @@ end
 
 function mimic_z(mt::MultiType, N=50)
 
-	zgrid = range(mt.ct.pgrid[3], 0.9, length=N)
+	zgrid = cdf.(Beta(4,1), range(0,1,length=N))
+	move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
 
 	data = zeros(N,6)
 	datanames = ["ω", "χ", "a", "s_ω", "s_χ", "s_a"]
