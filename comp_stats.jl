@@ -22,7 +22,7 @@ run_number, Nruns = qload(ARGS)
 
 include("ct.jl")
 
-param = "kappa"
+param = "sigma"
 if param == "sigma"
 	smin, smax = 0.75/400, 1.25/400
 elseif param == "beta"
