@@ -706,7 +706,7 @@ function find_equil!(mt::MultiType, z0=1e-2)
 
 	mt.μ = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
 
-	return k
+	return k_star
 end
 
 function mimic_z(mt::MultiType, N=50)
