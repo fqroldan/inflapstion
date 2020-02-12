@@ -108,7 +108,8 @@ a, ω, χ, mt = choose_ω!(L_mat, ct)
 # fill_in_results(show_σs, ω, a, χ, Lmin)
 
 Lavg = find_equil!(mt)
-mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt)
+z0 = mt.ct.pgrid[3]
+mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt, z0)
 fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg)
 
 

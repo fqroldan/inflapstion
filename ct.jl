@@ -720,7 +720,6 @@ function mimic_z(mt::MultiType, N=50)
 	for (jz, zv) in enumerate(zgrid)
 		find_equil!(mt, zv)
 		data[jz,:] .= find_plan_μ(mt)
-		println(zv)
 	end
 
 	return data, datanames, zgrid

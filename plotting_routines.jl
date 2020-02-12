@@ -417,7 +417,7 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
 
 	data, datanames, zgrid = mimic_z(mt, N)
 
-	cols = [RGB{Float64}(0.396811,0.31014,0.204105), RGB{Float64}(0.817882,0.7260905,0.426991), RGB{Float64}(0.35082,0.595178,0.853742)]
+	cols = [get(ColorSchemes.southwest, jj) for jj in [0, 0.5, 1]]
 	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)
 
 	yax = ["y2", "y1", "y1"]
