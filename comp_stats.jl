@@ -107,9 +107,9 @@ a, ω, χ, mt = choose_ω!(L_mat, ct)
 # Lmin = minimum(L_mat[:,:,3,:])
 # fill_in_results(show_σs, ω, a, χ, Lmin)
 
-Lavg = find_equil!(mt)
 z0 = mt.ct.pgrid[3]
-mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt, z0)
+Lavg = find_equil!(mt, z0)
+mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt)
 fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg)
 
 
