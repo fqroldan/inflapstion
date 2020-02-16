@@ -412,6 +412,20 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 	return p1
 end
 
+function make_colorbar(ct::CrazyType; slides::Bool=true)
+	agr = annualized.(ct.agrid)
+	Na = length(ct.agrid)
+
+	p1 = plot(contour(;x=range(0,1,length=2), y=range(0,1,length=Na), z=[jy for jx in 1:2, jy in agr], colorscale=[[vv, get(ColorSchemes.fall, vv)] for vv in range(0,1,length=Na)], colorbar=attr(title="<i>a"), contours_coloring="heatmap"))
+
+	if slides
+		relayout!(p1, font_family="Lato", font_size=18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	else
+		relayout!(p1, font_family = "Linux Libertine", font_size=18)
+	end
+	return p1
+
+end
 
 function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
 
