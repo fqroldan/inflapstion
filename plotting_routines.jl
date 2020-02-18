@@ -13,6 +13,21 @@ col = [	"#1f77b4",  # muted blue
 		"#17becf"   # blue-teal
 		]
 
+function style_plot!(pl; slides::Bool=true)
+	if slides
+		relayout!(pl,
+			font_family = "Lato", font_size=14,
+			paper_bgcolor="#fafafa", plot_bgcolor="#fafafa"
+			)
+	else
+		relayout!(pl,
+			font_family = "Linux Libertine", font_size=14,
+			paper_bgcolor="white", plot_bgcolor="white"
+			)
+	end
+	nothing
+end
+
 function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
 	if dim == 1
 		xgrid = ct.pgrid
@@ -127,8 +142,8 @@ function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 	return p1, p2, p3
 end
 
-function makeplots_ct_pa(ct::CrazyType)
-
+function makeplots_ct_pa(ct::CrazyType; slides::Bool=true)
+	""" Currently run for paper on ct.ω = 0.01, ct.χ = 0 """
 	gπ_minus_a = zeros(size(ct.gπ))
 	Eπ_minus_a = zeros(size(ct.gπ))
 	Ep_minus_p = zeros(size(ct.Ep))
@@ -136,6 +151,16 @@ function makeplots_ct_pa(ct::CrazyType)
 		gπ_minus_a[jp, ja] = ct.gπ[jp, ja] - av
 		Eπ_minus_a[jp, ja] = pv*av + (1.0-pv)*ct.gπ[jp, ja] - av
 		Ep_minus_p[jp, ja] = ct.Ep[jp, ja] - pv
+	end
+
+	if slides
+		font = "Lato"
+		bgcol = "#fafafa"
+		heights = 500 * ones(4)
+	else
+		font = "Linux Libertine"
+		bgcol = "white"
+		heights = [450, 350, 400, 500]
 	end
 
 	annual_π = annualized.(gπ_minus_a)
@@ -150,13 +175,14 @@ function makeplots_ct_pa(ct::CrazyType)
 
 	p = [pL pπ; py pp]
 
-	relayout!(p, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
-	relayout!(pL, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol)
+	relayout!(pL, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol, height = heights[1])
 
-	relayout!(pp, font_family="Lato", xaxis_title="<i>p", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
-	restyle!(pp, showlegend=false)
-	relayout!(pπ, font_family="Lato", xaxis_title="<i>p", yaxis_title="%", font_size=14, width=900, height=500, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(pπ, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
 	restyle!(pπ, showlegend=false)
+
+	relayout!(pp, font_family=font, xaxis_title="<i>p", font_size=16, width=900, height=heights[3], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
+	restyle!(pp, showlegend=false)
 
 	return p, pL, pπ, pC, pp
 end
@@ -258,6 +284,8 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	relayout!(p1, yaxis_type="log", title="‖g′-g‖/‖g‖", xaxis_title="iterations", yaxis_title="%")
 	return p1
 end
+
+plot_L_contour(mt::MultiType; name_y="𝓛", slides=false) = plot_L_contour(mt.ωgrid, mt.χgrid, mt.L_mat; name_y=name_y, slides=slides)
 
 function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false)
 
@@ -380,6 +408,7 @@ function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist
 	return p1
 end
 
+plot_plans_p(mt::MultiType; make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, make_pdf=make_pdf)
 function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false)
 
 	ωvec = zeros(ct.Np)

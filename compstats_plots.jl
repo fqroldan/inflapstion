@@ -27,6 +27,7 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 	# pω = scatter(x=df[!,1]*4, y=df[!,3], name=varnames[3], xaxis="x", yaxis="y2")
 
 	layout = Layout(
+		title="Average plans",
 		xaxis=attr(domain=[0,1],anchor="y", title="<i>"*xax),
 		yaxis1=attr(domain=[0,0.45], title="%"),
 		yaxis2=attr(domain=[0.55,1], anchor="x"),
