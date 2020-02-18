@@ -435,7 +435,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 10e-4 # 11!!!!
+			tol = 8e-4 # 11!!!!
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
