@@ -308,7 +308,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title="lim<sub><i>p→0</i></sub> min<sub><i>a</sub></i>"*name_y*"<i>(p,a,ω,χ)</i>", xaxis_title="Decay  (<i>ω</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title="lim<sub><i>p→0</i></sub> min<sub><i>a</sub></i>"*name_y*" (<i>p,a,ω,χ</i>)", xaxis_title="Decay  (<i>ω</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	end
