@@ -401,7 +401,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	if T == Simultaneous
 		ωmax = 3.0
 	elseif T == Forward
-		ωmax = 1.0
+		ωmax = 1.25
 	end
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))
 	move_grids!(ωgrid, xmax = ωmax, xmin = 0.01)
