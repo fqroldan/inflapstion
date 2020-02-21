@@ -293,6 +293,9 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	jjxy = findfirst(L_mat.==L_filled)
 
 	# _, jjxy = findmin(L_mat)
+	
+	xmin = ωgrid[jjxy[1]]
+	ymin = annualized(χgrid[jjxy[2]])
 
 	if name_y == "𝓛"
 		title = "lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> 𝓛(<i>p,a,ω,χ</i>)"
@@ -301,9 +304,6 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		title = "lim<sub><i>p→0</i></sub> C(<i>p,a*,ω,χ</i>)"
 		shape_vec = []
 	end
-
-	xmin = ωgrid[jjxy[1]]
-	ymin = annualized(χgrid[jjxy[2]])
 
 	ctχω = contour(;
 		x = ωgrid, y = annualized.(χgrid),
