@@ -68,8 +68,8 @@ function CrazyType(T::DataType;
 		# ω = 0.05,
 		ω = 0.1,
 		χ = 0.0,
-		Np = 60,
-		Na = 30
+		Np = 50,
+		Na = 50
 		)
 
 	if T == Simultaneous
