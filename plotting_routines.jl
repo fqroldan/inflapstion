@@ -294,10 +294,16 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 
 	# _, jjxy = findmin(L_mat)
 
+	if name_y == "𝓛"
+		title = "lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> 𝓛(<i>p,a,ω,χ</i>)"
+		shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="red", type="circle")]
+	elseif name_y == "C"
+		title = "lim<sub><i>p→0</i></sub> C(<i>p,a*,ω,χ</i>)"
+		shape_vec = []
+	end
+
 	xmin = ωgrid[jjxy[1]]
 	ymin = annualized(χgrid[jjxy[2]])
-
-	shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="red", type="circle")]
 
 	ctχω = contour(;
 		x = ωgrid, y = annualized.(χgrid),
@@ -308,9 +314,9 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title="lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> "*name_y*"(<i>p,a,ω,χ</i>)", xaxis_title="Decay  (<i>ω</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay  (<i>ω</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
-		relayout!(p1, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	end
 
 	return p1
@@ -417,23 +423,49 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 
 	for jp in 1:ct.Np
 		_, jj = findmin(L_mat[:,:,jp,:])
-		ωvec[jp] = ωgrid[jj[1]]
-		χvec[jp] = χgrid[jj[2]]
-		avec[jp] = ct.agrid[jj[3]]
+
+		data[jp, 1] = ωgrid[jj[1]]
+		data[jp, 2] = annualized.(ct.agrid[jj[3]])
+		data[jp, 3] = annualized.(χgrid[jj[2]])
+
+		# ωvec[jp] = ωgrid[jj[1]]
+		# χvec[jp] = χgrid[jj[2]]
+		# avec[jp] = ct.agrid[jj[3]]
 	end
 
-	pω = plot(scatter(;x=ct.pgrid[3:end], y=ωvec[3:end], line_width=2.5, name="<i>ω", marker_color=get(ColorSchemes.southwest, 0.0)));
-	pχa= plot([
-		scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="<i>a", marker_color=get(ColorSchemes.southwest, 0.5))
-		scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="<i>χ", marker_color=get(ColorSchemes.southwest, 0.99))
-		], Layout(;yaxis_title="%", xaxis_title="<i>p</i>"));
 
-	relayout!(pω,  xaxis_zeroline=false, yaxis_zeroline=false)
-	relayout!(pχa, xaxis_zeroline=false, yaxis_zeroline=false)
+	datanames = ["ω", "a", "χ"]
+	cols = [get(ColorSchemes.southwest, jj) for jj in [0, 0.5, 1]]
+	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)
 
-	p1 = [pω; pχa]
+	yax = ["y2", "y1", "y1"]
+	for jj in 1:3
+		col = cols[jj]
+		push!(ls, scatter(;x=ct.pgrid[3:end], y=data[3:end, jj], line_width = 2.5, yaxis="<i>"*yax[jj], marker_color=col, name="<i>"*datanames[jj]*"</i>"))
+	end
+
+	layout = Layout(
+		yaxis = attr(domain=[0, 0.45], zeroline=false),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false),
+		xaxis = attr(zeroline=false),
+		legend = attr(orientation="h", x=0.05),
+		font_size=16, font_family="Linux Libertine"
+		)
+
+	p1 = plot(ls, layout)
+
+	# pω = plot(scatter(;x=ct.pgrid[3:end], y=ωvec[3:end], line_width=2.5, name="<i>ω", marker_color=get(ColorSchemes.southwest, 0.0)));
+	# pχa= plot([
+	# 	scatter(;x=ct.pgrid[3:end], y=annualized.(avec[3:end]), line_width=2.5, name="<i>a", marker_color=get(ColorSchemes.southwest, 0.5))
+	# 	scatter(;x=ct.pgrid[3:end], y=annualized.(χvec[3:end]), line_width=2.5, name="<i>χ", marker_color=get(ColorSchemes.southwest, 0.99))
+	# 	], Layout(;yaxis_title="%", xaxis_title="<i>p</i>"));
+
+	# relayout!(pω,  xaxis_zeroline=false, yaxis_zeroline=false)
+	# relayout!(pχa, xaxis_zeroline=false, yaxis_zeroline=false)
+
+	# p1 = [pω; pχa]
 	relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", title="Preferred plans")
-	relayout!(p1, height=600, width=900, font_family="Lato", font_size=16, legend=attr(;orientation="h", x=0.1))
+	relayout!(p1, height=600, width=900, font_family="Lato", legend=attr(;orientation="h", x=0.1))
 
 	if make_pdf
 		savefig(p1, pwd()*"/../Graphs/plans.pdf")

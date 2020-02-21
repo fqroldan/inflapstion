@@ -654,26 +654,26 @@ function find_plan_μ(mt::MultiType)
 	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
 
 		mean_ω += mt.μ[jω, jχ, ja] * ωv
-		mean_χ += mt.μ[jω, jχ, ja] * annualized(χv)
 		mean_a += mt.μ[jω, jχ, ja] * annualized(av)
+		mean_χ += mt.μ[jω, jχ, ja] * annualized(χv)
 
 		m2_ω += mt.μ[jω, jχ, ja] * ωv^2
-		m2_χ += mt.μ[jω, jχ, ja] * annualized(χv)^2
 		m2_a += mt.μ[jω, jχ, ja] * annualized(av)^2
+		m2_χ += mt.μ[jω, jχ, ja] * annualized(χv)^2
 	end
 
 	mean_ω *= 1/sum_prob
-	mean_χ *= 1/sum_prob
 	mean_a *= 1/sum_prob
+	mean_χ *= 1/sum_prob
 	m2_ω *= 1/sum_prob
-	m2_χ *= 1/sum_prob
 	m2_a *= 1/sum_prob
+	m2_χ *= 1/sum_prob
 
 	sd_ω = sqrt(m2_ω - mean_ω^2)
-	sd_χ = sqrt(m2_χ - mean_χ^2)
 	sd_a = sqrt(m2_a - mean_a^2)
+	sd_χ = sqrt(m2_χ - mean_χ^2)
 
-	return mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a
+	return mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ
 end
 
 function find_equil!(mt::MultiType, z0=1e-2)
@@ -715,7 +715,7 @@ function mimic_z(mt::MultiType, N=50)
 	move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
 
 	data = zeros(N,6)
-	datanames = ["ω", "χ", "a", "s_ω", "s_χ", "s_a"]
+	datanames = ["ω", "a", "χ", "s_ω", "s_a", "s_χ"]
 
 	for (jz, zv) in enumerate(zgrid)
 		find_equil!(mt, zv)
