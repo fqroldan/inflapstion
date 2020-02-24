@@ -414,8 +414,8 @@ function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist
 	return p1
 end
 
-plot_plans_p(mt::MultiType; decay::Bool=false, make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, decay=decay, make_pdf=make_pdf)
-function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=false, make_pdf::Bool=false)
+plot_plans_p(mt::MultiType; decay::Bool=true, make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, decay=decay, make_pdf=make_pdf)
+function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, make_pdf::Bool=false)
 
 	ωvec = zeros(ct.Np)
 	avec = zeros(ct.Np)
@@ -489,7 +489,7 @@ function make_colorbar(ct::CrazyType; slides::Bool=true)
 
 end
 
-function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false, CIs::Bool=false)
+function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, CIs::Bool=false)
 
 	data, datanames, zgrid = mimic_z(mt, N, decay=decay)
 
