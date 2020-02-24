@@ -421,6 +421,7 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 	avec = zeros(ct.Np)
 	χvec = zeros(ct.Np)
 
+	data = zeros(ct.Np,3)
 	for jp in 1:ct.Np
 		_, jj = findmin(L_mat[:,:,jp,:])
 
