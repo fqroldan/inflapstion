@@ -428,10 +428,6 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 		data[jp, 1] = ωgrid[jj[1]]
 		data[jp, 2] = annualized.(ct.agrid[jj[3]])
 		data[jp, 3] = annualized.(χgrid[jj[2]])
-
-		# ωvec[jp] = ωgrid[jj[1]]
-		# χvec[jp] = χgrid[jj[2]]
-		# avec[jp] = ct.agrid[jj[3]]
 	end
 
 
