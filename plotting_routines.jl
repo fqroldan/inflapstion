@@ -293,8 +293,10 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	jjxy = findfirst(L_mat.==L_filled)
 
 	# _, jjxy = findmin(L_mat)
+
+	perc_rate(x) = 100 * (1 .- exp.(-x))
 	
-	xmin = ωgrid[jjxy[1]]
+	xmin = perc_rate(ωgrid[jjxy[1]])
 	ymin = annualized(χgrid[jjxy[2]])
 
 	if name_y == "𝓛"
@@ -306,7 +308,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	end
 
 	ctχω = contour(;
-		x = ωgrid, y = annualized.(χgrid),
+		x = perc_rate(ωgrid), y = annualized.(χgrid),
 		z = L_mat,
 		# contours_coloring="heatmap",
 		# contours_start=tickmin, contours_end=tickmax,
@@ -314,7 +316,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		colorscale = "Electric", reversescale = true,
 		# colorbar_dtick=0.1, colorbar_xpad=14
 		)
-	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay  (<i>ω</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i> %</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 	end
