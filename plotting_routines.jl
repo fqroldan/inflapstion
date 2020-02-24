@@ -489,7 +489,7 @@ function make_colorbar(ct::CrazyType; slides::Bool=true)
 
 end
 
-function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false)
+function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false, CIs::Bool=false)
 
 	data, datanames, zgrid = mimic_z(mt, N, decay=decay)
 
@@ -499,8 +499,10 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false)
 	yax = ["y2", "y1", "y1"]
 	for jj in 1:3
 		col = cols[jj]
-		push!(ls, scatter(;x = zgrid, y = data[:,jj]+data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, showlegend=false, line_width=0.01, hoverinfo="skip"))
-		push!(ls, scatter(;x = zgrid, y = data[:,jj]-data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, fill="tonexty", showlegend=false, line_width=0.01, hoverinfo="skip"))
+		if CIs
+			push!(ls, scatter(;x = zgrid, y = data[:,jj]+data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, showlegend=false, line_width=0.01, hoverinfo="skip"))
+			push!(ls, scatter(;x = zgrid, y = data[:,jj]-data[:,jj+3], yaxis=yax[jj], marker_color=col, mode="lines", opacity = 0.5, fill="tonexty", showlegend=false, line_width=0.01, hoverinfo="skip"))
+		end
 		push!(ls, scatter(;x=zgrid, y=data[:, jj], yaxis=yax[jj], marker_color=col, name="𝔼[<i>"*datanames[jj]*"</i>]"))
 	end
 
@@ -520,8 +522,8 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false)
 	return p1
 end
 
-function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
-	p1 = plot_mimic_z(mt, N; slides=slides)
-	savejson(p1, "../Graphs/tests/plot_mimic.json")
+function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=false)
+	p1 = plot_mimic_z(mt, N; slides=slides, CIs=CIs)
+	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", "")).json")
 	nothing
 end
