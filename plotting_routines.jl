@@ -308,11 +308,8 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	ctχω = contour(;
 		x = perc_rate(ωgrid), y = annualized.(χgrid),
 		z = L_mat,
-		# contours_coloring="heatmap",
-		# contours_start=tickmin, contours_end=tickmax,
-		# colorbar_tick0 = 0., colorbar_dtick=floor(Int, 1./5),
-		colorscale = "Electric", reversescale = true,
-		# colorbar_dtick=0.1, colorbar_xpad=14
+		# colorscale = "Electric", reversescale = true,
+		colorscale = [[jj, get(ColorSchemes.fall, jj)] for jj in range(0,1,length=50)], reversescale = true,
 		)
 	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i> %</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
