@@ -293,8 +293,6 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	jjxy = findfirst(L_mat.==L_filled)
 
 	# _, jjxy = findmin(L_mat)
-
-	perc_rate(x) = 100 * (1 .- exp.(-x))
 	
 	xmin = perc_rate(ωgrid[jjxy[1]])
 	ymin = annualized(χgrid[jjxy[2]])
@@ -416,8 +414,8 @@ function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist
 	return p1
 end
 
-plot_plans_p(mt::MultiType; make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, make_pdf=make_pdf)
-function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false)
+plot_plans_p(mt::MultiType; decay::Bool=false, make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, decay=decay, make_pdf=make_pdf)
+function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=false, make_pdf::Bool=false)
 
 	ωvec = zeros(ct.Np)
 	avec = zeros(ct.Np)
@@ -427,7 +425,11 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; make_pdf::Bool=false
 	for jp in 1:ct.Np
 		_, jj = findmin(L_mat[:,:,jp,:])
 
-		data[jp, 1] = ωgrid[jj[1]]
+		if decay
+			data[jp, 1] = perc_rate(ωgrid[jj[1]])
+		else
+			data[jp, 1] = ωgrid[jj[1]]
+		end
 		data[jp, 2] = annualized.(ct.agrid[jj[3]])
 		data[jp, 3] = annualized.(χgrid[jj[2]])
 	end
@@ -487,9 +489,9 @@ function make_colorbar(ct::CrazyType; slides::Bool=true)
 
 end
 
-function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true)
+function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=false)
 
-	data, datanames, zgrid = mimic_z(mt, N)
+	data, datanames, zgrid = mimic_z(mt, N, decay=decay)
 
 	cols = [get(ColorSchemes.southwest, jj) for jj in [0, 0.5, 1]]
 	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)

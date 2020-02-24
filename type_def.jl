@@ -110,3 +110,5 @@ cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
 
 annualized(π::Real) = 100*((1.0 .+ π).^4 .- 1)
 deannual(x::Real) = (x*0.01 + 1.0)^0.25 - 1.0
+
+perc_rate(x) = 100 * (1 .- exp.(-x))

@@ -643,9 +643,13 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 	end
 end
 
-function find_plan_μ(mt::MultiType)
+function find_plan_μ(mt::MultiType; decay::Bool=false)
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
+
+	if decay
+		ωgrid = perc_rate.(ωgrid)
+	end
 
 	mean_ω, mean_χ, mean_a = zeros(3)
 	m2_ω, m2_χ, m2_a = zeros(3)
@@ -709,7 +713,7 @@ function find_equil!(mt::MultiType, z0=1e-2)
 	return k_star
 end
 
-function mimic_z(mt::MultiType, N=50)
+function mimic_z(mt::MultiType, N=50; decay::Bool=false)
 
 	zgrid = cdf.(Beta(4,1), range(0,1,length=N))
 	move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
@@ -719,7 +723,7 @@ function mimic_z(mt::MultiType, N=50)
 
 	for (jz, zv) in enumerate(zgrid)
 		find_equil!(mt, zv)
-		data[jz,:] .= find_plan_μ(mt)
+		data[jz,:] .= find_plan_μ(mt, decay=decay)
 	end
 
 	return data, datanames, zgrid
