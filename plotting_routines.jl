@@ -321,7 +321,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
 			# ,[[1, "fafafa"]]
 			, [[1, get(ColorSchemes.lajolla, 0.1)]]
-			), reversescale = true,
+			), reversescale = true
 		)
 	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i>%</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
@@ -371,14 +371,14 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		plotname *="_t"
 	end
 
-	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="Years", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
+	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
 		)
 
 	if slides
 		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 		plotname *= "_slides"
 	else
-		relayout!(p1, font_family = "Linux Libertine", font_size = 18, height = 450, width=900)
+		relayout!(p1, font_family = "Linux Libertine", font_size = 18, height = 400, width=900)
 		plotname *= "_paper"
 	end
 
@@ -425,8 +425,8 @@ function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist
 	return p1
 end
 
-plot_plans_p(mt::MultiType; decay::Bool=true, make_pdf::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, decay=decay, make_pdf=make_pdf)
-function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, make_pdf::Bool=false)
+plot_plans_p(mt::MultiType; decay::Bool=true, slides::Bool=false) = plot_plans_p(mt.ct, mt.L_mat, mt.ωgrid, mt.χgrid, decay=decay, slides=slides)
+function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, slides::Bool=false)
 
 	ωvec = zeros(ct.Np)
 	avec = zeros(ct.Np)
@@ -446,22 +446,23 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, ma
 	end
 
 
-	datanames = ["ω", "a", "χ"]
+	datanames = ["ω", "a<sub>0", "χ"]
 	cols = [get(ColorSchemes.southwest, jj) for jj in [0, 0.5, 1]]
 	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)
 
 	yax = ["y2", "y1", "y1"]
 	for jj in 1:3
 		col = cols[jj]
-		push!(ls, scatter(;x=ct.pgrid[3:end], y=data[3:end, jj], line_width = 2.5, yaxis="<i>"*yax[jj], marker_color=col, name="<i>"*datanames[jj]*"</i>"))
+		push!(ls, scatter(;x=ct.pgrid[3:end], y=data[3:end, jj], line_width = 2.5, yaxis=yax[jj], marker_color=col, name="<i>"*datanames[jj]*"</i>"))
 	end
 
 	layout = Layout(
-		yaxis = attr(domain=[0, 0.45], zeroline=false),
-		yaxis2 = attr(domain=[0.55, 1], zeroline=false),
-		xaxis = attr(zeroline=false),
+		yaxis = attr(domain=[0, 0.45], zeroline=false, title="<i>%"),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
+		xaxis = attr(zeroline=false, title="<i>p<sub>0"),
 		legend = attr(orientation="h", x=0.05),
-		font_size=16, font_family="Linux Libertine"
+		width = 900, height = 450,
+		font_size=16, font_family="Linux Libertine", title="Preferred plans"
 		)
 
 	p1 = plot(ls, layout)
@@ -476,12 +477,11 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, ma
 	# relayout!(pχa, xaxis_zeroline=false, yaxis_zeroline=false)
 
 	# p1 = [pω; pχa]
-	relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", title="Preferred plans")
-	relayout!(p1, height=600, width=900, font_family="Lato", legend=attr(;orientation="h", x=0.1))
-
-	if make_pdf
-		savefig(p1, pwd()*"/../Graphs/plans.pdf")
+	if slides
+		relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, height=600, width=900, font_family="Lato")
 	end
+
 	return p1
 end
 
@@ -518,11 +518,11 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, 
 	end
 
 	layout = Layout(
-		yaxis = attr(domain=[0, 0.45], zeroline=false),
-		yaxis2 = attr(domain=[0.55, 1], zeroline=false),
-		xaxis = attr(zeroline=false),
+		yaxis = attr(domain=[0, 0.45], zeroline=false, title="<i>%"),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
+		xaxis = attr(zeroline=false, title="<i>z"),
 		legend = attr(orientation="h", x=0.05),
-		font_size=16, font_family="Linux Libertine"
+		font_size=16, font_family="Linux Libertine", title="Average plans"
 		)
 
 	p1 = plot(ls, layout)
