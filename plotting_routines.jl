@@ -306,21 +306,28 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 
 	if name_y == "𝓛"
 		title = "lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> 𝓛(<i>p,a,ω,χ</i>)"
-		shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="red", type="circle")]
+		shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color="#08282e", type="circle")]
 	elseif name_y == "C"
 		title = "lim<sub><i>p→0</i></sub> C(<i>p,a*,ω,χ</i>)"
 		shape_vec = []
 	end
 
+	colpal = ColorSchemes.fall
+
 	ctχω = contour(;
 		x = perc_rate(ωgrid), y = annualized.(χgrid),
 		z = L_mat,
 		# colorscale = "Electric", reversescale = true,
-		colorscale = [[jj, get(ColorSchemes.fall, jj)] for jj in range(0,1,length=50)], reversescale = true,
+		colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
+			# ,[[1, "fafafa"]]
+			, [[1, get(ColorSchemes.lajolla, 0.1)]]
+			), reversescale = true,
 		)
-	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i> %</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i>%</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	else
+		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
 	end
 
 	return p1
