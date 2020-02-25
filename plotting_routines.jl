@@ -285,7 +285,14 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
-plot_L_contour(mt::MultiType; name_y="𝓛", slides=false) = plot_L_contour(mt.ωgrid, mt.χgrid, mt.L_mat; name_y=name_y, slides=slides)
+function plot_L_contour(mt::MultiType; slides=false)
+	L = zeros(length(mt.ωgrid), length(mt.χgrid))
+	for jω in 1:length(mt.ωgrid), jχ in 1:length(mt.χgrid)
+		minL, ja = findmin(mt.L_mat[jω, jχ, 3, :])
+		L[jω, jχ] = minL
+	end
+	return plot_L_contour(mt.ωgrid, mt.χgrid, L; name_y="𝓛", slides=slides)
+end
 
 function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false)
 
