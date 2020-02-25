@@ -378,7 +378,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
 		plotname *= "_slides"
 	else
-		relayout!(p1, font_family = "STIX Two Text", font_size = 18, height = 500, width=1000)
+		relayout!(p1, font_family = "Linux Libertine", font_size = 18, height = 450, width=900)
 		plotname *= "_paper"
 	end
 
