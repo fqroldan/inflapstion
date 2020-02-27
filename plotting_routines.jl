@@ -537,3 +537,30 @@ function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=fal
 	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", "")).json")
 	nothing
 end
+
+function strategy_μ(mt::MultiType; slides=false)
+
+	χgrid = mt.χgrid
+	ωgrid = mt.ωgrid
+	agrid = mt.ct.agrid
+
+	jω = floor(Int, length(mt.ωgrid)/2)
+	# mt.μ[jω, jχ, ja]
+
+	colpal = ColorSchemes.davos
+
+	p1 = plot(contour(
+		x = annualized.(χgrid), y=annualized.(agrid),
+		z = mt.μ[end,:,:],
+		colorscale = [[jj, get(colpal, jj)] for jj in range(0,1,length=50)], reversescale = true
+		),
+	Layout(;title="<i>μ", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial Inflation (<i>a<sub>0</sub></i>)"))
+
+	if slides
+		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	else
+		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
+	end
+
+	return p1
+end
