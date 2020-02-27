@@ -317,7 +317,6 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	ctχω = contour(;
 		x = perc_rate(ωgrid), y = annualized.(χgrid),
 		z = L_mat,
-		# colorscale = "Electric", reversescale = true,
 		colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
 			# ,[[1, "fafafa"]]
 			, [[1, get(ColorSchemes.lajolla, 0.1)]]
