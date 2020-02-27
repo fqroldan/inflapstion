@@ -408,7 +408,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	Na = length(ct.agrid)
 	Nχ = size(L_mat, 2)
-	χgrid = range(0.0, 0.5*Nash(ct), length = Nχ)
+	χgrid = range(0.0, 0.43*Nash(ct), length = Nχ)
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
 	print_save("\n")
