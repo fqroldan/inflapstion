@@ -99,8 +99,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw:
 
 	few_lines ? step_a = 2 : step_a = 1
 
-	colorpal = ColorSchemes.fall
-
+	colorpal = ColorSchemes.lapaz
 
 	function set_col(ja, agrid, rel::Bool=false)
 		weight = min(1,max(0,(ja-1)/(jamax-1)))
@@ -312,15 +311,16 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		shape_vec = []
 	end
 
-	colpal = ColorSchemes.fall
+	colpal = ColorSchemes.lapaz
 
 	ctχω = contour(;
 		x = perc_rate(ωgrid), y = annualized.(χgrid),
 		z = L_mat,
-		colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
-			# ,[[1, "fafafa"]]
-			, [[1, get(ColorSchemes.lajolla, 0.1)]]
-			), reversescale = true
+		# colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
+		# 	# ,[[1, "fafafa"]]
+		# 	, [[1, get(ColorSchemes.lajolla, 0.1)]]
+		# 	), reversescale = true
+		colorscale = [[jj, get(colpal, 1-jj)] for jj in range(0,1,length=50)]
 		)
 	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i>%</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
