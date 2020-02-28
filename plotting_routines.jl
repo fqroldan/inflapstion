@@ -534,7 +534,7 @@ end
 
 function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=false)
 	p1 = plot_mimic_z(mt, N; slides=slides, CIs=CIs)
-	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", "")).json")
+	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", ""))$(ifelse(slides, "_slides", "_paper")).json")
 	nothing
 end
 

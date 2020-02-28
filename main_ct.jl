@@ -42,9 +42,10 @@ L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
 find_equil!(mt)
-save_plot_mimic_z(mt, CIs=true)
-save_plot_mimic_z(mt, CIs=false)
-save("../../mt.jld", "mt", mt)
+for slides in [true, false]
+	save_plot_mimic_z(mt, CIs=false, slides=slides)
+	save("../../mt.jld", "mt", mt)
+end
 
 nothing
 

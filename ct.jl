@@ -504,8 +504,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 			C_mat_ctour[jω, jχ] = C 
 
-			pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour, name_y="𝓛")
-			savejson(pLct, pwd()*"/../Graphs/tests/contour.json")
+			for slides in [true, false]
+				pLct = plot_L_contour(ωgrid, χgrid, L_mat_ctour, name_y="𝓛", slides=slides)
+				savejson(pLct, pwd()*"/../Graphs/tests/contour$(ifelse(slides, "_slides", "_paper")).json")
+			end
 
 			# pCct = plot_L_contour(ωgrid, χgrid, C_mat_ctour)
 			# savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
@@ -548,15 +550,21 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
 				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
-				_, pL, pπ, _, pp = makeplots_ct_pa(ct);
-				savejson(pL, pwd()*"/../Graphs/tests/first_L.json")
-				savejson(pπ, pwd()*"/../Graphs/tests/first_g.json")
-				savejson(pp, pwd()*"/../Graphs/tests/first_p.json")
+				_, pL, pπ, _, pp = makeplots_ct_pa(ct, slides=true);
+				savejson(pL, pwd()*"/../Graphs/tests/first_L_slides.json")
+				savejson(pπ, pwd()*"/../Graphs/tests/first_g_slides.json")
+				savejson(pp, pwd()*"/../Graphs/tests/first_p_slides.json")
+				_, pL, pπ, _, pp = makeplots_ct_pa(ct, slides=false);
+				savejson(pL, pwd()*"/../Graphs/tests/first_L_paper.json")
+				savejson(pπ, pwd()*"/../Graphs/tests/first_g_paper.json")
+				savejson(pp, pwd()*"/../Graphs/tests/first_p_paper.json")
 				save("../../first_ct.jld", "ct", ct)
 			end
 
-			pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:], name_y="C")
-			savejson(pCct, pwd()*"/../Graphs/tests/Ccontour.json")			
+			for slides in [true, false]
+				pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:], name_y="C", slides=slides)
+				savejson(pCct, pwd()*"/../Graphs/tests/Ccontour$(ifelse(slides, "_slides", "_paper")).json")
+			end
 
 		end
 
@@ -591,8 +599,10 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
 	print_save("\nOverall minimum announcement c = (a₀, ω, χ) = $(annualized(a_min)), $ω_min, $(annualized(χ_min))")
 
-	p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid)
-	savejson(p1, pwd()*"/../Graphs/tests/plans.json")
+	for slides = [true, false]
+		p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid, slides=slides)
+		savejson(p1, pwd()*"/../Graphs/tests/plans_$(ifelse(slides, "_slides", "_paper")).json")
+	end
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
 	ν *= 1/sum(ν)
