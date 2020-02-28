@@ -175,7 +175,7 @@ function makeplots_ct_pa(ct::CrazyType; slides::Bool=true)
 	p = [pL pπ; py pp]
 
 	relayout!(p, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol)
-	relayout!(pL, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol, height = heights[1])
+	relayout!(pL, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol, width=900, height = heights[1])
 
 	relayout!(pπ, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
 	restyle!(pπ, showlegend=false)
@@ -488,7 +488,7 @@ function make_colorbar(ct::CrazyType; slides::Bool=true)
 	agr = annualized.(ct.agrid)
 	Na = length(ct.agrid)
 
-	p1 = plot(contour(;x=range(0,1,length=2), y=range(0,1,length=Na), z=[jy for jx in 1:2, jy in agr], colorscale=[[vv, get(ColorSchemes.fall, vv)] for vv in range(0,1,length=Na)], colorbar=attr(title="<i>a"), contours_coloring="heatmap"))
+	p1 = plot(contour(;x=range(0,1,length=2), y=range(0,1,length=Na), z=[jy for jx in 1:2, jy in agr], colorscale=[[vv, get(ColorSchemes.lapaz, vv)] for vv in range(0,1,length=Na)], colorbar=attr(title="<i>a"), contours_coloring="heatmap"))
 
 	if slides
 		relayout!(p1, font_family="Lato", font_size=18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
