@@ -1,4 +1,5 @@
-using CSV, DataFrames, PlotlyJS, ColorSchemes
+using CSV, DataFrames, PlotlyJS, ColorSchemes, ORCA
+include("type_def.jl")
 
 function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 
@@ -11,12 +12,14 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 
 	varnames = ["<i>σ</i>"; "<i>ω</i>"; "<i>a<sub>0</sub></i>"; "<i>χ</i>"; "𝓛"]
 
+	df[!,2] = perc_rate.(df[!,2])
+
 	palette = ColorSchemes.southwest
 
 	if param == "sigma"
 		xax = "σ"
 	elseif param == "beta"
-		xax = "β"
+		xax = "β (<i>%</i>)"
 	elseif param == "kappa"
 		xax = "κ"
 	end
@@ -30,7 +33,7 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 		title="Average plans",
 		xaxis=attr(domain=[0,1],anchor="y", title="<i>"*xax),
 		yaxis1=attr(domain=[0,0.45], title="%"),
-		yaxis2=attr(domain=[0.55,1], anchor="x"),
+		yaxis2=attr(domain=[0.55,1], anchor="x", title="%"),
 		legend=attr(orientation="h", x=0.05)
 		)
 
@@ -47,4 +50,22 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 	end
 
 	return p1, p2
+end
+
+function save_all_plots()
+
+	for slides in [true, false]
+		for par in ["beta", "kappa", "sigma"]
+			p1, p2 = makeplot_compstats(par, slides=slides)
+
+			savefig(p1, "../Graphs/comp_stats_$(par)_$(ifelse(slides, "slides", "paper")).pdf", format = "pdf")
+			savefig(p2, "../Graphs/comp_stats_payoff_$(par)_$(ifelse(slides, "slides", "paper")).pdf", format="pdf")
+			if !slides
+				relayout!(p1, width = 450, height=300)
+				savefig(p1, "../Graphs/comp_stats_$(par)_paper_small.pdf", format="pdf")
+			end
+		end
+	end
+
+	nothing
 end
