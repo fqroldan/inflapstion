@@ -22,3 +22,17 @@ function save_summ_plots(N=10, ext="png")
 	nothing
 end
 
+function save_all_plots()
+
+	plnames = ["first_L", "first_g", "first_p", "plans", "mimics", "mimics_CI", "contour", "Ccontour"]
+
+	for slides in [true, false]
+		for pln in plnames
+			plname = pln*"$(ifelse(slides, "_slides", "_paper"))"
+			p1 = retrieve_plot("../HPC_output/Graphs/"*plname*".json")
+			savefig(p1, "../Graphs/new/"*plname*".pdf", format="pdf")
+		end
+	end
+	nothing
+end
+		
