@@ -420,7 +420,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	t0 = time()
 	Lplot = []
 	aplot = []
-	C_mat = zeros(Na, Nω, Nχ) * NaN
+	C_mat = NaN * L_mat
 	L_mat_ctour = zeros(Nω, Nχ) * NaN
 	C_mat_ctour = zeros(Nω, Nχ) * NaN
 	Lmin = 1e8
@@ -447,7 +447,9 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			Cmin = ct.C[3,ja]
 			# Cmin = ct.C[3,end]
 
-			C_mat[:,jω,jχ] = ct.C[3,:]
+			for jp in 1:length(ct.pgrid), ja in 1:length(ct.agrid)
+				C_mat[jω, jχ, jp, ja] = ct.C[jp, ja]
+			end
 			
 			s = ": done in $(time_print(time()-t1))"
 			flag ? s = s*" ✓" : nothing
@@ -562,7 +564,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			end
 
 			for slides in [true, false]
-				pCct = plot_L_contour(ωgrid, χgrid, C_mat[ja_min,:,:], name_y="C", slides=slides)
+				pCct = plot_L_contour(ωgrid, χgrid, C_mat[:,:,3,ja_min], name_y="C", slides=slides)
 				savejson(pCct, pwd()*"/../Graphs/tests/Ccontour$(ifelse(slides, "_slides", "_paper")).json")
 			end
 
@@ -606,7 +608,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
 	ν *= 1/sum(ν)
-	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, ν, L_mat)
+	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, ν, L_mat, C_mat)
 
 	return annualized(a_min), ω_min, annualized(χ_min), mt
 end

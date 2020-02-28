@@ -45,6 +45,7 @@ mutable struct MultiType
 	μ::Array{Float64, 3}
 
 	L_mat::Array{Float64, 4}
+	C_mat::Array{Float64, 4}
 end
 
 
