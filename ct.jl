@@ -603,7 +603,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	for slides = [true, false]
 		p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid, slides=slides)
-		savejson(p1, pwd()*"/../Graphs/tests/plans_$(ifelse(slides, "_slides", "_paper")).json")
+		savejson(p1, pwd()*"/../Graphs/tests/plans$(ifelse(slides, "_slides", "_paper")).json")
 	end
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
