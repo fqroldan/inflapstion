@@ -159,7 +159,7 @@ function makeplots_ct_pa(ct::CrazyType; slides::Bool=true)
 	else
 		font = "Linux Libertine"
 		bgcol = "white"
-		heights = [450, 350, 400, 500]
+		heights = [400, 350, 400, 500]
 	end
 
 	annual_π = annualized.(gπ_minus_a)
