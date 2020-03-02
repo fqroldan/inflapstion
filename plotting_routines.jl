@@ -74,7 +74,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 
 	# p = hvcat(2, pl[:])
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 12, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 12, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
 
 	function makeplot(p, ext::String)
 		savefig(p, pwd() * "/../Graphs/ct" * ext)
@@ -238,7 +238,7 @@ function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=3, noshocks:
 			], Layout(;title="Output", yaxis_zeroline=false, font_family = "Fira Sans Light", font_size = 16))
 	p = [prep ptar; pinf pout]
 
-	relayout!(p, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+	relayout!(p, font_family = "Fira Sans Light", font_size = 14, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
 
 	pL = plot([
 		scatter(;x=(1:T)/4, y=L_avg, showlegend=false, line_color=col[4])
@@ -324,7 +324,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		)
 	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i>%</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
-		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", width = 800, height = 450)
 	else
 		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
 	end
@@ -374,7 +374,7 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		)
 
 	if slides
-		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
 		plotname *= "_slides"
 	else
 		relayout!(p1, font_family = "Linux Libertine", font_size = 18, height = 400, width=900)
@@ -418,7 +418,7 @@ function plot_bayes(; center=1.5, dist=0.5, σ=0.5, p=0.25, distplot=4*sqrt(dist
 		Layout(;yaxis_range=[-0.05;1.05], xaxis_range=[0,3], shapes=shapes, annotations=annotations)
 		)
 
-	relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)", width=1200, height=500)
+	relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", width=1200, height=500)
 
 
 	return p1
@@ -477,7 +477,7 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, sl
 
 	# p1 = [pω; pχa]
 	if slides
-		relayout!(p1, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
 		relayout!(p1, height=600, width=900, font_family="Lato")
 	end
 
@@ -559,7 +559,7 @@ function strategy_μ(mt::MultiType; slides=false)
 	Layout(;title="<i>μ", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial Inflation (<i>a<sub>0</sub></i>)"))
 
 	if slides
-		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="rgba(250, 250, 250, 1.0)", paper_bgcolor="rgba(250, 250, 250, 1.0)")
+		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
 	else
 		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
 	end
