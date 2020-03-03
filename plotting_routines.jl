@@ -523,7 +523,7 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, 
 		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
 		xaxis = attr(zeroline=false, title="<i>z"),
 		legend = attr(orientation="h", x=0.05),
-		font_size=16, font_family="Linux Libertine", title="Average plans"
+		font_size=16, font_family="Linux Libertine", title="Average plans",
 		width = 700, height = 300
 		)
 
