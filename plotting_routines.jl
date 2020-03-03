@@ -537,6 +537,10 @@ end
 function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=false)
 	p1 = plot_mimic_z(mt, N; slides=slides, CIs=CIs)
 	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", ""))$(ifelse(slides, "_slides", "_paper")).json")
+	if !CIs
+		p1 = strategy_μ(mt, slides=slides)
+		savejson(p1, "../Graphs/tests/marg_aχ$(ifelse(slides, "_slides", "_paper")).json")
+	end
 	nothing
 end
 
@@ -546,23 +550,22 @@ function strategy_μ(mt::MultiType; slides=false)
 	ωgrid = mt.ωgrid
 	agrid = mt.ct.agrid
 
-	jω = floor(Int, length(mt.ωgrid)/2)
-	# mt.μ[jω, jχ, ja]
-
-	colpal = ColorSchemes.davos
-
-	p1 = plot(contour(
-		x = annualized.(χgrid), y=annualized.(agrid),
-		z = mt.μ[end,:,:],
-		colorscale = [[jj, get(colpal, jj)] for jj in range(0,1,length=50)], reversescale = true
-		),
-	Layout(;title="<i>μ", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial Inflation (<i>a<sub>0</sub></i>)"))
+	marg_aχ = [sum(mt.μ[:, jχ, ja]) for jχ in 1:size(mt.μ,2), ja in 1:size(mt.μ,3)];
 
 	if slides
-		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
+		ff = "Lato"
+		bgcol = "#fafafa"
+		wi = 800
 	else
-		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
+		ff = "Linux Libertine"
+		bgcol = ""
+		wi = 900
 	end
+
+	layout = Layout(title="Distribution of types", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol)
+
+	p1 = plot(contour(x=annualized.(mt.χgrid), y=annualized.(mt.ct.agrid), z=marg_aχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
 
 	return p1
 end
+
