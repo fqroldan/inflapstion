@@ -562,7 +562,7 @@ function strategy_μ(mt::MultiType; slides=false)
 		wi = 900
 	end
 
-	layout = Layout(title="Distribution of types", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol)
+	layout = Layout(title="∫<i>μ</i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol)
 
 	p1 = plot(contour(x=annualized.(mt.χgrid), y=annualized.(mt.ct.agrid), z=marg_aχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
 
