@@ -435,7 +435,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 5e-4 # 11!!!!
+			tol = 4e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
@@ -693,7 +693,7 @@ function find_plan_μ(mt::MultiType; decay::Bool=false)
 	return mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ
 end
 
-function find_equil!(mt::MultiType, z0=1e-2)
+function find_equil!(mt::MultiType, z0=mt.ct.pgrid[4])
 	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
