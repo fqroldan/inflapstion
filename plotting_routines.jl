@@ -538,8 +538,9 @@ function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=fal
 	p1 = plot_mimic_z(mt, N; slides=slides, CIs=CIs)
 	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", ""))$(ifelse(slides, "_slides", "_paper")).json")
 	if !CIs
-		p1 = strategy_μ(mt, slides=slides)
-		savejson(p1, "../Graphs/tests/marg_aχ$(ifelse(slides, "_slides", "_paper")).json")
+		p1, p2 = strategy_μ(mt, slides=slides)
+		savejson(p1, "../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
+		savejson(p2, "../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")		
 	end
 	nothing
 end
@@ -552,6 +553,8 @@ function strategy_μ(mt::MultiType; slides=false)
 
 	marg_aχ = [sum(mt.μ[:, jχ, ja]) for jχ in 1:size(mt.μ,2), ja in 1:size(mt.μ,3)];
 
+	marg_ωχ = [sum(mt.μ[jω, jχ, :]) for jω in 1:size(mt.μ, 1), jχ in 1:size(mt.μ,2)]
+
 	if slides
 		ff = "Lato"
 		bgcol = "#fafafa"
@@ -559,13 +562,16 @@ function strategy_μ(mt::MultiType; slides=false)
 	else
 		ff = "Linux Libertine"
 		bgcol = ""
-		wi = 900
+		wi = 550
 	end
 
-	layout = Layout(title="∫<i>μ</i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω", xaxis_title="Asymptote (<i>χ</i>)", yaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol)
+	layout = Layout(title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω", yaxis_title="Asymptote (<i>χ</i>)", xaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false)
 
-	p1 = plot(contour(x=annualized.(mt.χgrid), y=annualized.(mt.ct.agrid), z=marg_aχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
+	p1 = plot(contour(y=annualized.(mt.χgrid), x=annualized.(mt.ct.agrid), z=marg_aχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)], showscale=false), layout)
 
-	return p1
+	p2 = plot(contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
+	relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
+
+	return p1, p2
 end
 
