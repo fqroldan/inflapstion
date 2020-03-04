@@ -573,6 +573,13 @@ function strategy_μ(mt::MultiType; slides=false)
 	p2 = plot(contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
 	relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
 
+	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>χgrid[jχ]])
+	print("P(a_0 > χ) = $(@sprintf("%0.3g",100P))%")
+	write("../pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
+
+	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>5χgrid[jχ]])
+	write("../pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
+
 	return p1, p2
 end
 
