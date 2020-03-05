@@ -24,14 +24,14 @@ end
 
 function save_all_plots()
 
-	plnames = ["first_L", "first_g", "first_p", "plans", "mimics", "mimics_CI", "contour", "Ccontour"]
+	plnames = ["first_L", "first_g", "first_p", "plans", "marg_achi", "marg_omegachi", "mimics", "mimics_CI", "contour", "Ccontour"]
 
 	for pln in plnames
 		for slides in [true, false]
 			plname = pln*"$(ifelse(slides, "_slides", "_paper"))"
 			p1 = retrieve_plot("../HPC_output/Graphs/"*plname*".json")
 			if pln == "first_g"
-				relayout!(p1, yaxis_range=[0, 0.8], yaxis_zeroline=false)
+				relayout!(p1, yaxis_range=[0, 0.6], yaxis_zeroline=false)
 			end
 			savefig(p1, "../Graphs/new/"*plname*".pdf", format="pdf")
 		end

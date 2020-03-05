@@ -47,6 +47,9 @@ for slides in [true, false]
 		save_plot_mimic_z(mt, CIs=CI, slides=slides)
 		save("../../mt.jld", "mt", mt)
 	end
+	p1, p2 = strategy_μ(mt, slides=slides)
+	savejson(p1, pwd()*"/../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
+	savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 end
 
 nothing
