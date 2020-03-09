@@ -1,16 +1,12 @@
 using Distributed
 
-# @everywhere 
 using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD
 
-# @everywhere 
 include("type_def.jl")
-# @everywhere 
 include("reporting_routines.jl")
-# @everywhere 
 include("simul.jl")
-# @everywhere 
 include("plotting_routines.jl")
+include("planner.jl")
 
 function output_bayes(ct::CrazyType, pv, av)
 	knots = (ct.pgrid, ct.agrid);
@@ -66,9 +62,6 @@ function Bayes(ct::CrazyType, obs_π, exp_π, pv, av)
 
 	return p′
 end
-
-PC(ct::CrazyType{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::CrazyType{Simultaneous}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
 
 function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
 	aprime = ϕ(ct, av)
@@ -435,7 +428,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.ω = ωv
 
 			t1 = time()
-			tol = 20e-4
+			tol = 4e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end

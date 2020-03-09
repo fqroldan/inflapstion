@@ -9,7 +9,10 @@ end
 abstract type Simultaneous <: PhillipsCurve
 end
 
-mutable struct CrazyType{T<:PhillipsCurve}
+abstract type Plan{T<:PhillipsCurve}
+end
+
+mutable struct CrazyType{T<:PhillipsCurve} <: Plan{T}
 	β::Float64
 	γ::Float64
 	κ::Float64
@@ -48,6 +51,30 @@ mutable struct MultiType
 	C_mat::Array{Float64, 4}
 end
 
+mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
+	β::Float64
+	γ::Float64
+	κ::Float64
+	ystar::Float64
+
+	Nθ::Int64
+	θgrid::Vector{Float64}
+
+	gπ::Array{Float64, 1}
+	gy::Array{Float64, 1}
+	vf::Array{Float64, 1}
+end
+
+function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
+	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
+
+	θgrid = range(0, 50, length=Nθ)
+	gπ = zeros(Nθ)
+	gy = zeros(Nθ)
+	vf = zeros(Nθ)
+
+	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, gπ, gy, vf)
+end
 
 function move_grids!(xgrid; xmin=0.0, xmax=1.0)
 	xgrid[:] = xgrid[:] * (xmax-xmin) .+ xmin
@@ -96,13 +123,13 @@ end
 
 ϕ(ct::CrazyType, a::Float64) = exp(-ct.ω) * (a-ct.χ) + ct.χ
 
-which_PC(ct::CrazyType{T}) where T <: PhillipsCurve = T
+which_PC(ct::Plan{T}) where T <: PhillipsCurve = T
 
 Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, ystar / (κ*γ))
 
 # Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
 
-Nash(ct::CrazyType{T}) where T <: PhillipsCurve = Nash(T, ct.β, ct.γ, ct.κ, ct.ystar)
+Nash(ct::Plan{T}) where T <: PhillipsCurve = Nash(T, ct.β, ct.γ, ct.κ, ct.ystar)
 
 
 dist_ϵ(ct) = Normal(0, ct.σ)
@@ -113,3 +140,7 @@ annualized(π::Real) = 100*((1.0 .+ π).^4 .- 1)
 deannual(x::Real) = (x*0.01 + 1.0)^0.25 - 1.0
 
 perc_rate(x) = 100 * (1 .- exp.(-x))
+
+
+PC(ct::Plan{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
+PC(ct::Plan{Simultaneous}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
