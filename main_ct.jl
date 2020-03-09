@@ -42,6 +42,7 @@ L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
 find_equil!(mt)
+
 for slides in [true, false]
 	for CI in [true, false]
 		save_plot_mimic_z(mt, CIs=CI, slides=slides)

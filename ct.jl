@@ -693,7 +693,7 @@ function find_plan_μ(mt::MultiType; decay::Bool=false)
 	return mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ
 end
 
-function find_equil!(mt::MultiType, z0=mt.ct.pgrid[4])
+function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 	mt.z = z0
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
