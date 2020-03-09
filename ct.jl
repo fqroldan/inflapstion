@@ -601,7 +601,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
 	ν *= 1/sum(ν)
-	mt = MultiType(ct_best, ωgrid, χgrid, 0.1, ν, ν, L_mat, C_mat)
+	mt = MultiType(ct_best, ωgrid, χgrid, ct.pgrid[3], ν, ν, L_mat, C_mat)
 
 	return annualized(a_min), ω_min, annualized(χ_min), mt
 end

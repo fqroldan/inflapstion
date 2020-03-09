@@ -41,7 +41,7 @@ print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
-find_equil!(mt)
+find_equil!(mt, mt.ct.pgrid[3])
 
 for slides in [true, false]
 	for CI in [true, false]
