@@ -53,6 +53,8 @@ for slides in [true, false]
 	savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 end
 
+comp_plot_planner(mt)
+
 nothing
 
 

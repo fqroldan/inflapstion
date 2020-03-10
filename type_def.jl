@@ -67,8 +67,11 @@ end
 function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
 	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
 
-	θgrid = range(0, 20, length=Nθ)
+	θgrid = range(-10, 10, length=Nθ)
 	g = zeros(Nθ,3)
+
+	g[:,3] .= (minimum(θgrid) + maximum(θgrid)) / 2
+
 	v = zeros(Nθ)
 
 	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, g, v)
