@@ -60,20 +60,18 @@ mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
 	Nθ::Int64
 	θgrid::Vector{Float64}
 
-	gπ::Array{Float64, 1}
-	gy::Array{Float64, 1}
-	vf::Array{Float64, 1}
+	g::Array{Float64, 2}
+	v::Array{Float64, 1}
 end
 
 function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
 	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
 
-	θgrid = range(0, 50, length=Nθ)
-	gπ = zeros(Nθ)
-	gy = zeros(Nθ)
-	vf = zeros(Nθ)
+	θgrid = range(0, 20, length=Nθ)
+	g = zeros(Nθ,3)
+	v = zeros(Nθ)
 
-	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, gπ, gy, vf)
+	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, g, v)
 end
 
 function move_grids!(xgrid; xmin=0.0, xmax=1.0)
