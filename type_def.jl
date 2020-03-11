@@ -64,6 +64,50 @@ mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
 	v::Array{Float64, 1}
 end
 
+mutable struct Sustainable{T<:PhillipsCurve} <: Plan{T}
+	β::Float64
+	γ::Float64
+	κ::Float64
+	ystar::Float64
+
+	ξ::Float64
+	b::Float64
+
+	Na::Int64
+	agrid::Vector{Float64}
+
+	g::Array{Float64, 2}
+	v::Array{Float64, 1}
+end
+
+function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct)) where T<:PhillipsCurve
+	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
+
+	A = Nash(T, β, γ, κ, ystar)
+	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
+	move_grids!(agrid, xmax=A, xmin=0.0)
+
+	g = zeros(Na, 3)
+	v = zeros(Na)
+
+	yξ = (ystar - β*κ*γ*ξ) / (1+κ^2*γ)
+	πξ = κ*yξ + β*ξ
+
+	b = ((yξ - ystar)^2 + γ*πξ^2) / (1-β)
+	
+	return Sustainable{T}(β, γ, κ, ystar, ξ, b, Na, agrid, g, v)
+end
+
+function set_ξ!(sp::Sustainable, ξ)
+	β, γ, κ, ystar = sp.β, sp.γ, sp.κ, sp.ystar
+	yξ = (ystar - β*κ*γ*ξ) / (1+κ^2*γ)
+	πξ = κ*yξ + β*ξ
+
+	sp.ξ = ξ
+	sp.b = ((yξ - ystar)^2 + γ*πξ^2) / (1-β)
+	nothing
+end
+
 function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
 	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
 
@@ -75,6 +119,16 @@ function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
 	v = zeros(Nθ)
 
 	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, g, v)
+end
+function make_itp(rp::Ramsey, y)
+	knots = (rp.θgrid,)
+	itp = interpolate(knots, y, Gridded(Linear()))
+	return itp
+end
+function make_itp(sp::Sustainable, y)
+	knots = (sp.agrid,)
+	itp = interpolate(knots, y, Gridded(Linear()))
+	return itp
 end
 
 function move_grids!(xgrid; xmin=0.0, xmax=1.0)

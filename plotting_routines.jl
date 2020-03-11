@@ -583,7 +583,6 @@ function strategy_μ(mt::MultiType; slides=false)
 	return p1, p2
 end
 
-
 function comp_plot_planner(mt::MultiType)
 	ct = mt.ct
 	rp = Ramsey(ct)
@@ -626,4 +625,55 @@ function comp_plot_planner(mt::MultiType)
 		savejson(p1, pwd()*"/../Graphs/tests/ramsey$(ifelse(slides, "_slides", "_paper")).json")
 	end
 	return p1
+end
+
+
+function make_sustainable_plots(mt::MultiType, K)
+
+	ct = mt.ct
+	rp = Ramsey(ct)
+
+	vfi!(rp, verbose=false)
+	πR, θR = simul_plan(rp)
+
+	# tvec = 1:length(πR)
+	tvec = 1:10
+
+	mult = range(0.25,0.38,length=K)
+	π_sust = zeros(length(tvec), K)
+
+	for (jj, jv) in enumerate(mult)
+
+		sp = Sustainable(ct, ξ = jv*Nash(ct))
+
+		vfi!(sp, verbose=false)
+
+		πv, θv = simul_plan(sp)
+
+		π_sust[:, jj] = πv[tvec]
+	end
+
+	for slides in [true, false]
+		if slides
+			ff = "Lato"
+			bgcol = "#fafafa"
+			wi = 800
+		else
+			ff = "Linux Libertine"
+			bgcol = ""
+			wi = 1000
+		end
+
+		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
+
+		p1 = plot([
+			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K]
+			scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			], layout)
+
+		savejson(p1, pwd()*"/../Graphs/tests/sustainable$(ifelse(slides, "_slides", "_paper")).json")
+	end
+
+	return p1
+
 end
