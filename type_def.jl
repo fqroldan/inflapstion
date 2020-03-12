@@ -9,6 +9,12 @@ end
 abstract type Simultaneous <: PhillipsCurve
 end
 
+abstract type Fwd_strategy <: Forward
+end
+
+abstract type Fwd_literal <: Forward
+end
+
 abstract type Plan{T<:PhillipsCurve}
 end
 
@@ -80,7 +86,7 @@ mutable struct Sustainable{T<:PhillipsCurve} <: Plan{T}
 	v::Array{Float64, 1}
 end
 
-function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct)) where T<:PhillipsCurve
+function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct), literal::Bool=false) where T <: PhillipsCurve
 	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
 
 	A = Nash(T, β, γ, κ, ystar)
@@ -94,8 +100,14 @@ function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct)) where T<:Philli
 	πξ = κ*yξ + β*ξ
 
 	b = ((yξ - ystar)^2 + γ*πξ^2) / (1-β)
+
+	if literal
+		T2 = Fwd_literal
+	else
+		T2 = Fwd_strategy
+	end
 	
-	return Sustainable{T}(β, γ, κ, ystar, ξ, b, Na, agrid, g, v)
+	return Sustainable{T2}(β, γ, κ, ystar, ξ, b, Na, agrid, g, v)
 end
 
 function set_ξ!(sp::Sustainable, ξ)

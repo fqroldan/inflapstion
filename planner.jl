@@ -86,9 +86,14 @@ function value_dev(πv, ystar, γ, β, κ, b, ξ)
 	return (yv-ystar)^2 + γ*πv^2 + β*b
 end
 
-function value_comply(ap, av, ystar, γ, β, κ, itp_v, itp_gπ)
+function value_comply(sp::Sustainable{T}, ap, av, ystar, γ, β, κ, itp_v, itp_gπ) where T <: PhillipsCurve
 	πv = av
-	yv = (πv - β * itp_gπ(ap)) / κ
+	if T == Fwd_strategy
+		Eπ = itp_gπ(ap)
+	elseif T == Fwd_literal
+		Eπ = ap
+	end
+	yv = (πv - β * Eπ) / κ
 
 	return (yv-ystar)^2 + γ*πv^2 + β * itp_v(ap)
 end
@@ -115,7 +120,7 @@ function optim_step(sp::Sustainable, itp_v, itp_gπ)
 		av = sp.agrid[ja]
 
 		# If complying
-		obj_f2(ap) = value_comply(ap, av, ystar, γ, β, κ, itp_v, itp_gπ)
+		obj_f2(ap) = value_comply(sp, ap, av, ystar, γ, β, κ, itp_v, itp_gπ)
 		res = Optim.optimize(obj_f2, mina, maxa, GoldenSection())
 
 		ap = res.minimizer
