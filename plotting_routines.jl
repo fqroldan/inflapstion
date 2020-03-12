@@ -603,6 +603,8 @@ function comp_plot_planner(mt::MultiType)
 	aK = mt.ct.agrid[jj[3]]
 
 	πK = (aK - χK) * exp.(-ωK * tvec) .+ χK
+	
+	p1 = plot()
 
 	for slides in [true, false]
 		if slides
