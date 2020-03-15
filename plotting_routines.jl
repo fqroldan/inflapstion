@@ -630,7 +630,7 @@ function comp_plot_planner(mt::MultiType)
 end
 
 
-function make_sustainable_plots(mt::MultiType, K; literal::Bool=false, makeplots::Bool=false)
+function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, makeplots::Bool=false)
 
 	ct = mt.ct
 	rp = Ramsey(ct)
@@ -641,18 +641,21 @@ function make_sustainable_plots(mt::MultiType, K; literal::Bool=false, makeplots
 	# tvec = 1:length(πR)
 	tvec = 1:10
 
-	mult = range(0.25,0.38,length=K)
+	# mult = range(0.25,0.38,length=K)
+	mult = range(0.4,0.7,length=K)
 	π_sust = zeros(length(tvec), K)
 
-	sp = Sustainable(ct, literal=literal);
+	sp = Sustainable(ct, pc = pc, ξ = 0.0);
+	vfi!(sp)
 	old_g = sp.g
 	old_v = sp.v
 	for (jj, jv) in enumerate(mult)
 		
-		sp = Sustainable(ct, ξ = jv*Nash(ct), literal=literal)
+		sp = Sustainable(ct, ξ = jv*Nash(ct), pc = pc)
 		sp.g = old_g
-		
-		vfi!(sp, verbose=false)
+		sp.v = old_v
+		println("$jj")
+		vfi!(sp, verbose=true)
 		old_g = sp.g
 		old_v = sp.v
 

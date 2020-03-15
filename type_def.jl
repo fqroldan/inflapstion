@@ -15,6 +15,9 @@ end
 abstract type Fwd_literal <: Forward
 end
 
+abstract type Fwd_GP <: Forward
+end
+
 abstract type Plan{T<:PhillipsCurve}
 end
 
@@ -75,6 +78,10 @@ mutable struct Sustainable{T<:PhillipsCurve} <: Plan{T}
 	γ::Float64
 	κ::Float64
 	ystar::Float64
+	
+	θ::Float64
+	D::Float64
+	σ::Float64
 
 	ξ::Float64
 	b::Float64
@@ -86,7 +93,7 @@ mutable struct Sustainable{T<:PhillipsCurve} <: Plan{T}
 	v::Array{Float64, 1}
 end
 
-function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct), literal::Bool=false) where T <: PhillipsCurve
+function Sustainable(ct::CrazyType{T}, Na = 100; ξ = Nash(ct), pc::DataType=Forward) where T <: PhillipsCurve
 	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
 
 	A = Nash(T, β, γ, κ, ystar)
@@ -100,14 +107,11 @@ function Sustainable(ct::CrazyType{T}, Na = 2500; ξ = Nash(ct), literal::Bool=f
 	πξ = κ*yξ + β*ξ
 
 	b = ((yξ - ystar)^2 + γ*πξ^2) / (1-β)
-
-	if literal
-		T2 = Fwd_literal
-	else
-		T2 = Fwd_strategy
-	end
+	θ = 0.25
+	D = 0.005
+	σ = 0.01/4
 	
-	return Sustainable{T2}(β, γ, κ, ystar, ξ, b, Na, agrid, g, v)
+	return Sustainable{pc}(β, γ, κ, ystar, θ, D, σ, ξ, b, Na, agrid, g, v)
 end
 
 function set_ξ!(sp::Sustainable, ξ)
