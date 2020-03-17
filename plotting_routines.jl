@@ -644,6 +644,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# mult = range(0.25,0.38,length=K)
 	mult = range(0.4,0.7,length=K)
 	π_sust = zeros(length(tvec), K)
+	show_vec = Vector{Bool}(undef, K)
 
 	sp = Sustainable(ct, pc = pc, ξ = 0.0);
 	vfi!(sp)
@@ -655,13 +656,14 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		sp.g = old_g
 		sp.v = old_v
 		println("$jj")
-		vfi!(sp, verbose=true)
+		flag = vfi!(sp, verbose=true)
 		old_g = sp.g
 		old_v = sp.v
 
 		πv, θv = simul_plan(sp)
 
 		π_sust[:, jj] = πv[tvec]
+		show_vec[jj] = flag
 	end
 	p1 = plot()
 	for slides in [true, false]
@@ -678,7 +680,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 
 		p1 = plot([
-			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K]
+			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
 			scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
 

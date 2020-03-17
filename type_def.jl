@@ -45,6 +45,25 @@ mutable struct CrazyType{T<:PhillipsCurve} <: Plan{T}
 	Ep::Array{Float64, 2}
 end
 
+mutable struct DovisKirpalani{T<:PhillipsCurve} <: Plan{T}
+	β::Float64
+	γ::Float64
+	κ::Float64
+	σ::Float64
+	ystar::Float64
+
+	pgrid::Vector{Float64}
+	agrid::Vector{Float64}
+
+	Np::Int64
+	Na::Int64
+
+	gπ::Array{Float64, 2}
+	ga::Array{Float64, 2}
+	L::Array{Float64, 2}
+end
+DovisKirpalani(ct::CrazyType{T}) where T <: PhillipsCurve = DovisKirpalani{T}(ct.β, ct.γ, ct.κ, ct.σ, ct.ystar, ct.pgrid, ct.agrid, ct.Np, ct.Na, ct.gπ, ct.gπ, ct.L)
+
 mutable struct MultiType
 	ct::CrazyType
 

@@ -290,6 +290,12 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 					upd_η = 0.0025
 					if iter > 800
 						upd_η = 0.001
+						if iter > 1000
+							upd_η = 0.00025
+							if iter > 1200
+								upd_η = 0.0001
+							end
+						end
 					end
 				end
 			end
@@ -300,7 +306,7 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 	elseif verbose
 		print("\nFailed to converge")
 	end
-	nothing
+	return dist <= tol
 end
 
 initial_state(rp::Ramsey) = 0
