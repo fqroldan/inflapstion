@@ -583,7 +583,7 @@ function strategy_μ(mt::MultiType; slides=false)
 	return p1, p2
 end
 
-function comp_plot_planner(mt::MultiType)
+function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
 	ct = mt.ct
 	rp = Ramsey(ct)
 
@@ -603,9 +603,7 @@ function comp_plot_planner(mt::MultiType)
 	aK = mt.ct.agrid[jj[3]]
 
 	πK = (aK - χK) * exp.(-ωK * tvec) .+ χK
-	
 	p1 = plot()
-
 	for slides in [true, false]
 		if slides
 			ff = "Lato"
@@ -624,7 +622,9 @@ function comp_plot_planner(mt::MultiType)
 			scatter(x=tvec, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
 			], layout)
 
-		savejson(p1, pwd()*"/../Graphs/tests/ramsey$(ifelse(slides, "_slides", "_paper")).json")
+		if makeplots
+			savejson(p1, pwd()*"/../Graphs/tests/ramsey$(ifelse(slides, "_slides", "_paper")).json")
+		end
 	end
 	return p1
 end
@@ -645,6 +645,12 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	mult = range(0.4,0.7,length=K)
 	π_sust = zeros(length(tvec), K)
 	show_vec = Vector{Bool}(undef, K)
+
+	if pc == Fwd_strategy
+		plotname = "sustainable"
+	elseif pc == Fwd_GP
+		plotname = "GP"
+	end
 
 	sp = Sustainable(ct, pc = pc, ξ = 0.0);
 	vfi!(sp)
@@ -685,7 +691,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 			], layout)
 
 		if makeplots
-			savejson(p1, pwd()*"/../Graphs/tests/sustainable$(ifelse(literal, "_literal", "_strategy"))$(ifelse(slides, "_slides", "_paper")).json")
+			savejson(p1, pwd()*"/../Graphs/tests/$(plotname)_$(ifelse(slides, "slides", "paper")).json")
 		end
 	end
 

@@ -53,8 +53,9 @@ for slides in [true, false]
 	savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 end
 
-comp_plot_planner(mt)
-
+comp_plot_planner(mt, makeplots=true)
+make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_strategy)
+make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_GP)
 nothing
 
 
