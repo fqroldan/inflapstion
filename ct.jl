@@ -249,6 +249,15 @@ function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, xguess, pv, av)
 	gπ, ga = res.minimizer
 	L = res.minimum
 
+	if Optim.converged(res) == false
+	resb = Optim.optimize(obj_f, [minπ, mina], [maxπ, maxa], xguess, Fminbox(LBFGS()))
+		if resb.minimum < res.minimum
+			gπ, ga = resb.minimizer
+			L = resb.minimum
+		end
+	end
+
+
 	return gπ, L, ga
 end
 
@@ -327,13 +336,13 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 		old_L = copy(ct.L)
 
 		new_gπ, new_L, new_extra = pf_iter(ct, Egπ, old_gπ)
-		if typeof(ct) == CrazyType
+		if typeof(ct) <: CrazyType
 			new_y, new_π, new_p, new_C = new_extra[:]
 			ct.Ey = new_y
 			ct.Eπ = new_π
 			ct.Ep = new_p
 			ct.C  = new_C
-		elseif typeof(ct) == DovisKirpalani
+		elseif typeof(ct) <: DovisKirpalani
 			new_a = new_extra[1]
 			ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
 		end
@@ -344,14 +353,14 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 		ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		old_gπ = upd_η2 * new_gπ + (1.0-upd_η2) * old_gπ
 
-		if verbose && iter % 10 == 0
-			print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
-		end
+		# if verbose && iter % 10 == 0
+		# 	print("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))")
+		# end
 	end
 
 	dist2 = 10.
 	iter2 = 0
-	while typeof(ct) == CrazyType && dist > tol && iter2 < maxiter
+	while typeof(ct) <: CrazyType && dist > tol && iter2 < maxiter
 		iter2 += 1
 		old_C = copy(ct.C)
 		_, _, _, _, _, new_C = pf_iter(ct, Egπ, old_gπ; optimize=false)
@@ -374,7 +383,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	dist = 10.
 	iter = 0
 	
-	if typeof(ct) == CrazyType
+	if typeof(ct) <: CrazyType
 		print_save("\nRun with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
 	end
 
@@ -391,7 +400,9 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		dist = sqrt.(sum( (new_gπ  - ct.gπ ).^2 )) / sqrt.(sum(ct.gπ .^2))
+		norm_gπ = max(sqrt.(sum(ct.gπ .^2)) / length(ct.gπ), 1e-8)
+
+		dist = sqrt.(sum( (new_gπ  - ct.gπ ).^2 ))/length(ct.gπ) / norm_gπ
 		push!(dists, dist)
 		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))"
 		if flag
@@ -405,7 +416,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 
 		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ;
 
-		if typeof(ct) == CrazyType && tempplots && (iter % 5 == 0 || dist <= tol)
+		if typeof(ct) <: CrazyType && tempplots && (iter % 5 == 0 || dist <= tol)
 			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
@@ -432,7 +443,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	if typeof(ct) == CrazyType
+	if typeof(ct) <: CrazyType
 		p1, pL, pπ, pC, pp = makeplots_ct_pa(ct);
 		savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 		savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
