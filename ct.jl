@@ -400,7 +400,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		norm_gπ = max(sqrt.(sum(ct.gπ .^2)) / length(ct.gπ), 1e-8)
+		norm_gπ = max(sqrt.(sum(ct.gπ .^2)) / length(ct.gπ), 1e-5)
 
 		dist = sqrt.(sum( (new_gπ  - ct.gπ ).^2 ))/length(ct.gπ) / norm_gπ
 		push!(dists, dist)
