@@ -413,7 +413,8 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 	while dist > tol && iter2 < maxiter
 		iter2 += 1
 		old_C = copy(ct.C)
-		_, _, _, _, _, new_C = pf_iter(ct, Egπ, old_gπ; optimize=false)
+		_, _, _, _, _, new_others = pf_iter(ct, Egπ, old_gπ; optimize=false)
+		new_C = new_others[4]
 		dist2 = sqrt.(sum( (new_C  - old_C ).^2 )) / sqrt.(sum(old_C .^2))
 		ct.C  = upd_η2 * new_C  + (1.0-upd_η2) * ct.C
 	end
@@ -555,7 +556,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			update_ga!(ct)
 
 			t1 = time()
-			tol = 4e-4
+			tol = 5e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
