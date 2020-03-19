@@ -233,70 +233,70 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::B
 end
 
 
-function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, xguess, pv, av)
+# function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, xguess, pv, av)
 
-	minπ = max(0, xguess[1] - 3.09*ct.σ)
-	maxπ = min(1.1*maximum(ct.agrid), xguess[1] + 3.09*ct.σ)
-	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
-		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
-	end
-	mina = minimum(ct.agrid)
-	maxa = maximum(ct.agrid)
+# 	minπ = max(0, xguess[1] - 3.09*ct.σ)
+# 	maxπ = min(1.1*maximum(ct.agrid), xguess[1] + 3.09*ct.σ)
+# 	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
+# 		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
+# 	end
+# 	mina = minimum(ct.agrid)
+# 	maxa = maximum(ct.agrid)
 
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x[1], pv, av, x[2])
-	res = Optim.optimize(obj_f, [minπ, mina], [maxπ, maxa], xguess, Fminbox(NelderMead()))
+# 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x[1], pv, av, x[2])
+# 	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
 
-	gπ, ga = res.minimizer
-	L = res.minimum
+# 	gπ, ga = res.minimizer
+# 	L = res.minimum
 
-	if Optim.converged(res) == false
-	resb = Optim.optimize(obj_f, [minπ, mina], [maxπ, maxa], xguess, Fminbox(LBFGS()))
-		if resb.minimum < res.minimum
-			gπ, ga = resb.minimizer
-			L = resb.minimum
-		end
-	end
+# 	if Optim.converged(res) == false
+# 	resb = Optim.optimize(obj_f, [minπ, mina], [maxπ, maxa], xguess, Fminbox(LBFGS()))
+# 		if resb.minimum < res.minimum
+# 			gπ, ga = resb.minimizer
+# 			L = resb.minimum
+# 		end
+# 	end
 
 
-	return gπ, L, ga
-end
+# 	return gπ, L, ga
+# end
 
-function optim_step(ct::DovisKirpalani, itp_gπ, itp_L, gπ_guess; optimize::Bool=true)
-	gπ, ga, L = zeros(size(ct.gπ)), zeros(size(ct.ga)), zeros(size(ct.L))
-	πN 	   = Nash(ct)
-	apgrid = gridmake(1:ct.Np, 1:ct.Na)
-	maxa = maximum(ct.agrid)
-	mina = minimum(ct.agrid)
-	length_a = maxa-mina
-	Threads.@threads for js in 1:size(apgrid,1)
-    # for js in 1:size(apgrid,1)
-		jp, ja = apgrid[js, :]
-		pv, av = ct.pgrid[jp], ct.agrid[ja]
+# function optim_step(ct::DovisKirpalani, itp_gπ, itp_L, gπ_guess; optimize::Bool=true)
+# 	gπ, ga, L = zeros(size(ct.gπ)), zeros(size(ct.ga)), zeros(size(ct.L))
+# 	πN 	   = Nash(ct)
+# 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
+# 	maxa = maximum(ct.agrid)
+# 	mina = minimum(ct.agrid)
+# 	length_a = maxa-mina
+# 	Threads.@threads for js in 1:size(apgrid,1)
+#     # for js in 1:size(apgrid,1)
+# 		jp, ja = apgrid[js, :]
+# 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 
-		a_guess = max(min(ct.ga[jp, ja], maxa - 0.01*length_a), mina + 0.01*length_a)
-		π_guess = gπ_guess[jp, ja]
-		xguess = [π_guess, a_guess]
-		if optimize
-			gπ[jp, ja], L[jp, ja], ga[jp, ja] = opt_L(ct, itp_gπ, itp_L, xguess, pv, av)
-		else
-			ga[jp, ja] = a_guess
-			gπ[jp, ja] = π_guess
-			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av, a_guess)
-		end
-	end
+# 		a_guess = max(min(ct.ga[jp, ja], maxa - 0.01*length_a), mina + 0.01*length_a)
+# 		π_guess = gπ_guess[jp, ja]
+# 		xguess = [π_guess, a_guess]
+# 		if optimize
+# 			gπ[jp, ja], L[jp, ja], ga[jp, ja] = opt_L(ct, itp_gπ, itp_L, xguess, pv, av)
+# 		else
+# 			ga[jp, ja] = a_guess
+# 			gπ[jp, ja] = π_guess
+# 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av, a_guess)
+# 		end
+# 	end
 
-	return gπ, L, ga
-end
+# 	return gπ, L, ga
+# end
 
-function pf_iter(ct::DovisKirpalani, Egπ, gπ_guess; optimize::Bool=true)
-	knots = (ct.pgrid, ct.agrid)
-	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
-	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
+# function pf_iter(ct::DovisKirpalani, Egπ, gπ_guess; optimize::Bool=true)
+# 	knots = (ct.pgrid, ct.agrid)
+# 	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
+# 	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
 
-	new_gπ, new_L, new_ga = optim_step(ct, itp_gπ, itp_L, gπ_guess; optimize=optimize)
+# 	new_gπ, new_L, new_ga = optim_step(ct, itp_gπ, itp_L, gπ_guess; optimize=optimize)
 
-	return new_gπ, new_L, [new_ga]
-end
+# 	return new_gπ, new_L, [new_ga]
+# end
 
 function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
 	knots = (ct.pgrid, ct.agrid)
@@ -307,6 +307,21 @@ function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
 	new_gπ, new_L, new_y, new_π, new_p, new_C = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
 	return new_gπ, new_L, [new_y, new_π, new_p, new_C]
+end
+
+function update_others!(ct::CrazyType, new_others, upd_η2)
+	new_y, new_π, new_p, new_C = new_others[:]
+	ct.Ey = new_y
+	ct.Eπ = new_π
+	ct.Ep = new_p
+	ct.C  = new_C
+	nothing
+end
+
+function update_others!(ct::DovisKirpalani, new_others, upd_η2)
+	new_a = new_others[1]
+	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
+	nothing
 end
 
 function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::Bool=true, reset_guess::Bool=false)
@@ -335,18 +350,8 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 		# println("Iter $iter step")
 		old_L = copy(ct.L)
 
-		new_gπ, new_L, new_extra = pf_iter(ct, Egπ, old_gπ)
-		if typeof(ct) <: CrazyType
-			new_y, new_π, new_p, new_C = new_extra[:]
-			ct.Ey = new_y
-			ct.Eπ = new_π
-			ct.Ep = new_p
-			ct.C  = new_C
-		elseif typeof(ct) <: DovisKirpalani
-			new_a = new_extra[1]
-			ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
-		end
-		# println("Iter $iter optimization")
+		new_gπ, new_L, new_others = pf_iter(ct, Egπ, old_gπ)
+		update_others!(ct, new_others, upd_η2)
 
 		dist = sqrt.(sum( (new_L  - old_L ).^2 )) / sqrt.(sum(old_L .^2))
 
@@ -360,7 +365,7 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 
 	dist2 = 10.
 	iter2 = 0
-	while typeof(ct) <: CrazyType && dist > tol && iter2 < maxiter
+	while dist > tol && iter2 < maxiter
 		iter2 += 1
 		old_C = copy(ct.C)
 		_, _, _, _, _, new_C = pf_iter(ct, Egπ, old_gπ; optimize=false)
@@ -379,14 +384,19 @@ end
 
 decay_η(ct::Plan, η) = max(0.95*η, 5e-6)
 
+function report_start(ct::CrazyType)
+	print_save("\nRun with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
+	nothing
+end
+function report_start(dk::DovisKirpalani)
+	nothing
+end
+
 function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 10)
 	dist = 10.
 	iter = 0
 	
-	if typeof(ct) <: CrazyType
-		print_save("\nRun with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
-	end
-
+	report_start(ct)
 	dists = []
 
 	reset_guess = false
@@ -416,7 +426,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 
 		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ;
 
-		if typeof(ct) <: CrazyType && tempplots && (iter % 5 == 0 || dist <= tol)
+		if tempplots && (iter % 5 == 0 || dist <= tol)
 			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
@@ -443,11 +453,9 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	if typeof(ct) <: CrazyType
-		p1, pL, pπ, pC, pp = makeplots_ct_pa(ct);
-		savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
-		savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
-	end
+	p1, pL, pπ, pC, pp = makeplots_ct_pa(ct);
+	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
+	savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
 	
 	return dist
 end
