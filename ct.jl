@@ -108,8 +108,29 @@ function cond_L(ct::Plan, itp_gπ, itp_L, obs_π, pv, av, aprime; get_both::Bool
 	end
 end
 
-function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime; get_y::Bool=false)
-	L, pprime, y = cond_L(ct, itp_gπ, itp_L, obs_π, pv, av, aprime, get_both=true)
+function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime; get_y::Bool=false)
+	exp_π  = itp_gπ(pv, av)
+	if isapprox(pv, 0.0)
+		pprime = 0.0
+	elseif isapprox(pv, 1.0)
+		pprime = 1.0
+	else
+		pprime = Bayes(ct, obs_π, exp_π, pv, av)
+	end
+	# aprime = ϕ(ct, av)
+
+	πe = pv*av + (1-pv)*exp_π
+
+	if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
+		itp_L  = extrapolate(itp_L,  Interpolations.Flat())
+		itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
+	end
+
+	L′ = itp_L(pprime, aprime)
+	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+
+	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
+	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	C′ = itp_C(pprime, aprime)
 
 	if get_y
@@ -118,24 +139,26 @@ function cond_L(ct::CrazyType, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime; ge
 	return L
 end
 
-function exp_L(ct::Plan, itp_gπ, itp_L, control_π, pv, av, aprime; get_prob::Bool=false)
+# function exp_L(ct::Plan, itp_gπ, itp_L, control_π, pv, av, aprime; get_prob::Bool=false)
+# 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
+# 	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+
+# 	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+# 	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
+
+# 	val = val / sum_prob
+# 	if get_prob
+# 		return val, sum_prob
+# 	else
+# 		return val
+# 	end
+# end
+
+function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime; get_y::Bool=false)
+
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
 	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-
-	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
-
-	val = val / sum_prob
-	if get_prob
-		return val, sum_prob
-	else
-		return val
-	end
-end
-
-function exp_L(ct::CrazyType, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime; get_y::Bool=false)
-
-	val, sum_prob = exp_L(ct, itp_gπ, itp_L, control_π, pv, av, aprime, get_prob=true)
 
 	if get_y
 		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime; get_y=true)[1] * pdf_ϵ(ct, ϵv)
@@ -155,19 +178,40 @@ function exp_L(ct::CrazyType, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime;
 	return val
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
+function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
 
+	minπ = max(0, xguess[1] - 3.09*ct.σ)
+	maxπ = min(1.1*maximum(ct.agrid), xguess[1] + 3.09*ct.σ)
+	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
+		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
+	end
+	mina = minimum(ct.agrid)
+	maxa = maximum(ct.agrid)
+
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x[1], pv, av, x[2])
+	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
+
+	gπ, ga = res.minimizer
+	L = res.minimum
+
+	if Optim.converged(res) == false
+		resb = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(LBFGS()))
+		if resb.minimum < res.minimum
+			gπ, ga = resb.minimizer
+			L = resb.minimum
+		end
+	end
+
+	return gπ, L, ga
+end
+
+function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
+	π_guess = xguess[1]
 	minπ = max(0, π_guess - 3.09*ct.σ)
 	maxπ = min(1.1*maximum(ct.agrid), π_guess + 3.09*ct.σ)
 	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
 		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
 	end
-	
-#=	res = Optim.optimize(
-			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av),
-			minπ, maxπ, GoldenSection()#, rel_tol=1e-20, abs_tol=1e-20, iterations=10000
-			)
-=#
 	
 	aprime = ϕ(ct, av)
 
@@ -180,9 +224,6 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 	gπ, L = first(res.minimizer), res.minimum
 
 	if Optim.converged(res) == false
-		# a = Optim.iterations(res)
-		# print_save("π∈ [$minπ, $maxπ]")
-		# println(a)
 		resb = Optim.optimize(
 				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av, aprime),
 				minπ, maxπ, Brent(), rel_tol=1e-12, abs_tol=1e-12#, iterations=100000
@@ -195,30 +236,33 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, π_guess, pv, av)
 	return gπ, L, aprime
 end
 
-function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=true)
-	# gπ, L  = SharedArray{Float64}(ct.gπ), SharedArray{Float64}(ct.L)
-	# Ey, Eπ = SharedArray{Float64}(ct.Ey), SharedArray{Float64}(ct.Eπ)
-	# Ep, C  = SharedArray{Float64}(ct.Ep), SharedArray{Float64}(ct.C)
-	gπ, L  = zeros(size(ct.gπ)), zeros(size(ct.L))
+function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=true)
+	gπ, ga = zeros(size(ct.gπ)), zeros(size(ct.ga))
+	L  	   = zeros(size(ct.L))
 	Ey, Eπ = zeros(size(ct.Ey)), zeros(size(ct.Eπ))
 	Ep, C  = zeros(size(ct.Ep)), zeros(size(ct.C))
 	πN 	   = Nash(ct)
+	maxa = maximum(ct.agrid)
+	mina = minimum(ct.agrid)
+	length_a = maxa-mina
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
 	Threads.@threads for js in 1:size(apgrid,1)
-	# @sync @distributed  for js in 1:size(apgrid,1)
     # for js in 1:size(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 
+		a_guess = max(min(ct.ga[jp, ja], maxa - 0.01*length_a), mina + 0.01*length_a)
 		π_guess = gπ_guess[jp, ja]
+		xguess = [π_guess, a_guess]
 		if optimize
 			# π_guess = itp_gπ(pv, av)
-			gπ[jp, ja], L[jp, ja], aprime = opt_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av)
+			gπ[jp, ja], L[jp, ja], aprime = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av)
 		else
-			aprime = ϕ(ct, av)
+			aprime = ct.ga[jp, ja]
 			gπ[jp, ja] = π_guess
 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
 		end
+		ga[jp, ja] = aprime
 		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime; get_y=true)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 
@@ -229,7 +273,7 @@ function optim_step(ct::CrazyType, itp_gπ, itp_L, itp_C, gπ_guess; optimize::B
 		end
 	end
 
-	return gπ, L, Ey, Eπ, Ep, C
+	return gπ, L, Ey, Eπ, Ep, C, ga
 end
 
 
@@ -298,31 +342,32 @@ end
 # 	return new_gπ, new_L, [new_ga]
 # end
 
-function pf_iter(ct::CrazyType, Egπ, gπ_guess; optimize::Bool=true)
+function pf_iter(ct::Plan, Egπ, gπ_guess; optimize::Bool=true)
 	knots = (ct.pgrid, ct.agrid)
 	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
 	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
 	itp_C  = interpolate(knots, ct.C, Gridded(Linear()))
 
-	new_gπ, new_L, new_y, new_π, new_p, new_C = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
+	new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
-	return new_gπ, new_L, [new_y, new_π, new_p, new_C]
+	return new_gπ, new_L, [new_y, new_π, new_p, new_C, new_a]
 end
 
-function update_others!(ct::CrazyType, new_others, upd_η2)
-	new_y, new_π, new_p, new_C = new_others[:]
+function update_others!(ct::Plan, new_others, upd_η2)
+	new_y, new_π, new_p, new_C, new_a = new_others[:]
 	ct.Ey = new_y
 	ct.Eπ = new_π
 	ct.Ep = new_p
 	ct.C  = new_C
+	ct.ga = new_a
 	nothing
 end
 
-function update_others!(ct::DovisKirpalani, new_others, upd_η2)
-	new_a = new_others[1]
-	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
-	nothing
-end
+# function update_others!(ct::DovisKirpalani, new_others, upd_η2)
+# 	new_a = new_others[end]
+# 	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
+# 	nothing
+# end
 
 function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
@@ -507,6 +552,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		""" tol = 11e-4 """
 		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
 			ct.ω = ωv
+			update_ga!(ct)
 
 			t1 = time()
 			tol = 4e-4
