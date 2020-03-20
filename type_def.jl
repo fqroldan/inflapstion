@@ -71,6 +71,14 @@ mutable struct DovisKirpalani{T<:PhillipsCurve} <: Plan{T}
 end
 DovisKirpalani(ct::CrazyType{T}) where T <: PhillipsCurve = DovisKirpalani{T}(ct.β, ct.γ, ct.κ, ct.σ, ct.ystar, ct.pgrid, ct.agrid, ct.Np, ct.Na, ct.gπ, ct.ga, ct.L, ct.C, ct.Ey, ct.Eπ, ct.Ep)
 
+function switch_PC(pp::DovisKirpalani{T}, T2::DataType) where T<:PhillipsCurve
+	if T == T2
+		return nothing
+	else
+		return DovisKirpalani{T2}(pp.β, pp.γ, pp.κ, pp.σ, pp.ystar, pp.pgrid, pp.agrid, pp.Np, pp.Na, pp.gπ, pp.ga, pp.L, pp.C, pp.Ey, pp.Eπ, pp.Ep)
+	end
+end
+
 mutable struct MultiType
 	ct::CrazyType
 

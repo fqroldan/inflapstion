@@ -187,7 +187,7 @@ function makeplots_ct_pa(ct::CrazyType; slides::Bool=true)
 end
 
 
-function plot_simul(ct::CrazyType; T::Int64=50, N=10000, jp0::Int64=3, noshocks::Bool=false, CIs::Bool=false)
+function plot_simul(ct::Plan; T::Int64=50, N=10000, jp0::Int64=3, noshocks::Bool=false, CIs::Bool=false)
 	# Update simulations codes
 	include("simul.jl")
 
