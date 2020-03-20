@@ -42,7 +42,7 @@ function time_print(tfloat::Float64)
 	return t_print
 end
 
-function initial_report(ct::CrazyType)
+function initial_report(ct::Plan)
 
 	π_Nash = annualized(Nash(ct))
 	real_rate = (1/ct.β^4 - 1) * 100

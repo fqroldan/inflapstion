@@ -28,7 +28,7 @@ function style_plot!(pl; slides::Bool=true)
 	nothing
 end
 
-function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
+function lines(ct::Plan, y_mat; dim::Int64=0, title::String="", showleg::Bool=false)
 	if dim == 1
 		xgrid = ct.pgrid
 		zgrid = ct.agrid
@@ -60,7 +60,7 @@ function lines(ct::CrazyType, y_mat; dim::Int64=0, title::String="", showleg::Bo
 	return p
 end
 
-function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
+function plot_ct(ct::Plan, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Bool=false)
 	if length(y_tuple) != length(n_tuple)
 		throw(error("Make sure # y's = # n's"))
 	end
@@ -90,7 +90,7 @@ function plot_ct(ct::CrazyType, y_tuple, n_tuple; make_pdf::Bool=false, make_png
 	return p
 end
 
-function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false)
+function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false)
 
 	a_max = Nash(ct)
 	jamax = findfirst(ct.agrid.>=a_max)
@@ -123,7 +123,7 @@ function plot_ct_pa(ct::CrazyType, y=ct.L, name="𝓛"; ytitle="", reverse_draw:
 	return p1
 end
 
-function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
+function makeplots_ct(ct::Plan; make_pdf::Bool=false, make_png::Bool=false)
 
 	gπ_minus_a = zeros(size(ct.gπ))
 	Ep_minus_p = zeros(size(ct.Ep))
@@ -141,7 +141,7 @@ function makeplots_ct(ct::CrazyType; make_pdf::Bool=false, make_png::Bool=false)
 	return p1, p2, p3
 end
 
-function makeplots_ct_pa(ct::CrazyType; slides::Bool=true)
+function makeplots_ct_pa(ct::Plan; slides::Bool=true)
 	""" Currently run for paper on ct.ω = 0.01, ct.χ = 0 """
 	gπ_minus_a = zeros(size(ct.gπ))
 	Eπ_minus_a = zeros(size(ct.gπ))

@@ -151,8 +151,8 @@ function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x[1], pv, av, x[2])
 	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
 
-	gπ, ga = res.minimizer
-	L = res.minimum
+	gπ::Float64, ga::Float64 = res.minimizer
+	L::Float64 = res.minimum
 
 	if Optim.converged(res) == false
 		resb = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(LBFGS()))
@@ -345,10 +345,10 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		norm_gπ = max(sqrt.(sum(ct.gπ .^2)) / length(ct.gπ), 1e-5)
-		dist_π = sqrt.(sum( (new_gπ  - ct.gπ ).^2 ))/length(ct.gπ) / norm_gπ
-		norm_ga = max(sqrt.(sum(old_ga .^2)) / length(old_ga), 1e-5)
-		dist_a = sqrt.(sum( (ct.ga  - old_ga ).^2 ))/length(old_ga) / norm_ga
+		norm_gπ = max(sqrt.(sum(annualized.(ct.gπ) .^2)) / length(annualized.(ct.gπ)), 1e-5)
+		dist_π = sqrt.(sum( (annualized.(new_gπ)  - annualized.(ct.gπ) ).^2 ))/length(annualized.(ct.gπ)) / norm_gπ
+		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 1e-5)
+		dist_a = sqrt.(sum( (annualized.(ct.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
 		dist = max(dist_π, dist_a/10)
 		push!(dists, dist)
 		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |π,a| = ($(@sprintf("%0.3g",norm_gπ)), $(@sprintf("%0.3g",norm_ga)))"
