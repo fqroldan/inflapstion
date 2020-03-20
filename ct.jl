@@ -46,19 +46,20 @@ function output_bayes(ct::CrazyType, pv, av)
 end
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
-
-	numer = pv * pdf_ϵ(ct, obs_π - av)
-	denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
-
-	p′ = numer / denomin
-
-	p′ = max(0.0, min(1.0, p′))
-
-	if isapprox(denomin, 0.0)
+	
+	if isapprox(pv, 0.0)
 		p′ = 0.0
+	elseif isapprox(pv, 1.0)
+		p′ = 1.0
+	else
+		numer = pv * pdf_ϵ(ct, obs_π - av)
+		denomin = numer + (1.0-pv) * pdf_ϵ(ct, obs_π - exp_π)
+		if isapprox(denomin, 0.0)
+			p′ = 0.0
+		else
+			p′ = numer / denomin
+		end
 	end
-	# drift = (1.0 - pv) * 0.15
-	# drift = -(pv) * 0.15
 
 	return p′
 end
@@ -77,105 +78,64 @@ function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
 	return L
 end
 
-function cond_L(ct::Plan, itp_gπ, itp_L, obs_π, pv, av, aprime; get_both::Bool=false)
+function cond_L_inner(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
 	exp_π  = itp_gπ(pv, av)
-	if isapprox(pv, 0.0)
-		pprime = 0.0
-	elseif isapprox(pv, 1.0)
-		pprime = 1.0
-	else
-		pprime = Bayes(ct, obs_π, exp_π, pv, av)
-	end
-	# aprime = ϕ(ct, av)
+	pprime = Bayes(ct, obs_π, exp_π, pv, av)
 
 	πe = pv*av + (1-pv)*exp_π
 
 	if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
 		itp_L  = extrapolate(itp_L,  Interpolations.Flat())
 		itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
+		itp_C  = extrapolate(itp_C, Interpolations.Flat())
 	end
 
-	L′ = itp_L(pprime, aprime)
-	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+	L′::Float64 = itp_L(pprime, aprime)
+	exp_π′::Float64 = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
 	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
+	C′::Float64 = itp_C(pprime, aprime)
 
-	if get_both
-		return L, pprime, y
-	else
-		return L
-	end
+	return L, pprime, y, C′
 end
 
-function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime; get_y::Bool=false)
-	exp_π  = itp_gπ(pv, av)
-	if isapprox(pv, 0.0)
-		pprime = 0.0
-	elseif isapprox(pv, 1.0)
-		pprime = 1.0
-	else
-		pprime = Bayes(ct, obs_π, exp_π, pv, av)
-	end
-	# aprime = ϕ(ct, av)
-
-	πe = pv*av + (1-pv)*exp_π
-
-	if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
-		itp_L  = extrapolate(itp_L,  Interpolations.Flat())
-		itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
-	end
-
-	L′ = itp_L(pprime, aprime)
-	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
-
-	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
-	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
-	C′ = itp_C(pprime, aprime)
-
-	if get_y
-		return y, pprime, C′
-	end
+function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
+	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
 	return L
+end	
+function cond_L_others(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
+	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
+	return y, pprime, C′
 end
 
-# function exp_L(ct::Plan, itp_gπ, itp_L, control_π, pv, av, aprime; get_prob::Bool=false)
-# 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
-# 	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
-# 	# sum_prob, err = hquadrature(x -> pdf_ϵ(ct, x), -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-# 	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
+function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
 
-# 	val = val / sum_prob
-# 	if get_prob
-# 		return val, sum_prob
-# 	else
-# 		return val
-# 	end
-# end
+	sum_prob = get_sumprob(ct)
 
-function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime; get_y::Bool=false)
+	f_y(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[1] * pdf_ϵ(ct, ϵv)
+	Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	f_p(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[2] * pdf_ϵ(ct, ϵv)
+	Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[3] * pdf_ϵ(ct, ϵv)
+	Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
-	(val, err) = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-	sum_prob = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
+	Ey = Ey / sum_prob
+	Ep = Ep / sum_prob
+	Ec = Ec / sum_prob
 
-	if get_y
-		f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime; get_y=true)[1] * pdf_ϵ(ct, ϵv)
-		Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-		f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime; get_y=true)[2] * pdf_ϵ(ct, ϵv)
-		Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-		f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime; get_y=true)[3] * pdf_ϵ(ct, ϵv)
-		Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	return Ey, Ep, Ec
+end
 
-		Ey = Ey / sum_prob
-		Ep = Ep / sum_prob
-		Ec = Ec / sum_prob
+function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
 
-		return Ey, Ep, Ec
-	end
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
+	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	sum_prob = get_sumprob(ct)
 
-	return val
+	return val/sum_prob
 end
 
 function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
@@ -221,7 +181,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
 		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
 		)
 
-	gπ, L = first(res.minimizer), res.minimum
+	gπ::Float64, L::Float64 = first(res.minimizer), res.minimum
 
 	if Optim.converged(res) == false
 		resb = Optim.optimize(
@@ -263,7 +223,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
 		end
 		ga[jp, ja] = aprime
-		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime; get_y=true)
+		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 
 		if av >= πN || isapprox(av, πN)
@@ -276,71 +236,6 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 	return gπ, L, Ey, Eπ, Ep, C, ga
 end
 
-
-# function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, xguess, pv, av)
-
-# 	minπ = max(0, xguess[1] - 3.09*ct.σ)
-# 	maxπ = min(1.1*maximum(ct.agrid), xguess[1] + 3.09*ct.σ)
-# 	if maxπ < minπ + 1.1*maximum(ct.agrid) / 10
-# 		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
-# 	end
-# 	mina = minimum(ct.agrid)
-# 	maxa = maximum(ct.agrid)
-
-# 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, x[1], pv, av, x[2])
-# 	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
-
-# 	gπ, ga = res.minimizer
-# 	L = res.minimum
-
-# 	if Optim.converged(res) == false
-# 	resb = Optim.optimize(obj_f, [minπ, mina], [maxπ, maxa], xguess, Fminbox(LBFGS()))
-# 		if resb.minimum < res.minimum
-# 			gπ, ga = resb.minimizer
-# 			L = resb.minimum
-# 		end
-# 	end
-
-
-# 	return gπ, L, ga
-# end
-
-# function optim_step(ct::DovisKirpalani, itp_gπ, itp_L, gπ_guess; optimize::Bool=true)
-# 	gπ, ga, L = zeros(size(ct.gπ)), zeros(size(ct.ga)), zeros(size(ct.L))
-# 	πN 	   = Nash(ct)
-# 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
-# 	maxa = maximum(ct.agrid)
-# 	mina = minimum(ct.agrid)
-# 	length_a = maxa-mina
-# 	Threads.@threads for js in 1:size(apgrid,1)
-#     # for js in 1:size(apgrid,1)
-# 		jp, ja = apgrid[js, :]
-# 		pv, av = ct.pgrid[jp], ct.agrid[ja]
-
-# 		a_guess = max(min(ct.ga[jp, ja], maxa - 0.01*length_a), mina + 0.01*length_a)
-# 		π_guess = gπ_guess[jp, ja]
-# 		xguess = [π_guess, a_guess]
-# 		if optimize
-# 			gπ[jp, ja], L[jp, ja], ga[jp, ja] = opt_L(ct, itp_gπ, itp_L, xguess, pv, av)
-# 		else
-# 			ga[jp, ja] = a_guess
-# 			gπ[jp, ja] = π_guess
-# 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, π_guess, pv, av, a_guess)
-# 		end
-# 	end
-
-# 	return gπ, L, ga
-# end
-
-# function pf_iter(ct::DovisKirpalani, Egπ, gπ_guess; optimize::Bool=true)
-# 	knots = (ct.pgrid, ct.agrid)
-# 	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
-# 	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
-
-# 	new_gπ, new_L, new_ga = optim_step(ct, itp_gπ, itp_L, gπ_guess; optimize=optimize)
-
-# 	return new_gπ, new_L, [new_ga]
-# end
 
 function pf_iter(ct::Plan, Egπ, gπ_guess; optimize::Bool=true)
 	knots = (ct.pgrid, ct.agrid)
@@ -359,15 +254,9 @@ function update_others!(ct::Plan, new_others, upd_η2)
 	ct.Eπ = new_π
 	ct.Ep = new_p
 	ct.C  = new_C
-	ct.ga = new_a
+	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
 	nothing
 end
-
-# function update_others!(ct::DovisKirpalani, new_others, upd_η2)
-# 	new_a = new_others[end]
-# 	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
-# 	nothing
-# end
 
 function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
@@ -413,7 +302,7 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 	while dist > tol && iter2 < maxiter
 		iter2 += 1
 		old_C = copy(ct.C)
-		_, _, _, _, _, new_others = pf_iter(ct, Egπ, old_gπ; optimize=false)
+		_, _, new_others = pf_iter(ct, Egπ, old_gπ; optimize=false)
 		new_C = new_others[4]
 		dist2 = sqrt.(sum( (new_C  - old_C ).^2 )) / sqrt.(sum(old_C .^2))
 		ct.C  = upd_η2 * new_C  + (1.0-upd_η2) * ct.C
@@ -451,16 +340,18 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		iter += 1
 		tol_pfi = max(tol_pfi*0.98, 2e-6)
 
-		old_gπ, old_L = copy(ct.gπ), copy(ct.L);
+		old_gπ, old_L, old_ga = copy(ct.gπ), copy(ct.L), copy(ct.ga);
 
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
 		norm_gπ = max(sqrt.(sum(ct.gπ .^2)) / length(ct.gπ), 1e-5)
-
-		dist = sqrt.(sum( (new_gπ  - ct.gπ ).^2 ))/length(ct.gπ) / norm_gπ
+		dist_π = sqrt.(sum( (new_gπ  - ct.gπ ).^2 ))/length(ct.gπ) / norm_gπ
+		norm_ga = max(sqrt.(sum(old_ga .^2)) / length(old_ga), 1e-5)
+		dist_a = sqrt.(sum( (ct.ga  - old_ga ).^2 ))/length(old_ga) / norm_ga
+		dist = max(dist_π, dist_a/10)
 		push!(dists, dist)
-		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist))"
+		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |π,a| = ($(@sprintf("%0.3g",norm_gπ)), $(@sprintf("%0.3g",norm_ga)))"
 		if flag
 			rep_status *= "✓ "
 		end
@@ -470,7 +361,8 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 			print(rep_status)
 		end
 
-		ct.gπ = upd_η * new_gπ + (1.0-upd_η) * ct.gπ;
+		ct.gπ = upd_η * new_gπ + (1-upd_η) * ct.gπ;
+		ct.ga = upd_η * ct.ga + (1-upd_η) * old_ga;
 
 		if tempplots && (iter % 5 == 0 || dist <= tol)
 			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
