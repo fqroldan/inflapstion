@@ -70,6 +70,7 @@ mutable struct DovisKirpalani{T<:PhillipsCurve} <: Plan{T}
 	Ep::Array{Float64, 2}
 end
 DovisKirpalani(ct::CrazyType{T}) where T <: PhillipsCurve = DovisKirpalani{T}(ct.β, ct.γ, ct.κ, ct.σ, ct.ystar, ct.pgrid, ct.agrid, ct.Np, ct.Na, ct.gπ, ct.ga, ct.L, ct.C, ct.Ey, ct.Eπ, ct.Ep)
+CrazyType(dk::DovisKirpalani{T}) where T <: PhillipsCurve = CrazyType{T}(dk.β, dk.γ, dk.κ, dk.σ, dk.ystar, ω, χ, dk.pgrid, dk.agrid, dk.Np, dk.Na, dk.gπ, dk.ga, dk.L, dk.C, dk.Ey, dk.Eπ, dk.Ep)
 
 function switch_PC(pp::DovisKirpalani{T}, T2::DataType) where T<:PhillipsCurve
 	if T == T2

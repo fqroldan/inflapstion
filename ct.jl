@@ -327,6 +327,14 @@ function report_start(dk::DovisKirpalani)
 	nothing
 end
 
+function reset_L!(pp::Plan)
+	nothing
+end
+function reset_L!(dk::DovisKirpalani)
+	dk.L *= 0
+	nothing
+end
+
 function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 10)
 	dist = 10.
 	iter = 0
@@ -341,6 +349,8 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		tol_pfi = max(tol_pfi*0.98, 2e-6)
 
 		old_gπ, old_L, old_ga = copy(ct.gπ), copy(ct.L), copy(ct.ga);
+
+		reset_L!(ct)
 
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
