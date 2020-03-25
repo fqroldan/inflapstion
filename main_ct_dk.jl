@@ -6,7 +6,7 @@ write(pwd()*"/../output.txt", "")
 write(pwd()*"/../temp.txt", "")
 
 function create_or_load(T::DataType)
-	ct = CrazyType(T, ω = 0.2, χ = 0.0);
+	ct = CrazyType(T, ω = 0.2, χ = 0.0, Np=20, Na=20);
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../../ct_1.jld", "ct")
@@ -30,7 +30,7 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = create_or_load(Forward)
+ct = create_or_load(Simultaneous)
 
 dk = DovisKirpalani(ct);
 
