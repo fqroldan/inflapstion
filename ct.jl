@@ -287,7 +287,8 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 		new_gπ, new_L, new_others = pf_iter(ct, Egπ, old_gπ)
 		update_others!(ct, new_others, upd_η2)
 
-		dist = sqrt.(sum( (new_L  - old_L ).^2 )) / sqrt.(sum(old_L .^2))
+		norm_L = max(sqrt.(sum(old_L .^2)) / length(old_L), 100tol)
+		dist = sqrt.(sum( (new_L  - old_L ).^2 ))/length(old_L) / norm_L
 
 		ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		old_gπ = upd_η2 * new_gπ + (1.0-upd_η2) * old_gπ
@@ -355,9 +356,9 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		norm_gπ = max(sqrt.(sum(annualized.(ct.gπ) .^2)) / length(annualized.(ct.gπ)), 2tol)
+		norm_gπ = max(sqrt.(sum(annualized.(ct.gπ) .^2)) / length(annualized.(ct.gπ)), 20tol)
 		dist_π = sqrt.(sum( (annualized.(new_gπ)  - annualized.(ct.gπ) ).^2 ))/length(annualized.(ct.gπ)) / norm_gπ
-		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 2tol)
+		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
 		dist_a = sqrt.(sum( (annualized.(ct.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
 		dist = max(dist_π, dist_a/10)
 		push!(dists, dist)

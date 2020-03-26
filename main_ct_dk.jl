@@ -36,12 +36,12 @@ dk = DovisKirpalani(ct);
 
 initial_report(dk)
 
-Epfi!(dk, tol=1e-4, tempplots=true, upd_η = 0.1)
+Epfi!(dk, tempplots=true, upd_η = 0.1)
 save("../../dk.jld", "dk", dk)
 
 dk = switch_PC(dk, Simultaneous);
 
-Epfi!(dk, tol=1e-4, tempplots=true, upd_η = 0.1)
+Epfi!(dk, tempplots=true, upd_η = 0.1)
 save("../../dk_simultaneous.jld", "dk", dk)
 
 nothing
