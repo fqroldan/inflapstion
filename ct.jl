@@ -173,7 +173,8 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
 		maxπ = minπ + 1.1*maximum(ct.agrid) / 10
 	end
 	
-	aprime = ϕ(ct, av)
+	# aprime = ϕ(ct, av)
+	aprime = xguess[2]
 
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av, aprime)
 	res = Optim.optimize(
@@ -211,14 +212,14 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 
-		a_guess = max(min(ct.ga[jp, ja], maxa - 0.01*length_a), mina + 0.01*length_a)
+		a_guess = ct.ga[jp, ja]
 		π_guess = gπ_guess[jp, ja]
 		xguess = [π_guess, a_guess]
 		if optimize
 			# π_guess = itp_gπ(pv, av)
 			gπ[jp, ja], L[jp, ja], aprime = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av)
 		else
-			aprime = ct.ga[jp, ja]
+			aprime = a_guess
 			gπ[jp, ja] = π_guess
 			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
 		end
@@ -336,6 +337,43 @@ function reset_L!(dk::DovisKirpalani)
 	nothing
 end
 
+function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
+	dist = 10.
+	iter = 0
+
+	ct = CrazyType(dk)
+
+	tol_epfi = 1e-3
+
+	while dist > tol && iter < maxiter
+		iter += 1
+
+		dist_π = Epfi!(ct, tol=tol_epfi)
+		reset_L!(ct)
+
+		dk = DovisKirpalani(ct)
+		old_ga = copy(dk.ga)
+
+		Epfi!(dk; maxiter = 1)
+
+		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
+		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
+
+		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
+
+		dist <= tol_epfi ? rep_status *= " ✓" : nothing
+
+		print_save(rep_status)
+
+		dist = max(dist_a, dist_π)
+
+		ct = CrazyType(dk)
+		tol_epfi *= 0.95
+		tol_epfi = max(5e-4, tol_epfi)
+	end
+end
+
+
 function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 10)
 	dist = 10.
 	iter = 0
@@ -351,7 +389,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 
 		old_gπ, old_L, old_ga = copy(ct.gπ), copy(ct.L), copy(ct.ga);
 
-		reset_L!(ct)
+		# reset_L!(ct)
 
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
