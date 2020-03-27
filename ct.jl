@@ -212,7 +212,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 
-		a_guess = ct.ga[jp, ja]
+		a_guess = max(min(ct.ga[jp, ja], maxa),mina)
 		π_guess = gπ_guess[jp, ja]
 		xguess = [π_guess, a_guess]
 		if optimize
@@ -343,7 +343,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 	ct = CrazyType(dk)
 
-	tol_epfi = 1e-3
+	tol_epfi = 0.03
 
 	while dist > tol && iter < maxiter
 		iter += 1
@@ -351,8 +351,10 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		dist_π = Epfi!(ct, tol=tol_epfi)
 		reset_L!(ct)
 
-		dk = DovisKirpalani(ct)
+		# dk = DovisKirpalani(ct)
 		old_ga = copy(dk.ga)
+		dk.gπ = ct.gπ
+		dk.L = ct.L
 
 		Epfi!(dk; maxiter = 1)
 
