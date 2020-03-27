@@ -74,7 +74,7 @@ CrazyType(dk::DovisKirpalani{T}; ω=0.0, χ=0.0) where T <: PhillipsCurve = Craz
 
 function switch_PC(pp::DovisKirpalani{T}, T2::DataType) where T<:PhillipsCurve
 	if T == T2
-		return nothing
+		return pp
 	else
 		return DovisKirpalani{T2}(pp.β, pp.γ, pp.κ, pp.σ, pp.ystar, pp.pgrid, pp.agrid, pp.Np, pp.Na, pp.gπ, pp.ga, pp.L, pp.C, pp.Ey, pp.Eπ, pp.Ep)
 	end
