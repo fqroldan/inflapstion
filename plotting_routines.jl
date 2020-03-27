@@ -93,7 +93,12 @@ end
 function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false)
 
 	a_max = Nash(ct)
-	jamax = findfirst(ct.agrid.>=a_max)
+	if maximum(ct.agrid) > a_max
+		jamax = findfirst(ct.agrid.>=a_max)
+	else
+		jamax = length(ct.agrid)
+	end
+
 	positive_p ? xvec = ct.pgrid[2:end] : xvec = ct.pgrid
 	positive_p ? y = y[2:end, :] : nothing
 

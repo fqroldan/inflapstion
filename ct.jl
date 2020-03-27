@@ -213,7 +213,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 
 		a_guess = max(min(ct.ga[jp, ja], maxa),mina)
-		π_guess = gπ_guess[jp, ja]
+		π_guess = max(min(gπ_guess[jp, ja], maxa),mina)
 		xguess = [π_guess, a_guess]
 		if optimize
 			# π_guess = itp_gπ(pv, av)
@@ -363,7 +363,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 		rep_status = "\nAfter $iter iterations, d(a) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
 
-		dist <= tol_epfi ? rep_status *= " ✓" : nothing
+		dist_π <= tol_epfi ? rep_status *= " ✓" : nothing
 
 		print_save(rep_status)
 
