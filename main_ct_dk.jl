@@ -30,7 +30,7 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = create_or_load(Simultaneous)
+ct = create_or_load(Forward)
 
 dk = DovisKirpalani(ct);
 
@@ -39,7 +39,7 @@ initial_report(dk)
 solve!(dk)
 save("../../dk.jld", "dk", dk)
 
-dk = switch_PC(dk, Forward);
+dk = switch_PC(dk, Simultaneous);
 
 solve!(dk)
 save("../../dk_simultaneous.jld", "dk", dk)
