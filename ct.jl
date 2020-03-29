@@ -343,10 +343,15 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 	tol_epfi = 1e-3
 
+	ct = CrazyType(dk)
+	Epfi!(ct, maxiter = 500)
+
 	while dist > tol && iter < maxiter
 		iter += 1
 
+		old_ga = copy(dk.ga)
 
+		ct = CrazyType(dk)
 		dist_π = Epfi!(ct)
 		reset_L!(ct)
 
@@ -362,10 +367,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 		dist = max(dist_a, dist_π)
 
-		
-		# old_ga = copy(dk.ga)
 
-		# ct = CrazyType(dk)
 		# dist_π = Epfi!(ct, tol=tol_epfi)
 
 		# dk.gπ = ct.gπ
