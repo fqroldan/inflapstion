@@ -352,7 +352,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		old_ga = copy(dk.ga)
 
 		ct = CrazyType(dk)
-		dist_π = Epfi!(ct)
+		dist_π = Epfi!(ct, tol=tol_epfi)
 		reset_L!(ct)
 
 		dk = DovisKirpalani(ct)
@@ -363,32 +363,16 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
 		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
 
-		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
+		# rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
+		rep_status = "\nAfter $iter iterations, d(a) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga))"
+
+		dist_π <= tol_epfi ? rep_status *= " ✓" : nothing
+
+		print_save(rep_status)
 
 		dist = max(dist_a, dist_π)
-
-
-		# dist_π = Epfi!(ct, tol=tol_epfi)
-
-		# dk.gπ = ct.gπ
-		# dk.L = ct.L
-		# dk.ga = ct.ga
-		
-		# Epfi!(dk; maxiter = 1)
-
-		# norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
-		# dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
-
-		# rep_status = "\nAfter $iter iterations, d(a) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
-
-		# dist_π <= tol_epfi ? rep_status *= " ✓" : nothing
-
-		# print_save(rep_status)
-
-		# dist = max(dist_a, dist_π)
-
-		# tol_epfi *= 0.95
-		# tol_epfi = max(tol, tol_epfi)
+		tol_epfi *= 0.95
+		tol_epfi = max(tol, tol_epfi)
 	end
 end
 
