@@ -5,11 +5,15 @@ include("ct.jl")
 write(pwd()*"/../output.txt", "")
 write(pwd()*"/../temp.txt", "")
 
-function create_or_load(T::DataType)
-	ct = CrazyType(T, ω = 0.2, χ = 0.0, Np=20, Na=20);
+function create_or_load(T::DataType; dk::Bool=false)
+	ct = CrazyType(T, ω = 0.2, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
-		ctt = load("../../ct_1.jld", "ct")
+		if dk
+			ctt = load("../../ct_1_temp.jld", "ct")
+		else
+			ctt = load("../../ct_1.jld", "ct")
+		end
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ct.gπ=ctt.gπ
 		end
