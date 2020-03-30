@@ -268,7 +268,7 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 	verbose ? print_save(rep,true) : print(rep)
 
     if reset_guess
-	    ct.gπ = zeros(size(ct.gπ))
+	    # ct.gπ = zeros(size(ct.gπ))
 		ct.L = ones(ct.Np, ct.Na)
 	end
 
