@@ -30,8 +30,9 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-# ct = create_or_load(Forward)
-ct = CrazyType(Forward)
+ct = create_or_load(Forward)
+update_ga!(ct)
+# ct = CrazyType(Forward)
 
 dk = DovisKirpalani(ct);
 
