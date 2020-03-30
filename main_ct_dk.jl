@@ -6,7 +6,7 @@ write(pwd()*"/../output.txt", "")
 write(pwd()*"/../temp.txt", "")
 
 function create_or_load(T::DataType)
-	ct = CrazyType(T, ω = 1.5, χ = 0.0, Np=20, Na=20);
+	ct = CrazyType(T, ω = 1.5, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
 		ctt = load("../../ct_1.jld", "ct")
@@ -30,9 +30,10 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = CrazyType(Forward, ω = 1.5, χ = 0.0, Np=20, Na=20);
-update_ga!(ct)
-# ct = CrazyType(Forward)
+# ct = CrazyType(Forward, ω = 1.5, χ = 0.0, Np=20, Na=20);
+# update_ga!(ct)
+
+ct = create_or_load(Forward)
 
 dk = DovisKirpalani(ct);
 

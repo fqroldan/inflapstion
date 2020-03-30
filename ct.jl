@@ -353,7 +353,6 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 		ct = CrazyType(dk)
 		dist_π = Epfi!(ct, tol=tol_epfi)
-		reset_L!(ct)
 
 		dk = DovisKirpalani(ct)
 		old_ga = copy(dk.ga)
