@@ -355,9 +355,9 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		dist_π = Epfi!(ct, tol=tol_epfi)
 
 		# dk = DovisKirpalani(ct)
-		dk.ga = ct.ga
-		dk.gπ = ct.gπ
-		dk.L  = ct.L
+		# dk.ga = ct.ga
+		dk.gπ = copy(ct.gπ)
+		dk.L  = copy(ct.L)
 
 		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi/10)
 
