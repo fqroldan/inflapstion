@@ -359,7 +359,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		dk.gπ = copy(ct.gπ)
 		dk.L  = copy(ct.L)
 
-		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi/10)
+		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi)
 
 		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 10tol)
 		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
@@ -377,7 +377,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 	end
 end
 
-function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 10, 	tol_pfi = 2e-3 / 0.99)
+function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=true, tempplots::Bool=false, upd_η::Float64=0.01, switch_η = 10, tol_pfi = 2e-3 / 0.99)
 	dist = 10.
 	iter = 0
 	
