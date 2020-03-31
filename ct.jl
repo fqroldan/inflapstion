@@ -354,10 +354,12 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 		ct = CrazyType(dk)
 		dist_π = Epfi!(ct, tol=tol_epfi)
 
-		dk = DovisKirpalani(ct)
-		old_ga = copy(dk.ga)
+		# dk = DovisKirpalani(ct)
+		dk.ga = ct.ga
+		dk.gπ = ct.gπ
+		dk.L  = ct.L
 
-		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi/20)
+		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi/10)
 
 		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
 		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
