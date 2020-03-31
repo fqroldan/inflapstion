@@ -18,10 +18,10 @@ function iter_simul(ct::Plan, itp_gπ, itp_ga, pv, av; noshocks::Bool=false)
 	return pprime, aprime, obs_π, y, exp_π, ϵ
 end
 
-function simul(ct::Plan; T::Int64=50, jp0::Int64=2, noshocks::Bool=false)
+function simul(ct::Plan; T::Int64=50, jp0::Int64=3, noshocks::Bool=false)
 	p0 = ct.pgrid[jp0]
 
-	_, ind_a0 = findmin(ct.L[3, :])
+	_, ind_a0 = findmin(ct.L[jp0, :])
 
 	# ind_a0 = floor(Int, ct.Na*0.25)
 
