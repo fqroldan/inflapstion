@@ -227,6 +227,7 @@ function optim_step(sp::Sustainable, itp_v, itp_gπ)
 	vd, πd = find_best_dev(sp, itp_v)
 
 	# Now optimize given a
+
 	# for ja in 1:length(sp.agrid)
 	Threads.@threads for ja in 1:length(sp.agrid)
 		av = sp.agrid[ja]
@@ -259,30 +260,32 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 	end
 
 	iter = 0
-	dist = 1e8
+	dist = 10+tol
 
 	while dist > tol && iter < maxiter
 		iter += 1
 
-		old_g, old_v = copy(pp.g), copy(pp.v)
+		old_g, old_v = copy(pp.g), copy(pp.v);
 
-		new_g, new_v = vfi_iter(pp)
+		new_g, new_v = vfi_iter(pp);
 
-		norm_g = max(sqrt.(sum(old_g .^2))/length(old_g), 1e-2)
-		norm_v = max(sqrt.(sum(old_v .^2))/length(old_v), 1e-2)
+		norm_g = max(sqrt.(sum(old_g .^2))/length(old_g), 1e-4);
+		norm_v = max(sqrt.(sum(old_v .^2))/length(old_v), 1e-4)
 
-		dist_g = sqrt.(sum( (new_g  - old_g ).^2 ))/length(old_g) / norm_g
+		dist_g = sqrt.(sum( (new_g  - old_g ).^2 ))/length(old_g) / norm_g;
 		dist_v = sqrt.(sum( (new_v  - old_v ).^2 ))/length(old_v) / norm_v
 
+		[old_v new_v]
+		norm_v
 		dist = max(dist_g, dist_v)
 
-		pp.v = old_v + upd_η * (new_v - old_v)
-		pp.g = old_g + upd_η * (new_g - old_g)
+		pp.v = old_v + upd_η * (new_v - old_v);
+		pp.g = old_g + upd_η * (new_g - old_g);
 
 		if verbose && iter % 50 == 0
 			print("After $iter iterations, d(v,g) = $(@sprintf("%0.3g",dist_v)) $(@sprintf("%0.3g",dist_g)) at $(Dates.format(now(),"HH:MM"))\n")
 		end
-		if iter > 200
+		if typeof(pp)<:Sustainable && iter > 200
 			upd_η = 0.25
 			if iter > 400
 				upd_η = 0.01

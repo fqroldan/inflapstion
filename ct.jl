@@ -720,12 +720,16 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 	end
 end
 
-function find_plan_μ(mt::MultiType; decay::Bool=false)
+function find_plan_μ(mt::MultiType; annualize::Bool=false, decay::Bool=false)
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 
 	if decay
 		ωgrid = perc_rate.(ωgrid)
+	end
+	if annualize
+		agrid = annualized.(agrid)
+		χgrid = annualized.(χgrid)
 	end
 
 	mean_ω, mean_χ, mean_a = zeros(3)
@@ -735,12 +739,12 @@ function find_plan_μ(mt::MultiType; decay::Bool=false)
 	for (ja, av) in enumerate(agrid), (jχ, χv) in enumerate(χgrid), (jω, ωv) in enumerate(ωgrid)
 
 		mean_ω += mt.μ[jω, jχ, ja] * ωv
-		mean_a += mt.μ[jω, jχ, ja] * annualized(av)
-		mean_χ += mt.μ[jω, jχ, ja] * annualized(χv)
+		mean_a += mt.μ[jω, jχ, ja] * av
+		mean_χ += mt.μ[jω, jχ, ja] * χv
 
 		m2_ω += mt.μ[jω, jχ, ja] * ωv^2
-		m2_a += mt.μ[jω, jχ, ja] * annualized(av)^2
-		m2_χ += mt.μ[jω, jχ, ja] * annualized(χv)^2
+		m2_a += mt.μ[jω, jχ, ja] * av^2
+		m2_χ += mt.μ[jω, jχ, ja] * χv^2
 	end
 
 	mean_ω *= 1/sum_prob

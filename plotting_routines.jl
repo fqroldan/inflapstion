@@ -601,7 +601,7 @@ function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
 	# tvec = 1:length(πR)
 	tvec = 1:10
 
-	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; decay=false)
+	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
 
 	πC = (mean_a - mean_χ) * exp.(-mean_ω * tvec) .+ mean_χ
 
@@ -705,4 +705,55 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 
 	return p1
 
+end
+
+function comp_plot_recursive(dk::DovisKirpalani{T}, mt::MultiType; makeplots::Bool=false) where T<:PhillipsCurve
+
+	ct = mt.ct
+	rp = Ramsey(ct)
+
+	vfi!(rp)
+	πR, θR = simul_plan(rp)
+
+	# tvec = 1:length(πR)
+	tvec = 1:10
+
+	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
+
+	πC = (mean_a - mean_χ) * exp.(-mean_ω * tvec) .+ mean_χ
+
+	minL, jj = findmin(mt.L_mat[:, :, 3, :])
+	ωK = mt.ωgrid[jj[1]]
+	χK = mt.χgrid[jj[2]]
+	aK = mt.ct.agrid[jj[3]]
+
+	πK = (aK - χK) * exp.(-ωK * tvec) .+ χK
+
+    p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(dk; jp0=3, T=length(tvec), noshocks=true)
+
+	p1 = plot()
+	for slides in [true, false]
+		if slides
+			ff = "Lato"
+			bgcol = "#fafafa"
+			wi = 800
+		else
+			ff = "Linux Libertine"
+			bgcol = ""
+			wi = 1000
+		end
+
+		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
+		p1 = plot([
+			scatter(x=tvec, y=annualized.(πR[tvec]), marker_color=get(ColorSchemes.southwest, 0.01), name="<i>Ramsey")
+			scatter(x=tvec, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99), name="<i>Average eq'm")
+			scatter(x=tvec, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
+			scatter(x=tvec, y=annualized.(a_vec)[tvec], marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Recursive")
+			], layout)
+
+		if makeplots
+			savejson(p1, pwd()*"/../Graphs/tests/recursive_$(T)_$(ifelse(slides, "slides", "paper")).json")
+		end
+	end
+	return p1
 end
