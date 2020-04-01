@@ -172,6 +172,7 @@ function makeplots_ct_pa(ct::Plan; slides::Bool=true)
 
 	pL = plot_ct_pa(ct, ct.L, "𝓛"; reverse_draw=true)
 	pπ = plot_ct_pa(ct, annual_π, "<i>g<sup>⋆</sup> - a", ytitle="%")
+	pa = plot_ct_pa(ct, annualized.(ct.ga), "<i>g<sub>a", ytitle="%")
 	pE = plot_ct_pa(ct, Eπ_a, "𝔼π-a", ytitle="%")
 	py = plot_ct_pa(ct, ct.Ey, "𝔼y")
 	pp = plot_ct_pa(ct, Ep_minus_p, "𝔼[<i>p'-p</i>]")
@@ -184,11 +185,13 @@ function makeplots_ct_pa(ct::Plan; slides::Bool=true)
 
 	relayout!(pπ, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
 	restyle!(pπ, showlegend=false)
+	relayout!(pa, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol, yaxis_zeroline=false, xaxis_zeroline=false)
+	restyle!(pa, showlegend=false)
 
 	relayout!(pp, font_family=font, xaxis_title="<i>p", font_size=16, width=900, height=heights[3], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
 	restyle!(pp, showlegend=false)
 
-	return p, pL, pπ, pC, pp
+	return p, pL, pπ, pC, pp, pa
 end
 
 
@@ -250,7 +253,7 @@ function plot_simul(ct::Plan; T::Int64=50, N=10000, jp0::Int64=3, noshocks::Bool
 		scatter(;x=(1:T)/4, y=L_med, showlegend=false, line_color=col[4], line_dash="dashdot")
 		], Layout(;title="𝓛", font_family = "Fira Sans Light", font_size = 16))
 
-    return p, pL
+    return p, pL, ptar
 end
 
 function makeplot_conv(dists::Vector; switch_η=25)

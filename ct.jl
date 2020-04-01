@@ -416,7 +416,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		ct.ga = upd_η * ct.ga + (1-upd_η) * old_ga;
 
 		if tempplots && (iter % 5 == 0 || dist <= tol)
-			p1, pL, pE, pC, pp = makeplots_ct_pa(ct);
+			p1, pL, pE, pC, pp, _ = makeplots_ct_pa(ct);
 			relayout!(p1, title="iter = $iter")
 			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
 			relayout!(pL, title="iter = $iter")
@@ -442,7 +442,7 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	p1, pL, pπ, pC, pp = makeplots_ct_pa(ct);
+	p1, pL, pπ, pC, pp, _ = makeplots_ct_pa(ct);
 	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
 	savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
 	
@@ -602,7 +602,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				ct_best.ω, ct_best.χ = ωv, χv
 				ct_best.L, ct_best.gπ = ct.L, ct.gπ
 
-				_, pL, pπ, _, pp = makeplots_ct_pa(ct);
+				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct);
 				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
 				savejson(pπ, pwd()*"/../Graphs/tests/opt_g.json")
 				savejson(pp, pwd()*"/../Graphs/tests/opt_p.json")
@@ -616,11 +616,11 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
 				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
 				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
-				_, pL, pπ, _, pp = makeplots_ct_pa(ct, slides=true);
+				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=true);
 				savejson(pL, pwd()*"/../Graphs/tests/first_L_slides.json")
 				savejson(pπ, pwd()*"/../Graphs/tests/first_g_slides.json")
 				savejson(pp, pwd()*"/../Graphs/tests/first_p_slides.json")
-				_, pL, pπ, _, pp = makeplots_ct_pa(ct, slides=false);
+				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=false);
 				savejson(pL, pwd()*"/../Graphs/tests/first_L_paper.json")
 				savejson(pπ, pwd()*"/../Graphs/tests/first_g_paper.json")
 				savejson(pp, pwd()*"/../Graphs/tests/first_p_paper.json")

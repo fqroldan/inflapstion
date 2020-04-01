@@ -44,7 +44,7 @@ save("../../dk.jld", "dk", dk)
 
 dk = switch_PC(dk, Simultaneous);
 
-solve!(dk)
+solve!(dk, tol=1e-4)
 save("../../dk_simultaneous.jld", "dk", dk)
 
 nothing
