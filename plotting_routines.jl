@@ -652,6 +652,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# mult = range(0.25,0.38,length=K)
 	mult = range(0.4,0.7,length=K)
 	π_sust = zeros(length(tvec), K)
+	a_sust = zeros(length(tvec), K)
 	show_vec = Vector{Bool}(undef, K)
 
 	if pc == Fwd_strategy
@@ -677,6 +678,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		πv, θv = simul_plan(sp)
 
 		π_sust[:, jj] = πv[tvec]
+		a_sust[:, jj] = θv[tvec]
 		show_vec[jj] = flag
 	end
 	p1 = plot()
@@ -697,13 +699,18 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
 			scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
+		p2 = plot([
+			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, line_dash="dash", marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
+			[scatter(x=tvec, y=annualized.(a_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.lajolla, 1-0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
+			# scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			], layout)
 
 		if makeplots
 			savejson(p1, pwd()*"/../Graphs/tests/$(plotname)_$(ifelse(slides, "slides", "paper")).json")
 		end
 	end
 
-	return p1
+	return p1, p2
 
 end
 
