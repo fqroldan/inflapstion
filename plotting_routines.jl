@@ -682,6 +682,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		show_vec[jj] = flag
 	end
 	p1 = plot()
+	p2 = plot()
 	for slides in [true, false]
 		if slides
 			ff = "Lato"
