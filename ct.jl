@@ -373,7 +373,7 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 		dist = max(dist_a, dist_π)
 		tol_epfi *= 0.95
-		tol_epfi = max(tol, tol_epfi)
+		tol_epfi = max(5e-4, tol_epfi)
 	end
 end
 
