@@ -275,8 +275,6 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 		dist_g = sqrt.(sum( (new_g  - old_g ).^2 ))/length(old_g) / norm_g;
 		dist_v = sqrt.(sum( (new_v  - old_v ).^2 ))/length(old_v) / norm_v
 
-		[old_v new_v]
-		norm_v
 		dist = max(dist_g, dist_v)
 
 		pp.v = old_v + upd_η * (new_v - old_v);
