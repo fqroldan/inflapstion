@@ -256,8 +256,10 @@ end
 
 function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64=2500, verbose::Bool=true, upd_η = 0.75)
 
+	cens_v = 1e-4
 	if typeof(pp) == Sustainable{Fwd_GP}
 		upd_η = 0.5
+		cens_v = 1e-2
 	end
 
 	iter = 0
@@ -270,8 +272,8 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 
 		new_g, new_v = vfi_iter(pp);
 
-		norm_g = max(sqrt.(sum(old_g .^2))/length(old_g), 1e-4);
-		norm_v = max(sqrt.(sum(old_v .^2))/length(old_v), 1e-4)
+		norm_g = max(sqrt.(sum(old_g .^2))/length(old_g), cens_v);
+		norm_v = max(sqrt.(sum(old_v .^2))/length(old_v), cens_v)
 
 		dist_g = sqrt.(sum( (new_g  - old_g ).^2 ))/length(old_g) / norm_g;
 		dist_v = sqrt.(sum( (new_v  - old_v ).^2 ))/length(old_v) / norm_v
