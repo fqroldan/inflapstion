@@ -143,7 +143,7 @@ function Sustainable(ct::CrazyType{T}, Na = 100; ξ = Nash(ct), pc::DataType=For
 
 	b = ((yξ - ystar)^2 + γ*πξ^2) / (1-β)
 	θ = 0.25
-	D = 0.005
+	D = 0.005 * Nash(ct)
 	σ = 0.01/4
 	
 	return Sustainable{pc}(β, γ, κ, ystar, θ, D, σ, ξ, b, Na, agrid, g, v)
