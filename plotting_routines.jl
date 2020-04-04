@@ -712,7 +712,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		end
 	end
 
-	return p1, p2
+	return p1, π_sust, a_sust
 
 end
 
