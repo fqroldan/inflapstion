@@ -53,11 +53,17 @@ for slides in [true, false]
 	savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 end
 
-comp_plot_planner(mt, makeplots=true)
-make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_strategy)
-make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_GP)
-nothing
+function makeplots_planner(mt::MultiType)
+	comp_plot_planner(mt, makeplots=true)
+	print_save("\nDone with plot vs planner")
+	make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_strategy)
+	print_save("\nDone with plot vs sustainable plans")
+	make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_GP)
+	print_save("\nDone with plot vs sust plans with reverting triggers")
+	nothing
+end
 
+makeplots_planner(mt)
 
 # for (jp, pv) in enumerate(ct.pgrid)
 # 	findmin(L_mat[:,:,jp,:])

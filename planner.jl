@@ -305,12 +305,25 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 			end
 		end
 	end
-	if verbose && iter < maxiter
-		print("Converged in $iter iterations at $(Dates.format(now(),"HH:MM"))\n")
-	elseif verbose
-		print("\nFailed to converge")
+	if verbose
+		final_report(pp, iter, maxiter, dist)
 	end
 	return dist <= tol
+end
+final_report(pp::Sustainable, iter, maxiter, dist) = final_report(iter,maxiter,dist)
+function final_report(rp::Ramsey, iter, maxiter, dist)
+	knots = (rp.θgrid,)
+	itp = interpolate(knots, rp.v, Gridded(Linear()))
+	print("\nvalue attained = $(@sprintf("%0.3g",itp(0.0)))")
+	final_report(iter, maxiter, dist)
+end
+
+function final_report(iter, maxiter, dist)
+	if iter < maxiter
+		print("Converged in $iter iterations at $(Dates.format(now(),"HH:MM"))\n")
+	else
+		print("\nFailed to converge")
+	end
 end
 
 initial_state(rp::Ramsey) = 0

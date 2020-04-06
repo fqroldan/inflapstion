@@ -603,14 +603,14 @@ function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
 
 	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
 
-	πC = (mean_a - mean_χ) * exp.(-mean_ω * tvec) .+ mean_χ
+	πC = (mean_a - mean_χ) * exp.(-mean_ω * (tvec.-1)) .+ mean_χ
 
 	minL, jj = findmin(mt.L_mat[:, :, 3, :])
 	ωK = mt.ωgrid[jj[1]]
 	χK = mt.χgrid[jj[2]]
 	aK = mt.ct.agrid[jj[3]]
 
-	πK = (aK - χK) * exp.(-ωK * tvec) .+ χK
+	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
 	p1 = plot()
 	for slides in [true, false]
 		if slides
@@ -625,9 +625,9 @@ function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
 
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 		p1 = plot([
-			scatter(x=tvec, y=annualized.(πR)[tvec], marker_color=get(ColorSchemes.southwest, 0.01), name="<i>Ramsey")
-			scatter(x=tvec, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99), name="<i>Average eq'm")
-			scatter(x=tvec, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
+			scatter(x=tvec.-1, y=annualized.(πR)[tvec], marker_color=get(ColorSchemes.southwest, 0.01), name="<i>Ramsey")
+			scatter(x=tvec.-1, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99), name="<i>Average eq'm")
+			scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
 			], layout)
 
 		if makeplots
@@ -650,8 +650,11 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	tvec = 1:10
 
 	# mult = range(0.25,0.38,length=K)
-	mult = range(0.4,0.7,length=K)
-	# mult = range(0.6,0.9,length=K)
+	if pc == Fwd_GP
+		mult = range(0.0,0.4,length=K)
+	elseif pc == Fwd_strategy
+		mult = range(0.6,0.9,length=K)
+	end
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
 	show_vec = Vector{Bool}(undef, K)
@@ -698,13 +701,13 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 
 		p1 = plot([
-			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
-			scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			[scatter(x=tvec.-1, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
+			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
 		p2 = plot([
-			[scatter(x=tvec, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, line_dash="dash", marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
-			[scatter(x=tvec, y=annualized.(a_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.lajolla, 1-0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
-			# scatter(x=tvec, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			[scatter(x=tvec.-1, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, line_dash="dash", marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
+			[scatter(x=tvec.-1, y=annualized.(a_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=3, marker_color=get(ColorSchemes.lajolla, 1-0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
+			# scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
 
 		if makeplots
@@ -729,14 +732,14 @@ function comp_plot_recursive(dk::DovisKirpalani{T}, mt::MultiType; makeplots::Bo
 
 	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
 
-	πC = (mean_a - mean_χ) * exp.(-mean_ω * tvec) .+ mean_χ
+	πC = (mean_a - mean_χ) * exp.(-mean_ω * (tvec.-1)) .+ mean_χ
 
 	minL, jj = findmin(mt.L_mat[:, :, 3, :])
 	ωK = mt.ωgrid[jj[1]]
 	χK = mt.χgrid[jj[2]]
 	aK = mt.ct.agrid[jj[3]]
 
-	πK = (aK - χK) * exp.(-ωK * tvec) .+ χK
+	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
 
     p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(dk; jp0=3, T=length(tvec), noshocks=true)
 
@@ -754,10 +757,10 @@ function comp_plot_recursive(dk::DovisKirpalani{T}, mt::MultiType; makeplots::Bo
 
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 		p1 = plot([
-			scatter(x=tvec, y=annualized.(πR[tvec]), marker_color=get(ColorSchemes.southwest, 0.01), name="<i>Ramsey")
-			scatter(x=tvec, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99), name="<i>Average eq'm")
-			scatter(x=tvec, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
-			scatter(x=tvec, y=annualized.(a_vec)[tvec], marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Recursive")
+			scatter(x=tvec.-1, y=annualized.(πR[tvec]), marker_color=get(ColorSchemes.southwest, 0.01), name="<i>Ramsey")
+			scatter(x=tvec.-1, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99), name="<i>Average eq'm")
+			scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5), name="<i>Kambe eq'm")
+			scatter(x=tvec.-1, y=annualized.(a_vec)[tvec], marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Recursive")
 			], layout)
 
 		if makeplots
