@@ -120,7 +120,7 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
 	f_p(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[2] * pdf_ϵ(ct, ϵv)
 	Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[3] * pdf_ϵ(ct, ϵv)
-	Ec, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
 	Ey = Ey / sum_prob
 	Ep = Ep / sum_prob
