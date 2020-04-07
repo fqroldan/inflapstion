@@ -719,12 +719,56 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 
 end
 
+function plots_recursive(dk::DovisKirpalani, ct=CrazyType(dk); makeplots::Bool=false)
+
+	rp = Ramsey(ct)
+	vR = vfi!(rp)
+	πR, θR = simul_plan(rp)
+
+	tvec = 1:10
+	T = length(tvec)
+	K = length(dk.pgrid)
+	amat = zeros(T, K)
+
+	for jp in 1:K
+		p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(dk; jp0=jp, T=T, noshocks=true)
+		amat[:,jp] = annualized.(a_vec)
+	end
+
+	p1 = plot()
+	for slides in [true,false]
+		if slides
+			ff = "Lato"
+			bgcol = "#fafafa"
+			wi = 800
+		else
+			ff = "Linux Libertine"
+			bgcol = ""
+			wi = 1000
+		end
+
+		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
+
+		p1 = plot([
+			[scatter(x=tvec.-1, y=amat[:, jp], mode="lines", opacity=0.9, line_width=2, marker_color=get(ColorSchemes.davos, 0.5pv), name="<i>p₀ = $(pv)", showlegend=false) for (jp, pv) in enumerate(dk.pgrid)]
+			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			], layout)
+		if makeplots
+			savejson(p1, pwd()*"/../Graphs/tests/all_recursive_$(T)_$(ifelse(slides, "slides", "paper")).json")
+		end
+	end
+	return p1
+end
+
+
+
+
 function comp_plot_recursive(dk::DovisKirpalani{T}, mt::MultiType; makeplots::Bool=false) where T<:PhillipsCurve
 
 	ct = mt.ct
 	rp = Ramsey(ct)
 
-	vfi!(rp)
+	vR = vfi!(rp)
 	πR, θR = simul_plan(rp)
 
 	# tvec = 1:length(πR)
@@ -740,10 +784,23 @@ function comp_plot_recursive(dk::DovisKirpalani{T}, mt::MultiType; makeplots::Bo
 	aK = mt.ct.agrid[jj[3]]
 
 	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
+	vK = findmin(ct.L[3,:])[1]
 
-    p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(dk; jp0=3, T=length(tvec), noshocks=true)
+    p_vec, a_vec, π_vec, y_vec, g_vec, L_vec = simul(dk; jp0=3, T=4*length(tvec), noshocks=true)
+
 
 	p1 = plot()
+
+	print("\nRamsey initial: $(round(annualized(πR[1]),digits=3))")
+	print("\nRamsey final: $(round(annualized(πR[end]),digits=3))")
+	print("\nRamsey value: $(round(show_value(rp),digits=4))")
+	print("\nKambe initial: $(round(annualized(πK[1]),digits=3))")
+	print("\nKambe final: $(round(annualized(πK[end]),digits=3))")
+	print("\nKambe value: $(round(vK,digits=4))")
+	print("\nRecursive initial: $(round(annualized(a_vec[1]),digits=3))")
+	print("\nRecursive final: $(round(annualized(a_vec[end]),digits=3))")
+	print("\nRecursive value: $(round(L_vec[1],digits=4))")
+
 	for slides in [true, false]
 		if slides
 			ff = "Lato"
