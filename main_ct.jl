@@ -31,7 +31,6 @@ function create_or_load(T::DataType)
 end
 
 ct = create_or_load(Forward)
-
 initial_report(ct)
 
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
