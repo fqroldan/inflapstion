@@ -299,17 +299,6 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 		# end
 	end
 
-	dist2 = 10.
-	iter2 = 0
-	while dist > tol && iter2 < maxiter
-		iter2 += 1
-		old_C = copy(ct.C)
-		_, _, new_others = pf_iter(ct, Egπ, old_gπ; optimize=false)
-		new_C = new_others[4]
-		dist2 = sqrt.(sum( (new_C  - old_C ).^2 )) / sqrt.(sum(old_C .^2))
-		ct.C  = upd_η2 * new_C  + (1.0-upd_η2) * ct.C
-	end
-
 	if verbose && dist <= tol
 		print("\nConverged in $iter iterations.")
 	elseif verbose
@@ -437,6 +426,22 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		end
 
 	end
+
+	tolC, maxiterC = 5e-4, 2000
+	dist, iter = 1+tolC, 0
+	while dist > tolC && iter < maxiterC
+		iter += 1
+
+		old_C = copy(ct.C)
+		Egπ = copy(ct.gπ)
+		_, _, new_others = pf_iter(ct, Egπ, Egπ, optimize = false)
+
+		new_C = new_others[4]
+		dist2 = sqrt.(sum( (new_C  - old_C ).^2 )) / sqrt.(sum(old_C .^2))
+
+		update_others!(ct, new_others, 0.5)
+	end
+
 	if verbose && dist <= tol
 		print_save("\nConverged in $iter iterations.",true)
 	elseif verbose
