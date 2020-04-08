@@ -292,6 +292,16 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
+function plot_C_contour(mt::MultiType; slides=false)
+	ja_min = findmin(mt.L_mat[:,:,3,:])[2][3]
+
+	C = zeros(length(mt.ωgrid), length(mt.χgrid))
+	for jω in 1:length(mt.ωgrid), jχ in 1:length(mt.χgrid)
+		C[jω, jχ] = mt.C_mat[jω, jχ, 3, ja_min]
+	end
+	return plot_L_contour(mt.ωgrid, mt.χgrid, C; name_y="C", slides=slides)
+end
+
 function plot_L_contour(mt::MultiType; slides=false)
 	L = zeros(length(mt.ωgrid), length(mt.χgrid))
 	for jω in 1:length(mt.ωgrid), jχ in 1:length(mt.χgrid)
