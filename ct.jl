@@ -447,9 +447,11 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	p1, pL, pπ, pC, pp, _ = makeplots_ct_pa(ct);
-	savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
-	savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
+	if dist <= tol
+		p1, pL, pπ, pC, pp, _ = makeplots_ct_pa(ct);
+		savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
+		savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
+	end
 	
 	return dist
 end
