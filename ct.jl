@@ -428,8 +428,8 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	end
 
 	tolC, maxiterC = 5e-4, 2000
-	dist, iter = 1+tolC, 0
-	while dist > tolC && iter < maxiterC
+	dist2, iter = 1+tolC, 0
+	while dist2 > tolC && iter < maxiterC
 		iter += 1
 
 		old_C = copy(ct.C)
