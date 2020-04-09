@@ -236,6 +236,8 @@ end
 ϕ(ct::CrazyType, a::Float64) = ϕ(a, ct.ω, ct.χ)
 
 function update_ga!(ct::CrazyType; ω = ct.ω, χ = ct.χ)
+	ct.ω = ω
+	ct.χ = χ
 	for jp in 1:ct.Np, (ja, av) in enumerate(ct.agrid)
 		ct.ga[jp, ja] = ϕ(ct, av)
 	end
