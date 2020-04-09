@@ -509,7 +509,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			update_ga!(ct, ω = ωv)
 
 			t1 = time()
-			tol = 11e-4
+			tol = 5e-4
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
