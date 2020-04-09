@@ -478,8 +478,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	Nχ = size(L_mat, 2)
 	χgrid = range(0.0, 0.43*Nash(ct), length = Nχ)
 
-	ct.ω = ωgrid[1]
-	ct.χ = χgrid[1]
+	update_ga!(ct, ω = ωgrid[1], χ = χgrid[1])
 	dist = Epfi!(ct, maxiter = 1000, tol = 1e-2)
 	print_save("\nDone with initial setup $(ifelse(dist<1e-3, "✓", ""))")
 
@@ -505,8 +504,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 		""" tol = 11e-4 """
 		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
-			ct.ω = ωv
-			update_ga!(ct)
+			update_ga!(ct, ω = ωv)
 
 			t1 = time()
 			tol = 5e-4
