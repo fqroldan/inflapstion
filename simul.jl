@@ -18,14 +18,15 @@ function iter_simul(ct::Plan, itp_gπ, itp_ga, pv, av; noshocks::Bool=false)
 	return pprime, aprime, obs_π, y, exp_π, ϵ
 end
 
-function simul(ct::Plan; T::Int64=50, jp0::Int64=3, noshocks::Bool=false)
-	p0 = ct.pgrid[jp0]
-
+function starting_a(ct::Plan, jp0)
 	_, ind_a0 = findmin(ct.L[jp0, :])
-
-	# ind_a0 = floor(Int, ct.Na*0.25)
-
 	a0 = ct.agrid[ind_a0]
+	return a0
+end
+
+function simul(ct::Plan; T::Int64=50, jp0::Int64=3, a0=starting_a(ct,jp0), noshocks::Bool=false)
+
+	p0 = ct.pgrid[jp0]
 	p, a = p0, a0
 
 	knots = (ct.pgrid, ct.agrid)
