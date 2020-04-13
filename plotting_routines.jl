@@ -663,7 +663,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	if pc == Fwd_GP
 		mult = range(0.0,0.4,length=K)
 	elseif pc == Fwd_strategy
-		mult = range(0.6,0.9,length=K)
+		mult = range(0.0,0.35,length=K)
 	end
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
@@ -760,9 +760,17 @@ function plots_recursive(dk::DovisKirpalani, ct=CrazyType(dk); makeplots::Bool=f
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 
 		p1 = plot([
-			[scatter(x=tvec.-1, y=amat[:, jp], mode="lines+markers", opacity=0.9, line_width=2, marker_color=get(ColorSchemes.davos, 0.5pv), name="<i>p₀ = $(pv)", showlegend=false) for (jp, pv) in enumerate(dk.pgrid)]
-			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			[scatter(x=tvec.-1, y=amat[:, jp], mode="lines+markers", opacity=0.9, line_width=2, marker_color=get(ColorSchemes.davos, 0.05+0.8*jp/K), name="<i>p₀ = $(pv)", showlegend=false) for (jp, pv) in enumerate(dk.pgrid) if jp >= 3]
+			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", line_width = 3, marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
+
+		# p2 = plot([
+		# 	scatter(x=dk.pgrid[2:end], y = [amat[1,jp] for jp in 2:length(dk.pgrid)], name="<i>a<sub>0")
+		# 	scatter(x=dk.pgrid[2:end], y = [amat[end,jp] for jp in 2:length(dk.pgrid)], name="<i>χ")
+		# 	], Layout(yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05)))
+
+		# p1 = [p1; p2]
+
 		if makeplots
 			savejson(p1, pwd()*"/../Graphs/tests/all_recursive_$(T)_$(ifelse(slides, "slides", "paper")).json")
 		end
