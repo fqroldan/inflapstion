@@ -24,7 +24,7 @@ end
 
 function save_all_plots()
 
-	plnames = ["first_L", "first_g", "first_p", "plans", "marg_achi", "marg_omegachi", "mimics", "mimics_CI", "contour", "Ccontour"]
+	plnames = ["first_L", "first_g", "first_p", "plans", "marg_achi", "marg_omegachi", "mimics", "mimics_CI", "contour", "Ccontour", "GP", "ramsey", "sustainable"]
 
 	for pln in plnames
 		for slides in [true, false]

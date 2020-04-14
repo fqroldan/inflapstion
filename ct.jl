@@ -804,7 +804,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 	return k_star
 end
 
-function mimic_z(mt::MultiType, N=50; decay::Bool=false)
+function mimic_z(mt::MultiType, N=50; decay::Bool=false, annualize::Bool=false)
 
 	zgrid = cdf.(Beta(4,1), range(0,1,length=N))
 	move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
@@ -814,7 +814,7 @@ function mimic_z(mt::MultiType, N=50; decay::Bool=false)
 
 	for (jz, zv) in enumerate(zgrid)
 		find_equil!(mt, zv)
-		data[jz,:] .= find_plan_μ(mt, decay=decay)
+		data[jz,:] .= find_plan_μ(mt, decay=decay, annualize=annualize)
 	end
 
 	return data, datanames, zgrid

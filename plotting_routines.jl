@@ -521,7 +521,7 @@ end
 
 function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, CIs::Bool=false)
 
-	data, datanames, zgrid = mimic_z(mt, N, decay=decay)
+	data, datanames, zgrid = mimic_z(mt, N, decay=decay, annualize=true)
 
 	cols = [get(ColorSchemes.southwest, jj) for jj in [0, 0.5, 1]]
 	ls = Vector{PlotlyBase.GenericTrace{Dict{Symbol,Any}}}(undef, 0)

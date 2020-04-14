@@ -40,17 +40,23 @@ print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
-find_equil!(mt, mt.ct.pgrid[3])
+find_equil!(mt)
 
-for slides in [true, false]
-	for CI in [true, false]
-		save_plot_mimic_z(mt, CIs=CI, slides=slides)
-		save("../../mt.jld", "mt", mt)
+function makeplots_mimics_marginals(mt::MultiType)
+
+	for slides in [true, false]
+		for CI in [true, false]
+			save_plot_mimic_z(mt, CIs=CI, slides=slides)
+			save("../../mt.jld", "mt", mt)
+		end
+		p1, p2 = strategy_μ(mt, slides=slides)
+		savejson(p1, pwd()*"/../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
+		savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 	end
-	p1, p2 = strategy_μ(mt, slides=slides)
-	savejson(p1, pwd()*"/../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
-	savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
+	nothing
 end
+
+makeplots_mimics_marginals(mt)
 
 function makeplots_planner(mt::MultiType)
 	comp_plot_planner(mt, makeplots=true)
