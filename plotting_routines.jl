@@ -598,6 +598,9 @@ function strategy_μ(mt::MultiType; slides=false)
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>5χgrid[jχ]])
 	write("../pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
+	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ]==0])
+	write("../pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+
 	return p1, p2
 end
 
