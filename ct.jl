@@ -723,8 +723,12 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 		end
 		p0[jω, jχ, ja] = pv
 	end
-	if get_mu 
-		return μ
+	if get_mu
+		knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
+		itp_C = interpolate(knots, mt.C_mat[end:-1:1,:,:,:], Gridded(Linear()))
+		C_eqm = [ itp_C(ωv, χv, p0[jω, jχ, ja], av) for (jω, ωv) in enumerate(ωgrid), (jχ, χv) in enumerate(χgrid), (ja, av) in enumerate(agrid) ]
+		C_mat = [ sum( [itp_C(ωv, χv, p0[jω, jχ, ja], av) * sum(μ[jω, jχ, ja]) for (ja, av) in enumerate(agrid)] ) for (jω, ωv) in enumerate(ωgrid), (jχ, χv) in enumerate(χgrid) ]
+		return μ, C_eqm, C_mat
 	else
 		return sum(μ)
 	end
@@ -799,7 +803,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 
 	k_star = res.minimizer
 
-	mt.μ = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
+	mt.μ, C_eqm, C_mat = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
 
 	return k_star
 end
