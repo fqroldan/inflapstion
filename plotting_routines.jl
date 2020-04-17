@@ -604,7 +604,7 @@ function strategy_μ(mt::MultiType; slides=false)
 	return p1, p2
 end
 
-function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
+function comp_plot_planner(mt::MultiType; makeplots::Bool=false, slides::Bool=false)
 	ct = mt.ct
 	rp = Ramsey(ct)
 
@@ -625,7 +625,12 @@ function comp_plot_planner(mt::MultiType; makeplots::Bool=false)
 
 	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
 	p1 = plot()
-	for slides in [true, false]
+
+	iter_slides = [true, false]
+	if slides
+		iter_slides = [true]
+	end
+	for slides in iter_slides
 		if slides
 			ff = "Lato"
 			bgcol = "#fafafa"
