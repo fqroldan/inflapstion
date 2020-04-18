@@ -43,7 +43,7 @@ a, ω, χ, mt = choose_ω!(L_mat, ct)
 find_equil!(mt)
 
 function makeplots_mimics_marginals(mt::MultiType)
-
+	find_equil!(mt)
 	for slides in [true, false]
 		for CI in [true, false]
 			save_plot_mimic_z(mt, CIs=CI, slides=slides)
@@ -59,6 +59,7 @@ end
 makeplots_mimics_marginals(mt)
 
 function makeplots_planner(mt::MultiType)
+	find_equil!(mt)
 	comp_plot_planner(mt, makeplots=true)
 	print_save("\nDone with plot vs planner")
 	make_sustainable_plots(mt, 50, makeplots=true, pc = Fwd_strategy)
