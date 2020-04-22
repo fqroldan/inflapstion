@@ -355,11 +355,12 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 
 	cond_t ? cond = true : nothing
 
-	slides ? colorpal = ColorSchemes.munch : colorpal = ColorSchemes.southwest
+	slides ? colorpal = ColorSchemes.davos : colorpal = ColorSchemes.southwest
+	slides ? correction = 0.8 : correction = 1
 
 	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
 
-	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
+	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, correction*χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
 
 	plotname = "announcements"
 	annotations = []
