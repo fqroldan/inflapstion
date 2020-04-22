@@ -30,24 +30,11 @@ function create_or_load(T::DataType)
 	return ct
 end
 
-ct = create_or_load(Forward)
-initial_report(ct)
-
-# Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
-Nω = 40
-Nχ = 40
-print_save("\nNω, Nχ = $Nω, $Nχ")
-L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
-a, ω, χ, mt = choose_ω!(L_mat, ct)
-
-find_equil!(mt)
-
 function makeplots_mimics_marginals(mt::MultiType)
 	find_equil!(mt)
 	for slides in [true, false]
 		for CI in [true, false]
 			save_plot_mimic_z(mt, CIs=CI, slides=slides)
-			save("../../mt.jld", "mt", mt)
 		end
 		p1, p2 = strategy_μ(mt, slides=slides)
 		savejson(p1, pwd()*"/../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
@@ -55,9 +42,6 @@ function makeplots_mimics_marginals(mt::MultiType)
 	end
 	nothing
 end
-
-makeplots_mimics_marginals(mt)
-
 function makeplots_planner(mt::MultiType)
 	find_equil!(mt)
 	comp_plot_planner(mt, makeplots=true)
@@ -69,8 +53,20 @@ function makeplots_planner(mt::MultiType)
 	nothing
 end
 
-makeplots_planner(mt)
 
-# for (jp, pv) in enumerate(ct.pgrid)
-# 	findmin(L_mat[:,:,jp,:])
-# end
+ct = create_or_load(Forward)
+initial_report(ct)
+
+# Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
+Nω = 40
+Nχ = 40
+print_save("\nNω, Nχ = $Nω, $Nχ")
+L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
+a, ω, χ, mt = choose_ω!(L_mat, ct)
+
+find_equil!(mt)
+save("../../mt.jld", "mt", mt)
+
+makeplots_planner(mt)
+makeplots_mimics_marginals(mt)
+
