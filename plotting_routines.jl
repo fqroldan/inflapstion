@@ -667,12 +667,13 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# tvec = 1:length(πR)
 	tvec = 1:11
 
-	# mult = range(0.25,0.38,length=K)
 	if pc == Fwd_GP
-		mult = range(0.0,0.4,length=K)
+		mult = range(0.0,0.7,length=K)
 	elseif pc == Fwd_strategy
 		mult = range(0.0,0.35,length=K)
 	end
+	mult = range(0.1,0.8,length=K)
+
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
 	show_vec = Vector{Bool}(undef, K)
