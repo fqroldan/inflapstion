@@ -1,3 +1,3 @@
-# Reputation Formation for Stabilization Plans
+# Credibility Dynamics and Disinflation Plans
 
 Preliminary and incomplete codes
