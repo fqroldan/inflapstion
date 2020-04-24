@@ -292,6 +292,25 @@ function makeplot_conv(dists::Vector; switch_η=25)
 	return p1
 end
 
+function plot_C_contour_a(mt::MultiType; slides=false)
+	jω_min = findmin(mt.L_mat[:,:,3,:])[2][1]
+
+	C = zeros(length(mt.ct.agrid), length(mt.χgrid))
+	for ja in 1:length(mt.ct.agrid), jχ in 1:length(mt.χgrid)
+		C[ja, jχ] = mt.C_mat[jω_min, jχ, 3, ja]
+	end
+	return plot_L_contour(mt.ct.agrid, mt.χgrid, C; name_x = "a", name_y="C", slides=slides)
+end
+
+function plot_L_contour_a(mt::MultiType; slides=false)
+	L = zeros(length(mt.ct.agrid), length(mt.χgrid))
+	for ja in 1:length(mt.ct.agrid), jχ in 1:length(mt.χgrid)
+		minL, jω = findmin(mt.L_mat[:, jχ, 3, ja])
+		L[ja, jχ] = minL
+	end
+	return plot_L_contour(mt.ct.agrid, mt.χgrid, L; name_x = "a", name_y="𝓛", slides=slides)
+end
+
 function plot_C_contour(mt::MultiType; slides=false)
 	ja_min = findmin(mt.L_mat[:,:,3,:])[2][3]
 
@@ -311,15 +330,25 @@ function plot_L_contour(mt::MultiType; slides=false)
 	return plot_L_contour(mt.ωgrid, mt.χgrid, L; name_y="𝓛", slides=slides)
 end
 
-function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false)
+function plot_L_contour(xgrid, ygrid, L_mat; name_x="ω", name_y="𝓛", slides::Bool=false)
 
 	L_filled, temp = findmin(L_mat[.!isnan.(L_mat)])
 	jjxy = findfirst(L_mat.==L_filled)
 
 	# _, jjxy = findmin(L_mat)
+
+	ygrid = annualized.(ygrid)
+	if name_x == "ω"
+		xgrid = perc_rate(xgrid)
+		xtitle = "Decay rate  (<i>%</i>)"
+	elseif name_x == "a"
+		xgrid = annualized.(xgrid)
+		xtitle = "Initial inflation  (<i>a<sub>0</sub></i>)"
+	end
+
 	
-	xmin = perc_rate(ωgrid[jjxy[1]])
-	ymin = annualized(χgrid[jjxy[2]])
+	xmin = xgrid[jjxy[1]]
+	ymin = ygrid[jjxy[2]]
 
 	if name_y == "𝓛"
 		title = "lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> 𝓛(<i>p,a,ω,χ</i>)"
@@ -332,7 +361,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 	colpal = ColorSchemes.lapaz
 
 	ctχω = contour(;
-		x = perc_rate(ωgrid), y = annualized.(χgrid),
+		x = xgrid, y = ygrid,
 		z = L_mat,
 		# colorscale = vcat([[jj, get(colpal, jj)] for jj in range(0,1,length=50)][1:49]
 		# 	# ,[[1, "fafafa"]]
@@ -340,7 +369,7 @@ function plot_L_contour(ωgrid, χgrid, L_mat; name_y="𝓛", slides::Bool=false
 		# 	), reversescale = true
 		colorscale = [[jj, get(colpal, 1-jj)] for jj in range(0,1,length=50)]
 		)
-	p1 = plot(ctχω, Layout(;title=title, xaxis_title="Decay rate  (<i>%</i>)", yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
+	p1 = plot(ctχω, Layout(;title=title, xaxis_title=xtitle, yaxis_title="Asymptote  (<i>χ</i>)", shapes = shape_vec))
 	if slides
 		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", width = 800, height = 450)
 	else
