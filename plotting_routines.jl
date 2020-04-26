@@ -631,6 +631,9 @@ function strategy_μ(mt::MultiType; slides=false)
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ]==0])
 	write("../pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
+	P = sum([sum(mt.μ[jω,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω])<=10])
+	write("../pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+
 	return p1, p2
 end
 
@@ -697,12 +700,12 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# tvec = 1:length(πR)
 	tvec = 1:11
 
-	if pc == Fwd_GP
-		mult = range(0.0,0.7,length=K)
-	elseif pc == Fwd_strategy
-		mult = range(0.0,0.35,length=K)
-	end
-	mult = range(0.1,0.8,length=K)
+	# if pc == Fwd_GP
+	# 	mult = range(0.0,0.7,length=K)
+	# elseif pc == Fwd_strategy
+	# 	mult = range(0.0,0.35,length=K)
+	# end
+	mult = range(0.0,1.5,length=K)
 
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
