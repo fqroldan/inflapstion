@@ -705,7 +705,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# elseif pc == Fwd_strategy
 	# 	mult = range(0.0,0.35,length=K)
 	# end
-	mult = range(0.0,1.5,length=K)
+	mult = range(0.0,1.25,length=K)
 
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
