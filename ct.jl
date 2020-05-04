@@ -78,11 +78,11 @@ function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
 	return L
 end
 
-function cond_L_inner(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
-	exp_π  = itp_gπ(pv, av)
-	pprime = Bayes(ct, obs_π, exp_π, pv, av)
+function cond_L_inner(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′) where T <: PhillipsCurve
+	# ge = itp_gπ(pv, av)
+	pprime = Bayes(ct, obs_π, ge, pv, av)
 
-	πe = pv*av + (1-pv)*exp_π
+	πe = pv*av + (1-pv)*ge
 
 	if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
 		itp_L  = extrapolate(itp_L,  Interpolations.Flat())
@@ -91,35 +91,38 @@ function cond_L_inner(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
 	end
 
 	L′::Float64 = itp_L(pprime, aprime)
-	exp_π′::Float64 = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+	exp_π′ = 0.0
+	if T == Forward
+		exp_π′::Float64 = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+	end
 
-	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
+	y::Float64 = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
 	C′::Float64 = itp_C(pprime, aprime)
 
 	return L, pprime, y, C′
 end
 
-function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
-	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
+function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
+	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
 	return L
 end	
-function cond_L_others(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
-	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime)
+function cond_L_others(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
+	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
 	return y, pprime, C′
 end
 
 get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
-function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
+function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
 
 	sum_prob = get_sumprob(ct)
 
-	f_y(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[1] * pdf_ϵ(ct, ϵv)
+	f_y(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[1] * pdf_ϵ(ct, ϵv)
 	Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-	f_p(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[2] * pdf_ϵ(ct, ϵv)
+	f_p(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[2] * pdf_ϵ(ct, ϵv)
 	Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime)[3] * pdf_ϵ(ct, ϵv)
+	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[3] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
 	Ey = Ey / sum_prob
@@ -129,16 +132,16 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
 	return Ey, Ep, Ec
 end
 
-function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime)
+function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime) * pdf_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′) * pdf_ϵ(ct, ϵv)
 	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
 	return val/sum_prob
 end
 
-function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
+function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
 
 	minπ = max(0, xguess[1] - 3.09*ct.σ)
 	maxπ = min(1.1*maximum(ct.agrid), xguess[1] + 3.09*ct.σ)
@@ -148,7 +151,7 @@ function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
 	mina = minimum(ct.agrid)
 	maxa = maximum(ct.agrid)
 
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x[1], pv, av, x[2])
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x[1], pv, av, x[2], ge, πe′)
 	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
 
 	gπ::Float64, ga::Float64 = res.minimizer
@@ -165,7 +168,7 @@ function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av)
 	return gπ, L, ga
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
+function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
 	π_guess = xguess[1]
 	minπ = max(0, π_guess - 3.09*ct.σ)
 	maxπ = min(1.1*maximum(ct.agrid), π_guess + 3.09*ct.σ)
@@ -176,7 +179,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
 	# aprime = ϕ(ct, av)
 	aprime = xguess[2]
 
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av, aprime)
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av, aprime, ge, πe′)
 	res = Optim.optimize(
 		gπ -> obj_f(first(gπ)),
 		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
@@ -186,7 +189,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
 
 	if Optim.converged(res) == false
 		resb = Optim.optimize(
-				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av, aprime),
+				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av, aprime, ge, πe′),
 				minπ, maxπ, Brent(), rel_tol=1e-12, abs_tol=1e-12#, iterations=100000
 				)
 		if resb.minimum < res.minimum
@@ -195,6 +198,27 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av)
 	end
 
 	return gπ, L, aprime
+end
+
+function exp_π_prime(ct::Plan{T}, pv, av, itp_gπ, ge, aprime) where T<:PhillipsCurve
+	return 0.0
+end
+
+function π_prime(ct, ϵv, pv, av, itp_gπ, ge, aprime)
+	exp_π = pv*av + (1-pv)*ge
+	pprime = Bayes(ct, ge+ϵv, exp_π, pv, av)
+
+	ge′ = itp_gπ(pprime, aprime)
+
+	return pv*aprime + (1-pv)*ge′
+end
+
+function exp_π_prime(ct::Plan{SemiForward}, pv, av, itp_gπ, ge, aprime)
+	f(ϵv) = π_prime(ct, ϵv, pv, av, itp_gπ, ge, aprime) * pdf_ϵ(ct, ϵv)
+	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	sum_prob = get_sumprob(ct)
+
+	return val/sum_prob
 end
 
 function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=true)
@@ -215,16 +239,18 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, gπ_guess; optimize::Bool=t
 		a_guess = max(min(ct.ga[jp, ja], maxa),mina)
 		π_guess = max(min(gπ_guess[jp, ja], maxa),mina)
 		xguess = [π_guess, a_guess]
+		ge = itp_gπ(pv,av)
+		πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, a_guess)
 		if optimize
 			# π_guess = itp_gπ(pv, av)
-			gπ[jp, ja], L[jp, ja], aprime = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av)
+			gπ[jp, ja], L[jp, ja], aprime = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
 		else
 			aprime = a_guess
 			gπ[jp, ja] = π_guess
-			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
+			L[jp, ja] = exp_L(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime, ge, πe′)
 		end
 		ga[jp, ja] = aprime
-		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime)
+		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, π_guess, pv, av, aprime, ge, πe′)
 		Eπ[jp, ja] = pv * av + (1.0 - pv) * gπ[jp, ja]
 
 		if av >= πN || isapprox(av, πN)
@@ -470,7 +496,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 
 	if T == Simultaneous
 		ωmax = 3.0
-	elseif T == Forward
+	elseif T == Forward || T == SemiForward
 		ωmax = 1.5
 	end
 	ωgrid = cdf.(Beta(1,1), range(1,0,length=Nω))

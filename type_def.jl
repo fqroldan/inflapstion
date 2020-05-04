@@ -9,6 +9,9 @@ end
 abstract type Simultaneous <: PhillipsCurve
 end
 
+abstract type SemiForward <: PhillipsCurve
+end
+
 abstract type Fwd_strategy <: Forward
 end
 
@@ -246,7 +249,7 @@ end
 
 which_PC(ct::Plan{T}) where T <: PhillipsCurve = T
 
-Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward, κ / (1.0 - β + κ^2*γ) * ystar, ystar / (κ*γ))
+Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward || T==SemiForward, κ / (1.0 - β + κ^2*γ) * ystar, ystar / (κ*γ))
 
 # Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
 
@@ -263,5 +266,10 @@ deannual(x::Real) = (x*0.01 + 1.0)^0.25 - 1.0
 perc_rate(x) = 100 * (1 .- exp.(-x))
 
 
-PC(ct::Plan{Forward}, obs_π, πe, exp_π′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::Plan{Simultaneous}, obs_π, πe, exp_π′) = 1/ct.κ  * (obs_π - πe)
+PC(ct::Plan{Forward}, obs_π, πe, exp_π′, πe′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
+PC(ct::Plan{Simultaneous}, obs_π, πe, exp_π′, πe′) = 1/ct.κ  * (obs_π - πe)
+PC(ct::Plan{SemiForward}, obs_π, πe, exp_π′, πe′) = (1/ct.κ) * (obs_π - ct.β * πe′)
+
+# PC(ct::Plan{Forward}, obs_π, pv, av, pprime, aprime, itp_gπ) = (1/ct.κ) * (obs_π - ct.β * (pprime * aprime + (1-pprime) * itp_gπ(pprime, aprime)))
+# PC(ct::Plan{Simultaneous}, obs_π, pv, av, pprime, aprime, itp_gπ) = 1/ct.κ * (obs_π - (pv*av+(1-pv)*itp_gπ(pv,av)))
+# PC(ct::Plan{SemiForward}, obs_π, pv, av, pprime, aprime, itp_gπ) = (1/ct.κ) * (obs_π - ct.β * (pv * aprime + (1-pv) * itp_gπ(pv, aprime)))
