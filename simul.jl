@@ -13,7 +13,10 @@ function iter_simul(ct::Plan, itp_gπ, itp_ga, pv, av; noshocks::Bool=false)
 	aprime = itp_ga(pv, av)
 	exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 
-	y = PC(ct, obs_π, exp_π, exp_π′)
+	ge = itp_gπ(pv,av)
+	πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, aprime)
+
+	y = PC(ct, obs_π, exp_π, exp_π′, πe′)
 
 	return pprime, aprime, obs_π, y, exp_π, ϵ
 end

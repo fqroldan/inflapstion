@@ -84,21 +84,21 @@ function cond_L_inner(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime
 
 	πe = pv*av + (1-pv)*ge
 
-	if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
-		itp_L  = extrapolate(itp_L,  Interpolations.Flat())
-		itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
-		itp_C  = extrapolate(itp_C, Interpolations.Flat())
-	end
+	# if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
+	itp_L  = extrapolate(itp_L,  Interpolations.Flat())
+	itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
+	itp_C  = extrapolate(itp_C, Interpolations.Flat())
+	# end
 
-	L′::Float64 = itp_L(pprime, aprime)
+	L′ = itp_L(pprime, aprime)
 	exp_π′ = 0.0
 	if T == Forward
-		exp_π′::Float64 = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
+		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
 	end
 
-	y::Float64 = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
+	y = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
 	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
-	C′::Float64 = itp_C(pprime, aprime)
+	C′ = itp_C(pprime, aprime)
 
 	return L, pprime, y, C′
 end
@@ -135,7 +135,7 @@ end
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′) * pdf_ϵ(ct, ϵv)
-	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	val, err = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
 	return val/sum_prob
@@ -154,8 +154,8 @@ function opt_L(ct::DovisKirpalani, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, π
 	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x[1], pv, av, x[2], ge, πe′)
 	res = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(NelderMead()))
 
-	gπ::Float64, ga::Float64 = res.minimizer
-	L::Float64 = res.minimum
+	gπ, ga = res.minimizer
+	L = res.minimum
 
 	if Optim.converged(res) == false
 		resb = Optim.optimize(obj_f, [mina, mina], [maxa, maxa], xguess, Fminbox(LBFGS()))
@@ -179,24 +179,33 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
 	# aprime = ϕ(ct, av)
 	aprime = xguess[2]
 
-	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, x, pv, av, aprime, ge, πe′)
-	res = Optim.optimize(
-		gπ -> obj_f(first(gπ)),
-		[π_guess], LBFGS()#, autodiff=:forward#, Optim.Options(f_tol=1e-12)
-		)
+	gπ, L = π_guess, itp_L(pv,av)
 
-	gπ::Float64, L::Float64 = first(res.minimizer), res.minimum
+	obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, aprime, ge, πe′)
+	# res = Optim.optimize(
+	# 	gπ -> obj_f(first(gπ)),
+	# 	[π_guess], LBFGS()
+	# 	)
+	try 
+		od = OnceDifferentiable(obj_f, [π_guess]; autodiff = :forward)
+		# res = Optim.optimize(od, [π_guess], BFGS())
+		res = Optim.optimize(od, [minπ], [maxπ], [π_guess], Fminbox(BFGS()))
 
-	if Optim.converged(res) == false
-		resb = Optim.optimize(
-				gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av, aprime, ge, πe′),
-				minπ, maxπ, Brent(), rel_tol=1e-12, abs_tol=1e-12#, iterations=100000
-				)
-		if resb.minimum < res.minimum
-			gπ, L = resb.minimizer, resb.minimum
+		gπ::Float64, L::Float64 = first(res.minimizer), res.minimum
+		if Optim.converged(res)
+			return gπ, L, aprime
 		end
+	catch
 	end
 
+	resb = Optim.optimize(
+			gπ -> exp_L(ct, itp_gπ, itp_L, itp_C, gπ, pv, av, aprime, ge, πe′),
+			minπ, maxπ, Brent(), rel_tol=1e-12, abs_tol=1e-12#, iterations=100000
+			)
+	if resb.minimum < res.minimum
+		gπ, L = resb.minimizer, resb.minimum
+	end
+	
 	return gπ, L, aprime
 end
 
@@ -265,12 +274,12 @@ end
 
 
 function pf_iter(ct::Plan, Egπ, gπ_guess; optimize::Bool=true)
-	knots = (ct.pgrid, ct.agrid)
-	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()))
-	itp_L  = interpolate(knots, ct.L, Gridded(Linear()))
-	itp_C  = interpolate(knots, ct.C, Gridded(Linear()))
+	knots = (ct.pgrid, ct.agrid);
+	itp_gπ = interpolate(knots, Egπ, Gridded(Linear()));
+	itp_L  = interpolate(knots, ct.L, Gridded(Linear()));
+	itp_C  = interpolate(knots, ct.C, Gridded(Linear()));
 
-	new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
+	@time new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
 	return new_gπ, new_L, [new_y, new_π, new_p, new_C, new_a]
 end
@@ -308,7 +317,6 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::B
 			_, new_L, _ = pf_iter(ct, Egπ, old_gπ; optimize=false)
 			ct.L  = upd_η2 * new_L  + (1.0-upd_η2) * ct.L
 		end
-		# println("Iter $iter step")
 		old_L = copy(ct.L)
 
 		new_gπ, new_L, new_others = pf_iter(ct, Egπ, old_gπ)
@@ -507,7 +515,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 	χgrid = range(0.0, 0.43*Nash(ct), length = Nχ)
 
 	update_ga!(ct, ω = ωgrid[1], χ = χgrid[1])
-	dist = Epfi!(ct)
+	dist = Epfi!(ct, maxiter = 500)
 	print_save("\nDone with initial setup $(ifelse(dist<1e-3, "✓", ""))")
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
