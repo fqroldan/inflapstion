@@ -580,14 +580,14 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			else
 				all_Ls = vcat([Lplot[jj] for jj in 1:length(Lplot)], new_L)
 				all_as = vcat([aplot[jj] for jj in 1:length(aplot)], new_a)
+				p3 = plot(all_Ls)
+				relayout!(p3, title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"))
+				savejson(p3, pwd()*"/../Graphs/tests/Loss_omega.json")
+		
+				p4 = plot(all_as)
+				relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
+				savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 			end
-			p3 = plot(all_Ls)
-			relayout!(p3, title="lim_𝑝 min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"))
-			savejson(p3, pwd()*"/../Graphs/tests/Loss_omega.json")
-	
-			p4 = plot(all_as)
-			relayout!(p4, title="lim_𝑝 arg min_𝑎 𝓛(𝑝,𝑎,ω,χ)", xaxis=attr(;zeroline=false, title="ω"), yaxis_title="%", mode="lines+markers")
-			savejson(p4, pwd()*"/../Graphs/tests/a0.json")
 
 			return Lmin, Cmin, ja, flag
 		end
