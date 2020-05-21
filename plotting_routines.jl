@@ -379,17 +379,20 @@ function plot_L_contour(xgrid, ygrid, L_mat; name_x="ω", name_y="𝓛", slides:
 	return p1
 end
 
-function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=false, add_opt::Bool=false, cond_t::Bool=false)
+function plot_announcements(;slides::Bool=true, darkslides::Bool=false, exts::Vector=[], cond::Bool=false, add_opt::Bool=false, cond_t::Bool=false)
 	xvec = 0:0.25:10
+
+	darkslides ? slides = true : nothing
 
 	cond_t ? cond = true : nothing
 
 	slides ? colorpal = ColorSchemes.davos : colorpal = ColorSchemes.southwest
 	slides ? correction = 0.8 : correction = 1
+	darkslides ? fl = 0.2 : fl = 0
 
 	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
 
-	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, correction*χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
+	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, fl + correction*χ/2)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
 
 	plotname = "announcements"
 	annotations = []
@@ -408,27 +411,38 @@ function plot_announcements(;slides::Bool=true, exts::Vector=[], cond::Bool=fals
 		plotname *= "_w_opt"
 	end
 
+	darkslides ? shape_col = get(ColorSchemes.davos, 0.9) : shape_col = get(ColorSchemes.darkrainbow, 0.12)
 	shapes = []
 	if cond_t
 		tt = 11
 		x0 = lines[1][:x][tt]
 		y0 = lines[1][:y][tt]
-		shapes = [vline(x0, line_dash = "dash"); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=get(ColorSchemes.darkrainbow, 0.12), fillcolor=get(ColorSchemes.darkrainbow, 0.12), type="circle")]
-		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="<i>a<sub>t</sub><sup>c</sup>", ax=35, font_color = get(ColorSchemes.darkrainbow, 0.12), font_size=24, font_family="Lato"))
+		shapes = [vline(x0, line_dash = "dash", line_color=shape_col); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=shape_col, fillcolor=shape_col, type="circle")]
+		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="<i>a<sub>t</sub><sup>c</sup>", ax=35, font_color = shape_col, font_size=24, font_family="Lato"))
 		plotname *="_t"
 	end
 
-	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
-		)
-
 	if slides
-		relayout!(p1, font_family = "Lato", font_size = 18, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
+		font = "Lato"
+		bg = "#fafafa"
+		if darkslides
+			bg = "#000003"
+		end
 		plotname *= "_slides"
+		height = 550
 	else
-		relayout!(p1, font_family = "Linux Libertine", font_size = 18, height = 400, width=900)
+		font = "Linux Libertine"
+		bg = ""
 		plotname *= "_paper"
+		height = 400
 	end
 
+	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations, font_family = font, font_size=20, plot_bgcolor=bg, paper_bgcolor=bg, height=height, width=800)
+		)
+
+	if darkslides
+		relayout!(p1, font_color="white")
+	end
 	if length(exts) > 0
 		for (jj, ext) in enumerate(exts)
 			savefig(p1, pwd()*"/../Graphs/"*plotname*"."*ext)
