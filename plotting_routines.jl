@@ -12,6 +12,18 @@ col = [	"#1f77b4",  # muted blue
 		"#bcbd22",  # curry yellow-green
 		"#17becf"   # blue-teal
 		]
+slides_def = let
+	axis = attr(showgrid = true, gridcolor="#3d3d3d", line_width = 0.5, zeroline=false)
+	layout = Layout(plot_bgcolor="#fafafa", paper_bgcolor="#fafafa",
+		xaxis=axis, yaxis=axis, width=1920*0.5, height=1080*0.5, font_size=20, font_family="Lato")
+	Style(layout=layout)
+end
+dark_bg = let
+	axis = attr(showgrid = true, zeroline=false)
+	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202")
+	Style(layout=layout)
+end
+slides_dark = Style(slides_def, dark_bg)
 
 function style_plot!(pl; slides::Bool=true)
 	if slides
@@ -423,21 +435,21 @@ function plot_announcements(;slides::Bool=true, darkslides::Bool=false, exts::Ve
 	end
 
 	if slides
-		font = "Lato"
-		bg = "#fafafa"
+		style = slides_def
 		if darkslides
-			bg = "#000003"
+			style = slides_dark
 		end
 		plotname *= "_slides"
-		height = 550
+		width = slides_dark.layout.fields[:width] * 0.9
 	else
-		font = "Linux Libertine"
-		bg = ""
-		plotname *= "_paper"
-		height = 400
+		style = paper_def
+		# font = "Linux Libertine"
+		# bg = ""
+		# plotname *= "_paper"
+		# width = 400
 	end
 
-	p1 = plot(lines, Layout(;xaxis_zeroline=false, yaxis_zeroline=false, xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations, font_family = font, font_size=20, plot_bgcolor=bg, paper_bgcolor=bg, height=height, width=800)
+	p1 = plot(lines, style=style, Layout(;xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations, width=width)
 		)
 
 	if darkslides
