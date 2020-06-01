@@ -19,7 +19,7 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 	if param == "sigma"
 		xax = "σ"
 	elseif param == "beta"
-		xax = "β (<i>%</i>)"
+		xax = "β<sup>-1</sup> - 1 (<i>%</i>)"
 	elseif param == "kappa"
 		xax = "κ"
 	end
