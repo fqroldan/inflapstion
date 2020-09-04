@@ -69,5 +69,6 @@ a, ω, χ, mt = choose_ω!(L_mat, ct)
 find_equil!(mt)
 save("../../mt.jld", "mt", mt)
 
-makeplots_planner(mt)
 makeplots_mimics_marginals(mt)
+
+makeplots_planner(mt)

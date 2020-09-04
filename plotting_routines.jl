@@ -620,7 +620,7 @@ function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=fal
 	nothing
 end
 
-function strategy_μ(mt::MultiType; slides=false)
+function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, style::Style=slides_def)
 
 	χgrid = mt.χgrid
 	ωgrid = mt.ωgrid
@@ -630,37 +630,38 @@ function strategy_μ(mt::MultiType; slides=false)
 
 	marg_ωχ = [sum(mt.μ[jω, jχ, :]) for jω in 1:size(mt.μ, 1), jχ in 1:size(mt.μ,2)]
 
-	if slides
-		ff = "Lato"
-		bgcol = "#fafafa"
-		wi = 800
-	else
-		ff = "Linux Libertine"
-		bgcol = ""
-		wi = 550
-	end
+	layout = Layout(title="lim<sub>z→0</sub> <i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>)", 
+		font_size=16, width = style.layout[:width]*yw,
+		xaxis1 = attr(domain = [0, 0.45], anchor="y1", title="Initial inflation (<i>a<sub>0</sub></i>)"),
+		xaxis2 = attr(domain = [0.55, 1], anchor="y2", title="Decay rate (<i>%</i>)"),
+		yaxis1 = attr(anchor="x1", title="Asymptote (<i>χ</i>)"),
+		yaxis2 = attr(anchor="x2", title="Asymptote (<i>χ</i>)"),
+		)
 
-	layout = Layout(title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω", yaxis_title="Asymptote (<i>χ</i>)", xaxis_title="Initial inflation (<i>a<sub>0</sub></i>)", font_size=16, font_family=ff, width = wi, height = 450, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false)
+	# min_z1, max_z1 = extrema(marg_aχ)
+	# min_z2, max_z2 = extrema(marg_ωχ)
+	# min_z = min(min_z1, min_z2)
+	# max_z = max(max_z1, max_z2)
 
-	p1 = plot(contour(y=annualized.(mt.χgrid), x=annualized.(mt.ct.agrid), z=marg_aχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)], showscale=false), layout)
+	p1 = contour(y=annualized.(χgrid), x=annualized.(agrid), z=marg_aχ', showscale=false, xaxis="x1", yaxis="y1", colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 
-	p2 = plot(contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)]), layout)
-	relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
+	p2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, xaxis="x2", yaxis="y2", colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
+	# relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
 
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>χgrid[jχ]])
 	print("P(a_0 > χ) = $(@sprintf("%0.3g",100P))%")
-	write("../pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
+	save_stats && write("../pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>5χgrid[jχ]])
-	write("../pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
+	save_stats && write("../pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ]==0])
-	write("../pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+	save_stats && write("../pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
 	P = sum([sum(mt.μ[jω,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω])<=10])
-	write("../pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+	save_stats && write("../pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
-	return p1, p2
+	return plot([p1, p2], layout, style=style)
 end
 
 function comp_plot_planner(mt::MultiType; makeplots::Bool=false, slides::Bool=false)
