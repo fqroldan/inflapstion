@@ -56,7 +56,7 @@ function makeplots_planner(mt::MultiType)
 end
 
 
-ct = create_or_load(SemiForward)
+ct = create_or_load(Forward)
 initial_report(ct)
 
 # Epfi!(ct, tol=1e-4, tempplots=true, upd_η = 0.1)
@@ -71,4 +71,3 @@ save("../../mt.jld", "mt", mt)
 
 makeplots_planner(mt)
 makeplots_mimics_marginals(mt)
-

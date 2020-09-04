@@ -20,7 +20,7 @@ slides_def = let
 end
 dark_bg = let
 	axis = attr(showgrid = true, zeroline=false)
-	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202")
+	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202", font_color="white")
 	Style(layout=layout)
 end
 slides_dark = Style(slides_def, dark_bg)
