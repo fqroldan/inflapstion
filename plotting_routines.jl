@@ -129,7 +129,7 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 
 	p1 = plot([
 		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max
-		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
+		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle));
 
 	if reverse_draw
 		p1 = plot([
@@ -630,12 +630,18 @@ function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, style::Style=
 
 	marg_ωχ = [sum(mt.μ[jω, jχ, :]) for jω in 1:size(mt.μ, 1), jχ in 1:size(mt.μ,2)]
 
-	layout = Layout(title="lim<sub>z→0</sub> <i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>)", 
-		font_size=16, width = style.layout[:width]*yw,
-		xaxis1 = attr(domain = [0, 0.45], anchor="y1", title="Initial inflation (<i>a<sub>0</sub></i>)"),
-		xaxis2 = attr(domain = [0.55, 1], anchor="y2", title="Decay rate (<i>%</i>)"),
+	annotations = [
+		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>", font_size=22, y=1.15,yref="paper", x=0.475/2,xanchor="center",xref="paper",showarrow=false)
+		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>", font_size=22, y=1.15,yref="paper", x=1.525/2,xanchor="center",xref="paper",showarrow=false)
+	]
+
+	layout = Layout(
+		annotations = annotations,
+		font_size=16, width = style.layout[:width]*yw, height = style.layout[:height]*0.7,
+		xaxis1 = attr(domain = [0, 0.475], anchor="y1", title="Initial inflation (<i>a<sub>0</sub></i>)"),
+		xaxis2 = attr(domain = [0.525, 1], anchor="y2", title="Decay rate (<i>%</i>)"),
 		yaxis1 = attr(anchor="x1", title="Asymptote (<i>χ</i>)"),
-		yaxis2 = attr(anchor="x2", title="Asymptote (<i>χ</i>)"),
+		yaxis2 = attr(anchor="x2", title=""),
 		)
 
 	# min_z1, max_z1 = extrema(marg_aχ)
@@ -647,6 +653,7 @@ function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, style::Style=
 
 	p2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, xaxis="x2", yaxis="y2", colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 	# relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
+
 
 	P = sum([sum(mt.μ[:,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja]>χgrid[jχ]])
 	print("P(a_0 > χ) = $(@sprintf("%0.3g",100P))%")
