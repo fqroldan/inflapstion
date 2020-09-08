@@ -575,7 +575,7 @@ function make_colorbar(ct::CrazyType; slides::Bool=true)
 
 end
 
-function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, CIs::Bool=false)
+function plot_mimic_z(mt::MultiType, N=50; style::Style=slides_def, decay::Bool=true, CIs::Bool=false)
 
 	data, datanames, zgrid = mimic_z(mt, N, decay=decay, annualize=true)
 
@@ -593,30 +593,28 @@ function plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, decay::Bool=true, 
 	end
 
 	layout = Layout(
-		yaxis = attr(domain=[0, 0.45], zeroline=false, title="<i>%"),
-		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
-		xaxis = attr(zeroline=false, title="<i>z"),
+		yaxis = attr(domain=[0, 0.45], title="<i>%"),
+		yaxis2 = attr(domain=[0.55, 1], title="<i>%"),
+		xaxis = attr(title="<i>z"),
 		legend = attr(orientation="h", x=0.05),
-		font_size=16, font_family="Linux Libertine", title="Average plans",
+		title="Average plans",
 		width = 700, height = 300
 		)
 
-	p1 = plot(ls, layout)
+	p1 = plot(ls, layout, style=style)
 
-	if slides
-		relayout!(p1, font_family="Lato", paper_bgcolor="#fafafa", plot_bgcolor="#fafafa")
-	end
 	return p1
 end
 
 function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=false)
-	p1 = plot_mimic_z(mt, N; slides=slides, CIs=CIs)
+	slides ? sty = slides_def : sty = paper
+	p1 = plot_mimic_z(mt, N; style=sty, CIs=CIs)
 	savejson(p1, "../Graphs/tests/mimics$(ifelse(CIs, "_CI", ""))$(ifelse(slides, "_slides", "_paper")).json")
-	if !CIs
-		p1, p2 = strategy_μ(mt, slides=slides)
-		savejson(p1, "../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
-		savejson(p2, "../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")		
-	end
+	# if !CIs
+	# 	p1, p2 = strategy_μ(mt, style=sty)
+	# 	savejson(p1, "../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
+	# 	savejson(p2, "../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")		
+	# end
 	nothing
 end
 

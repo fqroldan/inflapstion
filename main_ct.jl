@@ -33,7 +33,8 @@ end
 function makeplots_mimics_marginals(mt::MultiType)
 	find_equil!(mt)
 	for slides in [true, false]
-		p1, p2 = strategy_μ(mt, slides=slides)
+		slides ? sty = slides_def : sty = paper
+		p1, p2 = strategy_μ(mt, style=sty)
 		savejson(p1, pwd()*"/../Graphs/tests/marg_achi$(ifelse(slides, "_slides", "_paper")).json")
 		savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
 	end
