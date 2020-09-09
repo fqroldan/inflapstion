@@ -720,7 +720,7 @@ end
 
 Bayes_plan(ν, z, μ) = z*ν / (z*ν + (1-z)*μ)
 
-function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
+function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false, verbose::Bool=false)
 
 	ωgrid, χgrid, L_mat = mt.ωgrid, mt.χgrid, mt.L_mat
 	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
@@ -736,7 +736,7 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 				p -> (itp_L(ωv, χv, p, av) - k)^2, 0, 1, GoldenSection())
 
 			disp = sqrt(res.minimum)
-			if disp > 1e-4
+			if verbose && disp > 1e-4
 				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
 			pv = res.minimizer
@@ -745,7 +745,7 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false)
 			res = Optim.optimize(
 				μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
 			disp = res.minimum
-			if disp > 1e-4
+			if verbose && disp > 1e-4
 				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
 			μv = res.minimizer
@@ -834,7 +834,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 
 	k_star = res.minimizer
 
-	mt.μ, C_eqm, C_mat = eval_k_to_mu(mt, k_star, itp_L; get_mu = true)
+	mt.μ, C_eqm, C_mat = eval_k_to_mu(mt, k_star, itp_L; get_mu = true, verbose=true)
 
 	return k_star
 end
