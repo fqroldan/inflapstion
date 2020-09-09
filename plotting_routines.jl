@@ -12,18 +12,34 @@ col = [	"#1f77b4",  # muted blue
 		"#bcbd22",  # curry yellow-green
 		"#17becf"   # blue-teal
 		]
-slides_def = let
-	axis = attr(showgrid = true, gridcolor="#3d3d3d", line_width = 0.5, zeroline=false)
-	layout = Layout(plot_bgcolor="#fafafa", paper_bgcolor="#fafafa",
-		xaxis=axis, yaxis=axis, width=1920*0.5, height=1080*0.5, font_size=20, font_family="Lato")
+
+
+""" Define styles """
+def_style = let
+	axis = attr(showgrid = true, gridcolor="#e2e2e2", gridwidth=0.5, zeroline=false)
+	layout = Layout(xaxis = axis, yaxis=axis)
 	Style(layout=layout)
 end
+
+slides_def = let
+	layout = Layout(plot_bgcolor="#fafafa", paper_bgcolor="#fafafa",
+		width=1920*0.45, height=1080*0.45, font_size=16, font_family="Lato",
+		legend = attr(orientation = "h", x=0.05))
+	Style(def_style, layout=layout)
+end
+
 dark_bg = let
-	axis = attr(showgrid = true, zeroline=false)
-	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202", font_color="white")
+	axis = attr(gridcolor="#1b1b1b")
+	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202", font_color="white", xaxis=axis,yaxis=axis)
 	Style(layout=layout)
 end
 slides_dark = Style(slides_def, dark_bg)
+
+paper = let
+	layout = Layout(width = 1920 * 0.5, height = 1080 * 0.35, font_size=16, font_family = "Linux Libertine",
+		legend = attr(orientation = "h", x=0.05))
+	Style(def_style, layout=layout)
+end
 
 function style_plot!(pl; slides::Bool=true)
 	if slides
@@ -618,7 +634,7 @@ function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=fal
 	nothing
 end
 
-function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, style::Style=slides_def)
+function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, yh = 0.7, style::Style=slides_def)
 
 	χgrid = mt.χgrid
 	ωgrid = mt.ωgrid
@@ -635,7 +651,7 @@ function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, style::Style=
 
 	layout = Layout(
 		annotations = annotations,
-		font_size=16, width = style.layout[:width]*yw, height = style.layout[:height]*0.7,
+		font_size=16, width = style.layout[:width]*yw, height = style.layout[:height]*yh,
 		xaxis1 = attr(domain = [0, 0.475], anchor="y1", title="Initial inflation (<i>a<sub>0</sub></i>)"),
 		xaxis2 = attr(domain = [0.525, 1], anchor="y2", title="Decay rate (<i>%</i>)"),
 		yaxis1 = attr(anchor="x1", title="Asymptote (<i>χ</i>)"),
