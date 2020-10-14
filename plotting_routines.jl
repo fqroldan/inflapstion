@@ -1,4 +1,4 @@
-using PlotlyJS, Colors, ColorSchemes, Printf, ORCA
+using PlotlyJS, Colors, ColorSchemes, Printf
 include("type_def.jl")
 
 col = [	"#1f77b4",  # muted blue
@@ -29,8 +29,8 @@ slides_def = let
 end
 
 dark_bg = let
-	axis = attr(gridcolor="#1b1b1b")
-	layout = Layout(plot_bgcolor="#020202", paper_bgcolor="#020202", font_color="white", xaxis=axis,yaxis=axis)
+	axis = attr(gridcolor="#353535")
+	layout = Layout(plot_bgcolor="#1e1e1e", paper_bgcolor="#1e1e1e", font_color="white", xaxis=axis,yaxis=axis)
 	Style(layout=layout)
 end
 slides_dark = Style(slides_def, dark_bg)
