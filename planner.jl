@@ -1,6 +1,6 @@
 using Distributed
 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2
 
 include("type_def.jl")
 include("reporting_routines.jl")
@@ -287,22 +287,7 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 			print("After $iter iterations, d(v,g) = $(@sprintf("%0.3g",dist_v)) $(@sprintf("%0.3g",dist_g)) at $(Dates.format(now(),"HH:MM"))\n")
 		end
 		if typeof(pp)<:Sustainable && iter > 200
-			upd_η = 0.25
-			if iter > 400
-				upd_η = 0.01
-				if iter > 600
-					upd_η = 0.0025
-					if iter > 800
-						upd_η = 0.001
-						if iter > 1000
-							upd_η = 0.00025
-							if iter > 1200
-								upd_η = 0.0001
-							end
-						end
-					end
-				end
-			end
+			upd_η = max(1e-5, upd_η * 0.975)
 		end
 	end
 	if verbose
@@ -327,7 +312,7 @@ function final_report(iter, maxiter, dist)
 	if iter < maxiter
 		print("Converged in $iter iterations at $(Dates.format(now(),"HH:MM"))\n")
 	else
-		print("\nFailed to converge")
+		print("Failed to converge\n")
 	end
 end
 

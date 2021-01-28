@@ -1,4 +1,4 @@
-using PlotlyJS, Colors, ColorSchemes, Printf
+using PlotlyJS, ColorSchemes, Printf
 include("type_def.jl")
 
 col = [	"#1f77b4",  # muted blue
@@ -775,7 +775,15 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		sp.g = old_g
 		sp.v = old_v
 		println("$jj")
-		flag = vfi!(sp, verbose=true)
+		flag = vfi!(sp, verbose=true, maxiter = 750)
+		if !flag
+			flag2 = false
+			subiter = 0
+			while flag2 == false && subiter < 10
+				subiter += 1
+				flag2 = vfi!(sp, verbose=true, maxiter = 750)
+			end
+		end
 		old_g = sp.g
 		old_v = sp.v
 
