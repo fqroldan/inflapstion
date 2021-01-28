@@ -1,4 +1,4 @@
-using Distributed, JLD
+using Distributed, JLD2, FileIO
 
 include("ct.jl")
 
@@ -9,7 +9,7 @@ function create_or_load(T::DataType)
 	ct = CrazyType(T, ω = 0.2, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
-		ctt = load("../../ct_1.jld", "ct")
+		ctt = load("../Output/ct_1.jld2", "ct")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ct.gπ=ctt.gπ
 		end
@@ -18,7 +18,7 @@ function create_or_load(T::DataType)
 		print_save("failed.")
 		try
 			print_save("Loading optimum of previous run: ")
-			ctt = load("../../ct_opt.jld", "ct");
+			ctt = load("../Output/ct_opt.jld2", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ct.gπ=ctt.gπ
 			end
@@ -37,7 +37,7 @@ function makeplots_mimics_marginals(mt::MultiType)
 		slides ? yh = 0.7 : yh = 1
 		p1 = strategy_μ(mt, style=sty, yh = yh)
 		savejson(p1, pwd()*"/../Graphs/tests/marg$(ifelse(slides, "_slides", "_paper")).json")
-		# savejson(p2, pwd()*"/../Graphs/tests/marg_omegachi$(ifelse(slides, "_slides", "_paper")).json")
+		savefig(p1, pwd()*"/../Graphs/tests/marg$(ifelse(slides, "_slides", "_paper")).pdf")
 	end
 	for slides in [true,false]
 		for CI in [true, false]
@@ -65,11 +65,11 @@ initial_report(ct)
 Nω = 20
 Nχ = 20
 print_save("\nNω, Nχ = $Nω, $Nχ")
-L_mat = zeros(Nω, Nχ, ct.Np, ct.Na)
+L_mat = zeros(Nω, Nχ, ct.Np, ct.Na);
 a, ω, χ, mt = choose_ω!(L_mat, ct)
 
 find_equil!(mt)
-save("../../mt.jld", "mt", mt)
+save("../Output/mt.jld2", "mt", mt)
 
 makeplots_mimics_marginals(mt)
 

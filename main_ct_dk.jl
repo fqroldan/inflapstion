@@ -1,4 +1,4 @@
-using Distributed, JLD
+using Distributed, JLD2, FileIO
 
 include("ct.jl")
 
@@ -9,7 +9,7 @@ function create_or_load(T::DataType)
 	ct = CrazyType(T, ω = 1.5, χ = 0.0);
 	try
 		print_save("Loading first file of previous run: ")
-		ctt = load("../../ct_1.jld", "ct")
+		ctt = load("../Output/ct_1.jld2", "ct")
 		if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 			ct.gπ=ctt.gπ
 		end
@@ -18,7 +18,7 @@ function create_or_load(T::DataType)
 		print_save("failed.")
 		try
 			print_save("Loading optimum of previous run: ")
-			ctt = load("../../ct_opt.jld", "ct");
+			ctt = load("../Output/ct_opt.jld2", "ct");
 			if typeof(ctt) == typeof(ct) && ct.Np == ctt.Np && ct.Na == ctt.Na
 				ct.gπ=ctt.gπ
 			end
@@ -40,11 +40,11 @@ dk = DovisKirpalani(ct);
 initial_report(dk)
 
 solve!(dk)
-save("../../dk.jld", "dk", dk)
+save("../Output/dk2.jld", "dk", dk)
 
 dk = switch_PC(dk, Simultaneous);
 
 solve!(dk, tol=4e-4)
-save("../../dk_simultaneous.jld", "dk", dk)
+save("../Output/dk_simultaneous.jld2", "dk", dk)
 
 nothing

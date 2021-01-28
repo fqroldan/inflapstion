@@ -1,6 +1,6 @@
 using Distributed
 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2
 
 include("type_def.jl")
 include("reporting_routines.jl")
@@ -276,7 +276,7 @@ function pf_iter(ct::Plan, Egπ, gπ_guess; optimize::Bool=true)
 	itp_L  = interpolate(knots, ct.L, Gridded(Linear()));
 	itp_C  = interpolate(knots, ct.C, Gridded(Linear()));
 
-	@time new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
+	new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, gπ_guess; optimize=optimize)
 
 	return new_gπ, new_L, [new_y, new_π, new_p, new_C, new_a]
 end
@@ -595,7 +595,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ωv = ωgrid[jω]
 			old_L, old_gπ = copy(ct.L), copy(ct.gπ)
 			if jω == 1 && jχ > 1
-				old_ct = load("../ct_1_temp.jld", "ct")
+				old_ct = load("../Output/ct_1_temp.jld2", "ct")
 				old_L, old_gπ = copy(old_ct.L), copy(old_ct.gπ)
 			end
 
@@ -622,14 +622,14 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			# print_save("\nCurrent L = $L against current min = $Lmin")
 
 			if jω == 1
-				save("../../ct_1_temp.jld", "ct", ct)
-				save("../ct_1_temp.jld", "ct", ct)
+				save("../Output/ct_1_temp.jld2", "ct", ct)
+				# save("../ct_1_temp.jld2", "ct", ct)
 			end
 
 
 			if jχ == 1 && jω == 2 && flag
-				save("../../ct_1.jld", "ct", ct)
-				save("../ct_1.jld", "ct", ct)
+				save("../Output/ct_1.jld2", "ct", ct)
+				# save("../ct_1.jld2", "ct", ct)
 			end
 
 			if L < L_min
@@ -639,7 +639,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				a_min = a_vec[jω]
 				ja_min = ja
 
-				save("../../ct_opt.jld", "ct", ct)
+				save("../Output/ct_opt.jld2", "ct", ct)
 				ct_best.ω, ct_best.χ = ωv, χv
 				ct_best.L, ct_best.gπ = ct.L, ct.gπ
 
@@ -665,7 +665,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 				savejson(pL, pwd()*"/../Graphs/tests/first_L_paper.json")
 				savejson(pπ, pwd()*"/../Graphs/tests/first_g_paper.json")
 				savejson(pp, pwd()*"/../Graphs/tests/first_p_paper.json")
-				save("../../first_ct.jld", "ct", ct)
+				save("../Output/first_ct.jld2", "ct", ct)
 			end
 
 			for slides in [true, false]
