@@ -1,6 +1,6 @@
 using Distributed
 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2, FileIO
 
 include("type_def.jl")
 include("reporting_routines.jl")
@@ -287,7 +287,12 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 			print("After $iter iterations, d(v,g) = $(@sprintf("%0.3g",dist_v)) $(@sprintf("%0.3g",dist_g)) at $(Dates.format(now(),"HH:MM"))\n")
 		end
 		if typeof(pp)<:Sustainable && iter > 200
-			upd_η = max(1e-5, upd_η * 0.975)
+			upd_η = 0.25
+			if iter == 400
+				upd_η = 0.01
+			elseif iter > 400
+				upd_η = max(1e-5, upd_η * 0.975)
+			end
 		end
 	end
 	if verbose
@@ -304,7 +309,7 @@ function show_value(rp::Ramsey)
 end
 function final_report(rp::Ramsey, iter, maxiter, dist)
 	vR = show_value(rp)
-	print("\nvalue attained = $(@sprintf("%0.3g",vR))")
+	print("value attained = $(@sprintf("%0.3g",vR))\n")
 	final_report(iter, maxiter, dist)
 end
 

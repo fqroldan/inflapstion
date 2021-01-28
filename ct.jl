@@ -1,6 +1,6 @@
 using Distributed
 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2, FileIO
 
 include("type_def.jl")
 include("reporting_routines.jl")
@@ -381,10 +381,9 @@ function solve!(dk::DovisKirpalani; tol::Float64=5e-4, maxiter::Int64=2500)
 
 		Epfi!(dk; maxiter = 1, tol_pfi = tol_epfi)
 
-		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 10tol)
-		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
+		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(old_ga), 10tol)
+		dist_a = sqrt.(sum( (annualized.(dk.ga)  - annualized.(old_ga) ).^2 ))/length(old_ga) / norm_ga
 
-		# rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga)))"
 		rep_status = "\nAfter $iter iterations, d(a) = $(@sprintf("%0.3g",dist)) at |a| = $(@sprintf("%0.3g",norm_ga))"
 
 		dist_π <= tol_epfi ? rep_status *= " ✓" : nothing

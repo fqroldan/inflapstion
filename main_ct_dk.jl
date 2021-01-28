@@ -40,7 +40,7 @@ dk = DovisKirpalani(ct);
 initial_report(dk)
 
 solve!(dk)
-save("../Output/dk2.jld", "dk", dk)
+save("../Output/dk.jld2", "dk", dk)
 
 dk = switch_PC(dk, Simultaneous);
 
