@@ -748,12 +748,11 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	# tvec = 1:length(πR)
 	tvec = 1:11
 
-	# if pc == Fwd_GP
-	# 	mult = range(0.0,0.7,length=K)
-	# elseif pc == Fwd_strategy
-	# 	mult = range(0.0,0.35,length=K)
-	# end
-	mult = range(0.0,1.25,length=K)
+	if pc == Fwd_GP
+		mult = range(0.0,1.75,length=K)
+	elseif pc == Fwd_strategy
+		mult = range(0.0,1.25,length=K)
+	end
 
 	π_sust = zeros(length(tvec), K)
 	a_sust = zeros(length(tvec), K)
@@ -779,7 +778,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		if !flag
 			flag2 = false
 			subiter = 0
-			while flag2 == false && subiter < 10
+			while flag2 == false && subiter < 2
 				subiter += 1
 				flag2 = vfi!(sp, verbose=true, maxiter = 750)
 			end

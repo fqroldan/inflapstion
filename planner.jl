@@ -163,8 +163,8 @@ end
 
 function cond_value(πv, ap, sp::Sustainable{Fwd_GP}, av, itp_v, itp_gπ)
 	ystar, γ, β, κ, b, ξ, θ, D, σ = sp.ystar, sp.γ, sp.β, sp.κ, sp.b, sp.ξ, sp.θ, sp.D, sp.σ
-	# if abs(πv-av) > av*D
-	if abs(πv-av) > D
+	if abs(πv-av) > av*D
+	# if abs(πv-av) > D
 		pp = 0.0
 	else
 		pp = 1.0
