@@ -474,14 +474,14 @@ function plot_announcements(;slides::Bool=true, darkslides::Bool=false, exts::Ve
 		plotname *= "_slides"
 		width = slides_dark.layout.fields[:width] * 0.9
 	else
-		style = paper_def
+		style = paper
 		# font = "Linux Libertine"
 		# bg = ""
 		# plotname *= "_paper"
 		# width = 400
 	end
 
-	p1 = plot(lines, style=style, Layout(;xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations, width=width)
+	p1 = plot(lines, style=style, Layout(;xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%", title="Inflation announcements", shapes = shapes, annotations=annotations)
 		)
 
 	if darkslides
