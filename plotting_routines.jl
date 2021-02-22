@@ -143,13 +143,29 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 		return get(colorpal, weight)
 	end
 
+	xs = [0.5 for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
+	ys = [mean(y[:, ja]) for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
+	colscale = [[vv, get(colorpal, 0.9*vv)] for vv in range(0,1,length=100)]
+	cols = range(0,1,length=length(xs))
+	colnames = round.(range(minimum(ct.agrid),annualized(a_max),length=6), digits=2)
+
+
 	p1 = plot([
-		scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max
+		scatter(mode = "markers", marker_opacity = 0,
+				x = xs, y = ys, showlegend=false,
+				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>a", ticktext=colnames))
+				)
+		[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max]
 		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle));
 
 	if reverse_draw
+
 		p1 = plot([
-			scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max
+			scatter(mode = "markers", marker_opacity = 0,
+				x = xs, y = ys, showlegend=false,
+				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>a", ticktext=colnames))
+				)
+			[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
 			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
 	end
 
@@ -211,7 +227,7 @@ function makeplots_ct_pa(ct::Plan; slides::Bool=true)
 	relayout!(p, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol)
 	relayout!(pL, font_family = font, font_size = 16, plot_bgcolor=bgcol, paper_bgcolor=bgcol, width=900, height = heights[1])
 
-	relayout!(pπ, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol)
+	relayout!(pπ, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol, yaxis_range = [-0.01, 0.6])
 	restyle!(pπ, showlegend=false)
 	relayout!(pa, font_family=font, xaxis_title="<i>p", yaxis_title="%", font_size=16, width=900, height=heights[2], plot_bgcolor=bgcol, paper_bgcolor=bgcol, yaxis_zeroline=false, xaxis_zeroline=false)
 	restyle!(pa, showlegend=false)
@@ -751,7 +767,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 	if pc == Fwd_GP
 		mult = range(0.0,1.75,length=K)
 	elseif pc == Fwd_strategy
-		mult = range(0.0,1.25,length=K)
+		mult = range(0.0,0.75,length=K)
 	end
 
 	π_sust = zeros(length(tvec), K)
@@ -782,6 +798,9 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 				subiter += 1
 				flag2 = vfi!(sp, verbose=true, maxiter = 750)
 			end
+			if flag2
+				flag = true
+			end
 		end
 		old_g = sp.g
 		old_v = sp.v
@@ -807,9 +826,18 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 
+		xs = [mean(tvec.-1) for jj in 1:K if show_vec[jj]]
+		ys = [mean(annualized.(π_sust[tvec, jj])) for jj in 1:K if show_vec[jj]]
+		cols = range(0,1,length=length(xs))
+		colscale = [[vv, get(ColorSchemes.davos, 0.8*vv)] for vv in range(0,1,length=100)]
+		colnames = round.(range(extrema(mult)..., length=6), digits = 2)
+
 		p1 = plot([
+			scatter(mode = "markers", x=xs, y=ys, showlegend = false, 
+				marker = attr(color=cols, opacity = 0, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>ξ", ticktext=colnames))
+				)
 			[scatter(x=tvec.-1, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
-			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
+			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", line_width = 2, marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)
 		p2 = plot([
 			[scatter(x=tvec.-1, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, line_dash="dash", marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
@@ -822,7 +850,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 		end
 	end
 
-	return p1, π_sust, a_sust
+	return p1, π_sust, a_sust, p2
 
 end
 
@@ -856,7 +884,17 @@ function plots_recursive(dk::DovisKirpalani, ct=CrazyType(dk); makeplots::Bool=f
 
 		layout = Layout(title="Plans", yaxis_title="%", xaxis_title="<i>Quarters", font_size=18, font_family = ff, width = wi, height=350, paper_bgcolor=bgcol, plot_bgcolor=bgcol, xaxis_zeroline=false, yaxis_zeroline=false, legend=attr(orientation="h", x=0.05))
 
+		xs = [mean(tvec.-1) for (jp, pv) in enumerate(dk.pgrid) if jp >= 3]
+		ys = [mean(amat[:, jp]) for (jp, pv) in enumerate(dk.pgrid) if jp >= 3]
+		cols = range(0,1,length=length(xs))
+		colscale = [[vv, get(ColorSchemes.davos, 0.8*vv)] for vv in range(0,1,length=100)]
+		colnames = round.(range(extrema(dk.pgrid)..., length=6), digits = 2)
+
+
 		p1 = plot([
+			scatter(x=xs, y=ys, mode="markers", showlegend=false,
+				marker = attr(color=cols, opacity = 0, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>p<sub>0", ticktext=colnames))
+				)
 			[scatter(x=tvec.-1, y=amat[:, jp], mode="lines+markers", opacity=0.9, line_width=2, marker_color=get(ColorSchemes.davos, 0.05+0.8*jp/K), name="<i>p₀ = $(pv)", showlegend=false) for (jp, pv) in enumerate(dk.pgrid) if jp >= 3]
 			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", line_width = 3, marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
 			], layout)

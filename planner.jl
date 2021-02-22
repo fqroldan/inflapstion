@@ -254,7 +254,7 @@ function vfi_iter(pp::Union{Ramsey, Sustainable})
 	return new_g, new_v
 end
 
-function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64=2500, verbose::Bool=true, upd_η = 0.75)
+function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=15e-4, maxiter::Int64=2500, verbose::Bool=true, upd_η = 0.75)
 
 	cens_v = 1e-4
 	if typeof(pp) == Sustainable{Fwd_GP}
@@ -289,8 +289,8 @@ function vfi!(pp::Union{Ramsey, Sustainable}; tol::Float64=25e-4, maxiter::Int64
 		if typeof(pp)<:Sustainable && iter > 200
 			upd_η = 0.25
 			if iter == 400
-				upd_η = 0.01
-			elseif iter > 400
+				upd_η = 0.1
+			elseif iter > 600
 				upd_η = max(1e-5, upd_η * 0.975)
 			end
 		end
