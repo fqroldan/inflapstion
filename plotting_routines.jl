@@ -417,7 +417,7 @@ function plot_L_contour(xgrid, ygrid, L_mat; name_x="ω", name_y="𝓛", slides:
 	if slides
 		relayout!(p1, font_family = "Lato", font_size = 16, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa", width = 800, height = 450)
 	else
-		relayout!(p1, font_family="Linux Libertine", font_size = 16, width=900, height=450)
+		relayout!(p1, font_family="Linux Libertine", font_size = 17, width=900, height=450)
 	end
 
 	return p1
@@ -567,7 +567,7 @@ function plot_plans_p(ct::CrazyType, L_mat, ωgrid, χgrid; decay::Bool=true, sl
 		xaxis = attr(zeroline=false, title="<i>p<sub>0"),
 		legend = attr(orientation="h", x=0.05),
 		width = 900, height = 450,
-		font_size=16, font_family="Linux Libertine", title="Preferred plans"
+		font_size=17, font_family="Linux Libertine", title="Preferred plans"
 		)
 
 	p1 = plot(ls, layout)
@@ -630,7 +630,7 @@ function plot_mimic_z(mt::MultiType, N=50; style::Style=slides_def, decay::Bool=
 		xaxis = attr(title="<i>z"),
 		legend = attr(orientation="h", x=0.05),
 		title="Average plans",
-		width = 700, height = 300
+		width = 700, height = 300, font_size = 16,
 		)
 
 	p1 = plot(ls, layout, style=style)
@@ -650,7 +650,34 @@ function save_plot_mimic_z(mt::MultiType, N=50; slides::Bool=true, CIs::Bool=fal
 	nothing
 end
 
-function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, yh = 0.7, style::Style=slides_def)
+function strategy_μ(mt::MultiType; style, save_stats=false)
+
+	c1, c2 = strategy_μ(mt, save_stats)
+
+	annotations = [
+		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>", font_size=22, y=1.15,yref="paper", x=0.475/2,xanchor="center",xref="paper",showarrow=false)
+		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>", font_size=22, y=1.15,yref="paper", x=1.525/2,xanchor="center",xref="paper",showarrow=false)
+	]
+	
+	l1 = Layout(
+		annotations = annotations[1],
+		font_size=16,
+		xaxis = attr(title="Initial inflation (<i>a<sub>0</sub></i>)"),
+		yaxis = attr(title="Asymptote (<i>χ</i>)"),
+	)
+	l2 = Layout(
+		annotations = annotations[2],
+		xaxis = attr(title="Decay rate (<i>%</i>)"),
+		yaxis = attr(title=""),
+		)
+
+	p1 = plot(c1, l1, style=style)
+	p2 = plot(c2, l2, style=style)
+
+	return p1, p2
+end
+
+function strategy_μ(mt::MultiType, save_stats = false)
 
 	χgrid = mt.χgrid
 	ωgrid = mt.ωgrid
@@ -660,28 +687,14 @@ function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, yh = 0.7, sty
 
 	marg_ωχ = [sum(mt.μ[jω, jχ, :]) for jω in 1:size(mt.μ, 1), jχ in 1:size(mt.μ,2)]
 
-	annotations = [
-		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>", font_size=22, y=1.15,yref="paper", x=0.475/2,xanchor="center",xref="paper",showarrow=false)
-		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>", font_size=22, y=1.15,yref="paper", x=1.525/2,xanchor="center",xref="paper",showarrow=false)
-	]
-
-	layout = Layout(
-		annotations = annotations,
-		font_size=16, width = style.layout[:width]*yw, height = style.layout[:height]*yh,
-		xaxis1 = attr(domain = [0, 0.475], anchor="y1", title="Initial inflation (<i>a<sub>0</sub></i>)"),
-		xaxis2 = attr(domain = [0.525, 1], anchor="y2", title="Decay rate (<i>%</i>)"),
-		yaxis1 = attr(anchor="x1", title="Asymptote (<i>χ</i>)"),
-		yaxis2 = attr(anchor="x2", title=""),
-		)
-
 	# min_z1, max_z1 = extrema(marg_aχ)
 	# min_z2, max_z2 = extrema(marg_ωχ)
 	# min_z = min(min_z1, min_z2)
 	# max_z = max(max_z1, max_z2)
 
-	p1 = contour(y=annualized.(χgrid), x=annualized.(agrid), z=marg_aχ', showscale=false, xaxis="x1", yaxis="y1", colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
+	p1 = contour(y=annualized.(χgrid), x=annualized.(agrid), z=marg_aχ', showscale=false, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 
-	p2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, xaxis="x2", yaxis="y2", colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
+	p2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 	# relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
 
 
@@ -698,7 +711,7 @@ function strategy_μ(mt::MultiType; save_stats = false, yw = 1.25, yh = 0.7, sty
 	P = sum([sum(mt.μ[jω,jχ,ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω])<=10])
 	save_stats && write("../pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
-	return plot([p1, p2], layout, style=style)
+	return p1, p2
 end
 
 function comp_plot_planner(mt::MultiType; makeplots::Bool=false, slides::Bool=false)

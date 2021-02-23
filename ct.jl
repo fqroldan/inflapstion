@@ -494,7 +494,7 @@ end
 # 	choose_ω!(L_mat, ct, Simultaneous, Nω; remote=remote, upd_η=upd_η)
 # end
 
-function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
+function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose = true)
 	T = which_PC(ct)
 	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
 
@@ -535,7 +535,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 		ω_vec = []
 
 		""" tol = 11e-4 """
-		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
+		function wrap_Epfi!(ct::CrazyType, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ; verbose=true)
 			update_ga!(ct, ω = ωv)
 
 			t1 = time()
@@ -543,7 +543,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
-			dist = Epfi!(ct, verbose = true, tol=tol, tempplots=false, upd_η=upd_η)
+			dist = Epfi!(ct, verbose = verbose, tol=tol, tempplots=false, upd_η=upd_η)
 			write(pwd()*"/../temp.txt", "")
 			
 			flag = (dist <= tol)
@@ -603,7 +603,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1)
 			ct.L, ct.gπ = old_L, old_gπ
 			
 			L_mat_save = zeros(ct.Np, ct.Na)
-			L, C, ja, flag = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ)
+			L, C, ja, flag = wrap_Epfi!(ct, ωv, L_vec, a_vec, ω_vec, Lplot, L_mat_save, C_mat, aplot, jω, jχ, verbose = verbose)
 
 			L_mat[jω, jχ, :, :] = L_mat_save
 			L_mat_ctour[jω, jχ] = L
@@ -828,7 +828,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 		k_min, k_max, GoldenSection())
 
 	if res.minimum > 1e-4
-		print_save("WARNING: Couldn't find μ at z = $zv")
+		print_save("WARNING: Couldn't find μ at z = $z0")
 	end
 
 	k_star = res.minimizer
@@ -838,10 +838,11 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 	return k_star
 end
 
-function mimic_z(mt::MultiType, N=50; decay::Bool=false, annualize::Bool=false)
+function mimic_z(mt::MultiType, N=100; decay::Bool=false, annualize::Bool=false)
 
 	zgrid = cdf.(Beta(4,1), range(0,1,length=N))
-	move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
+	# move_grids!(zgrid, xmax=0.9, xmin=mt.ct.pgrid[3])
+	move_grids!(zgrid, xmax=0.95, xmin=1e-9)
 
 	data = zeros(N,6)
 	datanames = ["ω", "a", "χ", "s_ω", "s_a", "s_χ"]
