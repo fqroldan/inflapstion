@@ -7,6 +7,7 @@ sender(){
 	mkdir -p ../Output/CompStats/$param/run$1
 	cp comp_stats.jl ../Output/CompStats/$param/run$1/comp_stats.jl
 	cd ../Output/CompStats/$param/run$1
+	mkdir -p ../Graphs/tests/
 	sleep 1
 	# export JULIA_NUM_THREADS=8
 	julia comp_stats.jl $1 $2 $3 &
