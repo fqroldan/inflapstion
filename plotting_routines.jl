@@ -241,7 +241,7 @@ end
 
 function plot_simul(ct::Plan; T::Int64=50, N=10000, jp0::Int64=3, noshocks::Bool=false, CIs::Bool=false)
 	# Update simulations codes
-	include("simul.jl")
+	# include("simul.jl")
 
 	p_mat, a_mat, π_mat, y_mat, g_mat, L_mat = zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N), zeros(T,N)
 
@@ -653,20 +653,15 @@ end
 function strategy_μ(mt::MultiType; style, save_stats=false)
 
 	c1, c2 = strategy_μ(mt, save_stats)
-
-	annotations = [
-		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>", font_size=22, y=1.15,yref="paper", x=0.475/2,xanchor="center",xref="paper",showarrow=false)
-		attr(text="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>", font_size=22, y=1.15,yref="paper", x=1.525/2,xanchor="center",xref="paper",showarrow=false)
-	]
 	
 	l1 = Layout(
-		annotations = annotations[1],
+		title = "lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>",
 		font_size=16,
 		xaxis = attr(title="Initial inflation (<i>a<sub>0</sub></i>)"),
 		yaxis = attr(title="Asymptote (<i>χ</i>)"),
 	)
 	l2 = Layout(
-		annotations = annotations[2],
+		title = "lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>",
 		xaxis = attr(title="Decay rate (<i>%</i>)"),
 		yaxis = attr(title=""),
 		)
@@ -692,7 +687,7 @@ function strategy_μ(mt::MultiType, save_stats = false)
 	# min_z = min(min_z1, min_z2)
 	# max_z = max(max_z1, max_z2)
 
-	p1 = contour(y=annualized.(χgrid), x=annualized.(agrid), z=marg_aχ', showscale=false, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
+	p1 = contour(y=annualized.(χgrid), x=annualized.(agrid), z=marg_aχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 
 	p2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj)] for jj in range(0,1,length=50)])
 	# relayout!(p2, xaxis_title="Decay rate (<i>%</i>)", title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>a<sub>0</sub></i>")
