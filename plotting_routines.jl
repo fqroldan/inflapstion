@@ -153,7 +153,7 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 	p1 = plot([
 		scatter(mode = "markers", marker_opacity = 0,
 				x = xs, y = ys, showlegend=false,
-				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>a", ticktext=colnames))
+				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
 		[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max]
 		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle));
@@ -163,7 +163,7 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 		p1 = plot([
 			scatter(mode = "markers", marker_opacity = 0,
 				x = xs, y = ys, showlegend=false,
-				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>a", ticktext=colnames))
+				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
 			[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
 			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
@@ -842,7 +842,7 @@ function make_sustainable_plots(mt::MultiType, K; pc::DataType=Fwd_strategy, mak
 
 		p1 = plot([
 			scatter(mode = "markers", x=xs, y=ys, showlegend = false, 
-				marker = attr(color=cols, opacity = 0, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>ξ", ticktext=colnames))
+				marker = attr(color=cols, opacity = 0, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;<i>ξ/π<sup>N", ticktext=colnames))
 				)
 			[scatter(x=tvec.-1, y=annualized.(π_sust[tvec, jj]), mode="lines", opacity=0.9, line_width=5, marker_color=get(ColorSchemes.davos, 0.8(jj)/K), name="$(mult[jj])", showlegend=false) for jj in 1:K if show_vec[jj]]
 			scatter(x=tvec.-1, y=annualized.(πR[tvec]), line_dash="dash", line_width = 2, marker_color=get(ColorSchemes.lajolla, 0.6), name="<i>Ramsey")
