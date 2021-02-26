@@ -6,7 +6,7 @@ function makeplot_compstats(param::String; slides::Bool=true, temp::Bool=false)
 	if temp 
 		df = CSV.read("../HPC_output/output_compstats.csv");
 	else
-		df = CSV.read("../HPC_output/compstats_"*param*".csv");
+		df = CSV.read("../Output/CompStats/$param/compstats_"*param*".csv");
 	end
 	df = sort(df, Symbol(param));
 
