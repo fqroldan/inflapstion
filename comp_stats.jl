@@ -14,7 +14,7 @@ end
 function prepare_results(run_number, Nruns, smin, smax, param)
 	if run_number == 1
 		write("../comments_compstats.txt", "Nruns = $Nruns. $param between $smin and $smax")
-		write("../output_compstats.csv", param*",omega,a,chi,Lmin\n")
+		write("../output_compstats.csv", "run_number,$param,omega,a,chi,Lmin\n")
 	end
 	nothing
 end
@@ -84,7 +84,7 @@ initial_report(ct)
 
 function fill_in_results(par, ω, a, χ, Lmin, run_number)
 	s = read("../output_compstats.csv", String)
-	write("../output_compstats.csv", s*"$(par), $(ω), $(a), $(χ), $(Lmin)\n")
+	write("../output_compstats.csv", s*"$(run_number), $(par), $(ω), $(a), $(χ), $(Lmin)\n")
 
 	s2 = read("../comments_compstats.txt", String)
 	write("../comments_compstats.txt", s2 * "\nDone with run $run_number at $(Dates.format(now(), "HH:MM"))")
@@ -101,6 +101,8 @@ a, ω, χ, mt = choose_ω!(L_mat, ct, verbose = false)
 
 z0 = mt.ct.pgrid[3]
 Lavg = find_equil!(mt, z0)
+save("mt$run_number.jld2", mt)
+
 mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt)
 fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg, run_number)
 
