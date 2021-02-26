@@ -99,9 +99,6 @@ print_save("\nNω, Nχ = $Nω, $Nχ")
 L_mat = zeros(Nω, Nχ, ct.Np, ct.Na);
 a, ω, χ, mt = choose_ω!(L_mat, ct, verbose = false)
 
-# Lmin = minimum(L_mat[:,:,3,:])
-# fill_in_results(show_σs, ω, a, χ, Lmin)
-
 z0 = mt.ct.pgrid[3]
 Lavg = find_equil!(mt, z0)
 mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt)
