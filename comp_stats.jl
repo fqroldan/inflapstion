@@ -21,8 +21,6 @@ end
 
 run_number, Nruns, param = qload(ARGS)
 
-run_number == 1 && println("Starting $Nruns runs for parameter $param")
-
 include("../../../../Codes/ct.jl")
 
 if param == "sigma"
@@ -84,9 +82,12 @@ ct = create_or_load(Forward, param)
 
 initial_report(ct)
 
-function fill_in_results(par, ω, a, χ, Lmin)
+function fill_in_results(par, ω, a, χ, Lmin, run_number)
 	s = read("../output_compstats.csv", String)
 	write("../output_compstats.csv", s*"$(par), $(ω), $(a), $(χ), $(Lmin)\n")
+
+	s2 = read("../comments_compstats.txt", String)
+	write("../comments_compstats.txt", s2 * "\nDone with run $run_number at $(Dates.format(now(), "HH:MM"))")
 	nothing
 end
 
@@ -104,8 +105,7 @@ a, ω, χ, mt = choose_ω!(L_mat, ct, verbose = false)
 z0 = mt.ct.pgrid[3]
 Lavg = find_equil!(mt, z0)
 mean_ω, mean_χ, mean_a, sd_ω, sd_χ, sd_a = find_plan_μ(mt)
-fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg)
-
+fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg, run_number)
 
 nothing
 
