@@ -543,7 +543,15 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 			# if length(L_vec) > 0
 			# 	upd_η = 0.005
 			# end
-			dist = Epfi!(ct, verbose = verbose, tol=tol, tempplots=false, upd_η=upd_η)
+			out_iter = 0
+			flag = false
+			while out_iter < 5 && flag == false
+				out_iter += 1
+				dist = Epfi!(ct, verbose = verbose, maxiter = 500, tol=tol, tempplots=false, upd_η=upd_η)
+				if dist < tol
+					flag = true
+				end
+			end
 			write(pwd()*"/../temp.txt", "")
 			
 			flag = (dist <= tol)
