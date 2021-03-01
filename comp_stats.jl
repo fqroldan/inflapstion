@@ -13,7 +13,7 @@ function qload(s)
 end
 function prepare_results(run_number, Nruns, smin, smax, param)
 	if run_number == 1
-		write("../comments_compstats.txt", "Nruns = $Nruns. $param between $smin and $smax")
+		write("../comments_compstats.txt", "Nruns = $Nruns. $param between $smin and $smax. Started on $(today()) at $(Dates.format(now(), "HH:MM"))")
 		write("../output_compstats.csv", "run_number,$param,omega,a,chi,Lmin\n")
 	end
 	nothing
