@@ -101,7 +101,7 @@ a, ω, χ, mt = choose_ω!(L_mat, ct, verbose = false)
 
 z0 = mt.ct.pgrid[3]
 Lavg = find_equil!(mt, z0)
-save("mt$run_number.jld2", mt)
+save("mt$run_number.jld2", "mt", mt)
 
 mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt)
 fill_in_results(show_σs, mean_ω, mean_a, mean_χ, Lavg, run_number)
