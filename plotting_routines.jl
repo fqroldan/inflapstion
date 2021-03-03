@@ -147,7 +147,7 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 	ys = [mean(y[:, ja]) for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
 	colscale = [[vv, get(colorpal, 0.9*vv)] for vv in range(0,1,length=100)]
 	cols = range(0,1,length=length(xs))
-	colnames = round.(range(minimum(ct.agrid),annualized(a_max),length=6), digits=2)
+	colnames = round.(range(0,1,length=6), digits=2)
 
 
 	p1 = plot([
