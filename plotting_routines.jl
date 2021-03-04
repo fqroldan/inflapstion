@@ -156,7 +156,7 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
 		[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in 1:step_a:length(ct.agrid) if ct.agrid[ja] <= a_max]
-		], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle));
+		], Layout(;title=name, xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle));
 
 	if reverse_draw
 
