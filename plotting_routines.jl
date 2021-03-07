@@ -118,7 +118,7 @@ function plot_ct(ct::Plan, y_tuple, n_tuple; make_pdf::Bool=false, make_png::Boo
 	return p
 end
 
-function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false)
+function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool=false, positive_p::Bool=false, few_lines::Bool=false, f_p = false)
 
 	a_max = Nash(ct)
 	if maximum(ct.agrid) > a_max
@@ -167,6 +167,21 @@ function plot_ct_pa(ct::Plan, y=ct.L, name="𝓛"; ytitle="", reverse_draw::Bool
 				)
 			[scatter(;x=xvec, y=y[:,ja], marker_color=set_col(ja,ct.agrid), showlegend=false, name = "a=$(@sprintf("%.3g", annualized(ct.agrid[ja])))") for ja in length(ct.agrid):-1:1 if ct.agrid[ja] <= a_max]
 			], Layout(;title=name, fontsize=16,font_family="Fira Sans Light", xaxis_zeroline=false, xaxis_title= "<i>p</i>", yaxis_title=ytitle))
+	end
+
+	if f_p
+		xvec = annualized.(ct.agrid)
+		xs = [annualized(mean(ct.agrid)) for jp in eachindex(ct.pgrid)]
+		ys = [mean(y[jp, :]) for jp in eachindex(ct.pgrid)]
+		cols = range(0,1,length=length(xs))
+
+		p1 = plot([
+			scatter(mode = "markers", marker_opacity = 0,
+					x = xs, y = ys, showlegend=false,
+					marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;&nbsp;<i>p", ticktext=colnames))
+					)
+			[scatter(;x=xvec, y=y[jp,:], showlegend=false, marker_color=set_col(jp,ct.pgrid), name = "p=$(@sprintf("%.3g", pv))") for (jp, pv) in enumerate(ct.pgrid)]
+			], Layout(;title=name, xaxis_zeroline=false, xaxis_title= "<i>a</i>", yaxis_title=ytitle));
 	end
 
 	return p1
