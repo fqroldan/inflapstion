@@ -511,7 +511,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 	χgrid = range(0.0, 0.43*Nash(ct), length = Nχ)
 
 	update_ga!(ct, ω = ωgrid[1], χ = χgrid[1])
-	dist = Epfi!(ct, maxiter = 500)
+	dist = Epfi!(ct, maxiter = 100)
 	print_save("\nDone with initial setup $(ifelse(dist<1e-3, "✓", ""))")
 
 	print_save("\nLooping over behavioral types with ω ∈ [$(minimum(ωgrid)), $(maximum(ωgrid))]")
