@@ -291,7 +291,7 @@ function update_others!(ct::Plan, new_others, upd_η2)
 	nothing
 end
 
-function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=300, verbose::Bool=true, reset_guess::Bool=false)
+function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=100, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
 	iter = 0
 	upd_η2 = 0.75
@@ -545,7 +545,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 			# end
 			out_iter = 0
 			flag = false
-			while out_iter < 5 && flag == false
+			while out_iter < 10 && flag == false
 				out_iter += 1
 				dist = Epfi!(ct, verbose = verbose, maxiter = 500, tol=tol, tempplots=false, upd_η=upd_η)
 				if dist < tol
