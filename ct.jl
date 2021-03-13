@@ -291,7 +291,7 @@ function update_others!(ct::Plan, new_others, upd_η2)
 	nothing
 end
 
-function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=100, verbose::Bool=true, reset_guess::Bool=false)
+function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=250, verbose::Bool=true, reset_guess::Bool=false)
 	dist = 10.
 	iter = 0
 	upd_η2 = 0.75
