@@ -222,7 +222,7 @@ function CrazyType(T::DataType;
 	gπ, ga = [zeros(Np, Na) for jj in 1:2]
 	for jp in 1:Np, (ja, av) in enumerate(agrid)
 		gπ[jp, ja] = av
-		ga[jp, ja] = ϕ(av, ω, χ)
+		ga[jp, ja] = ϕ(av, av, ω, χ)
 	end
 
 	L = ones(Np, Na)
