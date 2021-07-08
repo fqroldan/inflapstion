@@ -65,7 +65,7 @@ function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 end
 
 function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
-	aprime = ϕ(ct, av)
+	aprime = ϕ(ct, av, obs_π)
 
 	πe = pv*av + (1-pv)*exp_π
 	exp_π′ = itp_gπ(0.0, aprime)
@@ -78,11 +78,16 @@ function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
 	return L
 end
 
+next_a(ct::Plan, av, apv, π) = ϕ(ct, av, π)
+next_a(ct::DovisKirpalani, av, apv, π) = apv
+
 function cond_L_inner(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′) where T <: PhillipsCurve
 	# ge = itp_gπ(pv, av)
 	pprime = Bayes(ct, obs_π, ge, pv, av)
 
 	πe = pv*av + (1-pv)*ge
+
+	aprime = next_a(ct, av, aprime, obs_π)
 
 	# if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
 	itp_L  = extrapolate(itp_L,  Interpolations.Flat())

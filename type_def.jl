@@ -235,8 +235,8 @@ function CrazyType(T::DataType;
 	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, ga, L, C, Ey, Eπ, Ep)
 end
 
-ϕ(a::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
-ϕ(ct::CrazyType, a::Float64) = ϕ(a, ct.ω, ct.χ)
+ϕ(a::Float64, π::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
+ϕ(ct::CrazyType, a::Float64, π::Float64) = ϕ(a, π, ct.ω, ct.χ)
 
 function update_ga!(ct::CrazyType; ω = ct.ω, χ = ct.χ)
 	ct.ω = ω
