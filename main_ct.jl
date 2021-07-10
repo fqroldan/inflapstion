@@ -35,7 +35,7 @@ function makeplots_mimics_marginals(mt::MultiType)
 	for slides in [true, false]
 		slides ? sty = slides_def : sty = paper
 		slides ? yh = 0.7 : yh = 1
-		p1 = strategy_μ(mt, style=sty, yh = yh)
+		p1, p2 = strategy_μ(mt, style=sty)
 
 		savejson(p1, pwd()*"/../Graphs/tests/marg$(ifelse(slides, "_slides", "_paper")).json")
 		savefig(p1, pwd()*"/../Graphs/tests/marg$(ifelse(slides, "_slides", "_paper")).pdf")
