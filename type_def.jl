@@ -32,6 +32,9 @@ mutable struct CrazyType{T<:PhillipsCurve} <: Plan{T}
 	ystar::Float64
 	ω::Float64
 	χ::Float64
+	
+	use_a::Bool
+	ψ::Float64
 
 	pgrid::Vector{Float64}
 	agrid::Vector{Float64}
@@ -75,7 +78,7 @@ end
 DovisKirpalani(ct::CrazyType{T}) where T <: PhillipsCurve = DovisKirpalani{T}(ct.β, ct.γ, ct.κ, ct.σ, ct.ystar, ct.pgrid, ct.agrid, ct.Np, ct.Na, ct.gπ, ct.ga, ct.L, ct.C, ct.Ey, ct.Eπ, ct.Ep)
 CrazyType(dk::DovisKirpalani{T}; ω=0.0, χ=0.0) where T <: PhillipsCurve = CrazyType{T}(dk.β, dk.γ, dk.κ, dk.σ, dk.ystar, ω, χ, dk.pgrid, dk.agrid, dk.Np, dk.Na, dk.gπ, dk.ga, dk.L, dk.C, dk.Ey, dk.Eπ, dk.Ep)
 
-function switch_PC(pp::DovisKirpalani{T}, T2::DataType) where T<:PhillipsCurve
+function switch_PC(pp::DovisKirpalani{T}, T2::PhillipsCurve) where T<:PhillipsCurve
 	if T == T2
 		return pp
 	else
@@ -199,6 +202,8 @@ function CrazyType(T::DataType;
 		# κ = 0.02,
 		# σ = 0.01/3,
 		# σ = 0.003,
+		use_a = true,
+		ψ = 0.01,
 		σ = 0.01/4,
 		ystar = 0.05,
 		# ω = 0.271,
@@ -222,7 +227,7 @@ function CrazyType(T::DataType;
 	gπ, ga = [zeros(Np, Na) for jj in 1:2]
 	for jp in 1:Np, (ja, av) in enumerate(agrid)
 		gπ[jp, ja] = av
-		ga[jp, ja] = ϕ(av, av, ω, χ)
+		ga[jp, ja] = ϕ(av, ω, χ)
 	end
 
 	L = ones(Np, Na)
@@ -232,17 +237,17 @@ function CrazyType(T::DataType;
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, pgrid, agrid, Np, Na, gπ, ga, L, C, Ey, Eπ, Ep)
+	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, use_a, ψ, pgrid, agrid, Np, Na, gπ, ga, L, C, Ey, Eπ, Ep)
 end
 
-ϕ(a::Float64, π::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
-ϕ(ct::CrazyType, a::Float64, π::Float64) = ϕ(a, π, ct.ω, ct.χ)
+ϕ(a::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
+ϕ(ct::Plan, a::Float64) = ϕ(a, ct.ω, ct.χ)
 
 function update_ga!(ct::CrazyType; ω = ct.ω, χ = ct.χ)
 	ct.ω = ω
 	ct.χ = χ
 	for jp in 1:ct.Np, (ja, av) in enumerate(ct.agrid)
-		ct.ga[jp, ja] = ϕ(ct, av, av)
+		ct.ga[jp, ja] = ϕ(ct, av)
 	end
 	nothing
 end

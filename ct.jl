@@ -1,49 +1,13 @@
 using Distributed
 
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, LaTeXStrings, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2, FileIO
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, Printf, PlotlyJS, Distributed, SharedArrays, Dates, JLD2
+# FileIO
 
 include("type_def.jl")
 include("reporting_routines.jl")
 include("simul.jl")
-include("plotting_routines.jl")
+# include("plotting_routines.jl")
 include("planner.jl")
-
-function output_bayes(ct::CrazyType, pv, av)
-	knots = (ct.pgrid, ct.agrid);
-	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()));
-
-	# exp_π = pv*av + (1-pv)*itp_gπ(pv, av)
-	exp_π = itp_gπ(pv, av)
-
-	println("gπ = [$(annualized(itp_gπ(pv, av))-1.96*ct.σ), $(annualized(itp_gπ(pv, av))+1.96*ct.σ)], av = $(annualized(av))")
-
-	println("$(pdf_ϵ(ct, exp_π - av ))")
-	println("$(pdf_ϵ(ct, 0.0 ))")
-
-	aprime = ϕ(ct, av)
-	π_myopic = pv * aprime + (1.0-pv) * itp_gπ(pv, aprime)
-
-	Nv = 50
-	yv = zeros(Nv)
-	ym = zeros(Nv)
-	πvec = range(av - 1.96*ct.σ, av + 1.96*ct.σ, length=Nv)
-	for (jj, πv) in enumerate(πvec)
-
-		pprime = Bayes(ct, πv, exp_π, pv, av)
-		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
-		yv[jj] = PC(ct, πv, exp_π, exp_π′)
-		ym[jj] = PC(ct, πv, exp_π, π_myopic)
-
-		# yv[jj] = pdf_ϵ(ct, πv - av)
-		# yv[jj] = pprime
-
-	end
-
-	plot([
-		scatter(;x=annualized.(πvec), y=yv)
-		# scatter(;x=annualized.(πvec), y=ym)
-		])
-end
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	
@@ -64,57 +28,38 @@ function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	return p′
 end
 
-function cond_Ldev(ct::CrazyType, itp_gπ, itp_L, obs_π, pv, av)
-	aprime = ϕ(ct, av, obs_π)
-
-	πe = pv*av + (1-pv)*exp_π
-	exp_π′ = itp_gπ(0.0, aprime)
-
-	y = PC(ct, obs_π, πe, exp_π′) # Automatically uses method for forward or backward
-	L′ = itp_L(0.0, aprime)
-
-	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
-
-	return L
-end
-
-next_a(ct::Plan, av, apv, π) = ϕ(ct, av, π)
+next_a(ct::Plan, av, apv, π) = ifelse(ct.use_a, ϕ(ct, av), ϕ(ct, av) + ct.ψ * (π-av))
 next_a(ct::DovisKirpalani, av, apv, π) = apv
 
-function cond_L_inner(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′) where T <: PhillipsCurve
-	# ge = itp_gπ(pv, av)
-	pprime = Bayes(ct, obs_π, ge, pv, av)
+function cond_L_inner(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′) where {T<:PhillipsCurve}
+    # ge = itp_gπ(pv, av)
+    pprime = Bayes(ct, obs_π, ge, pv, av)
 
-	πe = pv*av + (1-pv)*ge
+    πe = pv * av + (1 - pv) * ge
 
-	aprime = next_a(ct, av, aprime, obs_π)
+    a_min, a_max = extrema(ct.agrid)
 
-	# if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
-	itp_L  = extrapolate(itp_L,  Interpolations.Flat())
-	itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
-	itp_C  = extrapolate(itp_C, Interpolations.Flat())
-	# end
+    π_today = max(a_min, min(a_max, obs_π))
+    aprime = next_a(ct, av, aprime, π_today)
+    aprime = max(a_min, min(a_max, aprime))
 
-	L′ = itp_L(pprime, aprime)
-	exp_π′ = 0.0
-	if T == Forward
-		exp_π′ = pprime * aprime + (1.0-pprime) * itp_gπ(pprime, aprime)
-	end
+    # if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
+    itp_L = extrapolate(itp_L, Interpolations.Flat())
+    itp_gπ = extrapolate(itp_gπ, Interpolations.Flat())
+    itp_C = extrapolate(itp_C, Interpolations.Flat())
+    # end
 
-	y = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
-	L = (ct.ystar-y)^2 + ct.γ * obs_π^2 + ct.β * L′
-	C′ = itp_C(pprime, aprime)
+    L′ = itp_L(pprime, aprime)
+    exp_π′ = 0.0
+    if T == Forward
+        exp_π′ = pprime * aprime + (1.0 - pprime) * itp_gπ(pprime, aprime)
+    end
 
-	return L, pprime, y, C′
-end
+    y = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
+    L = (ct.ystar - y)^2 + ct.γ * obs_π^2 + ct.β * L′
+    C′ = itp_C(pprime, aprime)
 
-function cond_L(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
-	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
-	return L
-end	
-function cond_L_others(ct::Plan, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
-	L, pprime, y, C′ = cond_L_inner(ct, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′)
-	return y, pprime, C′
+    return L, pprime, y, C′
 end
 
 get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
@@ -123,11 +68,11 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge
 
 	sum_prob = get_sumprob(ct)
 
-	f_y(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[1] * pdf_ϵ(ct, ϵv)
+	f_y(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[3] * pdf_ϵ(ct, ϵv)
 	Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	f_p(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[2] * pdf_ϵ(ct, ϵv)
 	Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[3] * pdf_ϵ(ct, ϵv)
+	f_C(ϵv) = cond_L_others(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[4] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
 	Ey = Ey / sum_prob
@@ -139,7 +84,7 @@ end
 
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′) * pdf_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[1] * pdf_ϵ(ct, ϵv)
 	val, err = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
@@ -344,7 +289,7 @@ function pfi!(ct::Plan, Egπ; tol::Float64=1e-12, maxiter::Int64=250, verbose::B
 	return (dist <= tol), new_gπ
 end
 
-decay_η(ct::Plan, η) = max(0.95*η, 5e-6)
+decay_η(ct::Plan, η) = max(0.95*η, 1e-6)
 
 function report_start(ct::CrazyType)
 	print_save("\nRun with ω = $(@sprintf("%.3g",ct.ω)), χ = $(@sprintf("%.3g",annualized(ct.χ)))% at $(Dates.format(now(), "HH:MM"))")
@@ -420,11 +365,12 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		flag, new_gπ = pfi!(ct, old_gπ; verbose=verbose, reset_guess=reset_guess, tol=tol_pfi);
 		reset_guess = !flag
 
-		norm_gπ = max(sqrt.(sum(annualized.(ct.gπ) .^2)) / length(annualized.(ct.gπ)), 20tol)
-		dist_π = sqrt.(sum( (annualized.(new_gπ)  - annualized.(ct.gπ) ).^2 ))/length(annualized.(ct.gπ)) / norm_gπ
-		norm_ga = max(sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga)), 20tol)
-		dist_a = sqrt.(sum( (annualized.(ct.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / norm_ga
+		norm_gπ = sqrt.(sum(annualized.(ct.gπ) .^2)) / length(annualized.(ct.gπ))
+		dist_π = sqrt.(sum( (annualized.(new_gπ)  - annualized.(ct.gπ) ).^2 ))/length(annualized.(ct.gπ)) / max(norm_gπ, 20tol)
+		norm_ga = sqrt.(sum(annualized.(old_ga) .^2)) / length(annualized.(old_ga))
+		dist_a = sqrt.(sum( (annualized.(ct.ga)  - annualized.(old_ga) ).^2 ))/length(annualized.(old_ga)) / max(norm_ga, 20tol)
 		dist = max(dist_π, dist_a/10)
+		
 		push!(dists, dist)
 		rep_status = "\nAfter $iter iterations, d(π) = $(@sprintf("%0.3g",dist)) at |π,a| = ($(@sprintf("%0.3g",norm_gπ)), $(@sprintf("%0.3g",norm_ga)))"
 		if flag
@@ -433,23 +379,11 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 		if verbose #&& iter % 10 == 0
 			print_save(rep_status*"\n", true)
 		else
-			print(rep_status)
+			println(rep_status)
 		end
 
 		ct.gπ = upd_η * new_gπ + (1-upd_η) * ct.gπ;
 		ct.ga = upd_η * ct.ga + (1-upd_η) * old_ga;
-
-		if tempplots && (iter % 5 == 0 || dist <= tol)
-			p1, pL, pE, pC, pp, _ = makeplots_ct_pa(ct);
-			relayout!(p1, title="iter = $iter")
-			savejson(p1, pwd()*"/../Graphs/tests/temp.json")
-			relayout!(pL, title="iter = $iter")
-			savejson(pL, pwd()*"/../Graphs/tests/tempL.json")
-			# relayout!(pE, title="iter = $iter")
-			# savejson(pE, pwd()*"/../Graphs/tests/tempLpE.json")
-			p2 = makeplot_conv(dists; switch_η=switch_η);
-			savejson(p2, pwd()*"/../Graphs/tests/tempconv.json")
-		end
 
 		if iter == floor(Int, switch_η*0.4)
 			upd_η = min(upd_η, 0.01)
@@ -482,11 +416,6 @@ function Epfi!(ct::Plan; tol::Float64=5e-4, maxiter::Int64=2500, verbose::Bool=t
 	elseif verbose
 		print_save("\nAfter $iter iterations, d(L) = $(@sprintf("%0.3g",dist))",true)
 	end
-	if dist <= tol
-		p1, pL, pπ, pC, pp, _ = makeplots_ct_pa(ct);
-		savejson(pC, pwd()*"/../Graphs/tests/tempC.json")
-		savejson(pπ, pwd()*"/../Graphs/tests/tempg.json")
-	end
 	
 	return dist
 end
@@ -501,7 +430,7 @@ end
 
 function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose = true)
 	T = which_PC(ct)
-	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
+	ct_best = CrazyType(T; γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar, use_a=ct.use_a)
 
 	if T == Simultaneous
 		ωmax = 3.0
@@ -611,7 +540,7 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 				old_L, old_gπ = copy(old_ct.L), copy(old_ct.gπ)
 			end
 
-			ct = CrazyType(T; χ=χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, ystar=ct.ystar)
+			ct = CrazyType(T; χ=χv, γ=ct.γ, κ=ct.κ, σ=ct.σ, β=ct.β, use_a = ct.use_a, ystar=ct.ystar)
 			
 			ct.L, ct.gπ = old_L, old_gπ
 			
@@ -655,35 +584,35 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 				ct_best.ω, ct_best.χ = ωv, χv
 				ct_best.L, ct_best.gπ = ct.L, ct.gπ
 
-				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct);
-				savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
-				savejson(pπ, pwd()*"/../Graphs/tests/opt_g.json")
-				savejson(pp, pwd()*"/../Graphs/tests/opt_p.json")
+				# _, pL, pπ, _, pp, _ = makeplots_ct_pa(ct);
+				# savejson(pL, pwd()*"/../Graphs/tests/opt_L.json")
+				# savejson(pπ, pwd()*"/../Graphs/tests/opt_g.json")
+				# savejson(pp, pwd()*"/../Graphs/tests/opt_p.json")
 
 
-				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
-				savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
-				savejson(pLsim,pwd()*"/../Graphs/tests/simul_Lopt.json")
+				# psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+				# savejson(psim, pwd()*"/../Graphs/tests/simul_opt.json")
+				# savejson(pLsim,pwd()*"/../Graphs/tests/simul_Lopt.json")
 			end
-			if jω == length(ωgrid) && jχ == 1
-				psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
-				savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
-				savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
-				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=true);
-				savejson(pL, pwd()*"/../Graphs/tests/first_L_slides.json")
-				savejson(pπ, pwd()*"/../Graphs/tests/first_g_slides.json")
-				savejson(pp, pwd()*"/../Graphs/tests/first_p_slides.json")
-				_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=false);
-				savejson(pL, pwd()*"/../Graphs/tests/first_L_paper.json")
-				savejson(pπ, pwd()*"/../Graphs/tests/first_g_paper.json")
-				savejson(pp, pwd()*"/../Graphs/tests/first_p_paper.json")
-				save("../Output/first_ct.jld2", "ct", ct)
-			end
+			# if jω == length(ωgrid) && jχ == 1
+			# 	psim, pLsim = plot_simul(ct, T = 40, N = 50000, jp0 = 3)
+			# 	savejson(psim, pwd()*"/../Graphs/tests/simul_1.json")
+			# 	savejson(pLsim,pwd()*"/../Graphs/tests/simul_L1.json")
+			# 	_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=true);
+			# 	savejson(pL, pwd()*"/../Graphs/tests/first_L_slides.json")
+			# 	savejson(pπ, pwd()*"/../Graphs/tests/first_g_slides.json")
+			# 	savejson(pp, pwd()*"/../Graphs/tests/first_p_slides.json")
+			# 	_, pL, pπ, _, pp, _ = makeplots_ct_pa(ct, slides=false);
+			# 	savejson(pL, pwd()*"/../Graphs/tests/first_L_paper.json")
+			# 	savejson(pπ, pwd()*"/../Graphs/tests/first_g_paper.json")
+			# 	savejson(pp, pwd()*"/../Graphs/tests/first_p_paper.json")
+			# 	save("../Output/first_ct.jld2", "ct", ct)
+			# end
 
-			for slides in [true, false]
-				pCct = plot_L_contour(ωgrid, χgrid, C_mat[:,:,3,ja_min], name_y="C", slides=slides)
-				savejson(pCct, pwd()*"/../Graphs/tests/Ccontour$(ifelse(slides, "_slides", "_paper")).json")
-			end
+			# for slides in [true, false]
+			# 	pCct = plot_L_contour(ωgrid, χgrid, C_mat[:,:,3,ja_min], name_y="C", slides=slides)
+			# 	savejson(pCct, pwd()*"/../Graphs/tests/Ccontour$(ifelse(slides, "_slides", "_paper")).json")
+			# end
 
 		end
 
@@ -703,24 +632,14 @@ function choose_ω!(L_mat, ct::CrazyType, Nω=size(L_mat,1); upd_η=0.1, verbose
 		new_a = scatter(;x=ω_vec, y=annualized.(a_vec), name = "χ = $(@sprintf("%.3g",annualized(χv)))%")
 		push!(aplot, new_a)
 
-		#=
-			if remote
-				p1 = makeplots_ct_pa(ct)
-				relayout!(p1, title="ω = $(@sprintf("%.3g",ct.ω))", width=1200, height=900)
-				savejson(p1, pwd()*"/../Graphs/tests/summary_jom_$(jω).json")
-
-				p2 = plot_simul(ct);
-				savejson(p2, pwd()*"/../Graphs/tests/simul_jom_$(jω).json");
-			end
-		=#
 	end
 
 	print_save("\nWent through the spectrum of ω's in $(time_print(time()-t0))")
 	print_save("\nOverall minimum announcement c = (a₀, ω, χ) = $(annualized(a_min)), $ω_min, $(annualized(χ_min))")
 
 	for slides = [true, false]
-		p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid, slides=slides)
-		savejson(p1, pwd()*"/../Graphs/tests/plans$(ifelse(slides, "_slides", "_paper")).json")
+		# p1 = plot_plans_p(ct, L_mat, ωgrid, χgrid, slides=slides)
+		# savejson(p1, pwd()*"/../Graphs/tests/plans$(ifelse(slides, "_slides", "_paper")).json")
 	end
 
 	ν = ones(length(ωgrid), length(χgrid), length(ct_best.agrid))
@@ -751,20 +670,20 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false, verbose::Bool
 			if verbose && disp > 1e-4
 				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
-			pv = res.minimizer
+			pv = res.minimizer # p0 to get value k in the current type
 
-			νv = mt.ν[jω, jχ, ja]
+			νv = mt.ν[jω, jχ, ja] # Get density of the current type
 			res = Optim.optimize(
 				μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
 			disp = res.minimum
 			if verbose && disp > 1e-4
 				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
 			end
-			μv = res.minimizer
+			μv = res.minimizer # probability of announcement to start with p0
 
 			μ[jω, jχ, ja] = μv
 		end
-		p0[jω, jχ, ja] = pv
+		p0[jω, jχ, ja] = pv # Save p0
 	end
 	if get_mu
 		knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
@@ -830,7 +749,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 	k_min = minimum(L_mat[:,:,jp0,:]) # lower loss 
 	V = var(L_mat[:,:,1,:])
 	if V > 1e-4
-		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V))")
+		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V)), should be 0")
 	end
 
 	knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
