@@ -213,8 +213,24 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
 
     obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, ge, πe′)
 
-    res = Optim.optimize(obj_f, minπ, maxπ, Brent())
-    gπ, L = res.minimizer, res.minimum
+    try
+        res = Optim.optimize(
+            gπ -> obj_f(first(gπ)),
+            [π_guess], LBFGS()
+        )
+        # od = OnceDifferentiable(obj_f, [π_guess]; autodiff = :forward)
+        # # res = Optim.optimize(od, [π_guess], BFGS())
+        # res = Optim.optimize(od, [minπ], [maxπ], [π_guess], Fminbox(BFGS()))
+
+        gπ::Float64, L::Float64 = first(res.minimizer), res.minimum
+        if Optim.converged(res)
+            return gπ, L, aprime
+        end
+    catch
+    end
+
+    resb = Optim.optimize(obj_f, minπ, maxπ, Brent())
+    gπ, L = resb.minimizer, resb.minimum
 
     return gπ, L, aprime
 end
