@@ -3,8 +3,8 @@ using Distributions, Interpolations, Optim, HCubature, QuantEcon, Printf, Plotly
 include("type_def.jl")
 include("reporting_routines.jl")
 include("simul.jl")
-# include("plotting_routines.jl")
-include("planner.jl")
+include("plotsct.jl")
+# include("planner.jl")
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	
