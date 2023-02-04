@@ -76,7 +76,7 @@ mutable struct DovisKirpalani{T<:PhillipsCurve} <: Plan{T}
 	Ep::Array{Float64, 2}
 end
 DovisKirpalani(ct::CrazyType{T}) where T <: PhillipsCurve = DovisKirpalani{T}(ct.β, ct.γ, ct.κ, ct.σ, ct.ystar, ct.pgrid, ct.agrid, ct.Np, ct.Na, ct.gπ, ct.ga, ct.L, ct.C, ct.Ey, ct.Eπ, ct.Ep)
-CrazyType(dk::DovisKirpalani{T}; ω=0.0, χ=0.0) where T <: PhillipsCurve = CrazyType{T}(dk.β, dk.γ, dk.κ, dk.σ, dk.ystar, ω, χ, dk.pgrid, dk.agrid, dk.Np, dk.Na, dk.gπ, dk.ga, dk.L, dk.C, dk.Ey, dk.Eπ, dk.Ep)
+CrazyType(dk::DovisKirpalani{T}; ω=0.0, χ=0.0, use_a = false, ψ = 0.0) where T <: PhillipsCurve = CrazyType{T}(dk.β, dk.γ, dk.κ, dk.σ, dk.ystar, ω, χ, use_a, ψ, dk.pgrid, dk.agrid, dk.Np, dk.Na, dk.gπ, dk.ga, dk.L, dk.C, dk.Ey, dk.Eπ, dk.Ep)
 
 function switch_PC(pp::DovisKirpalani{T}, T2::PhillipsCurve) where T<:PhillipsCurve
 	if T == T2
@@ -99,6 +99,7 @@ mutable struct MultiType
 
 	L_mat::Array{Float64, 4}
 	C_mat::Array{Float64, 4}
+	g_mat::Array{Float64, 4}
 end
 
 mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
@@ -211,7 +212,8 @@ function CrazyType(T::DataType;
 		ω = 0.1,
 		χ = 0.0,
 		Np = 50,
-		Na = 50
+		Na = 50,
+		cut_0 = false,
 		)
 
 	if T == Simultaneous
@@ -221,6 +223,9 @@ function CrazyType(T::DataType;
 	A = Nash(T, β, γ, κ, ystar)
 
 	pgrid = cdf.(Beta(5,3), range(0,1,length=Np))
+	if cut_0
+		pgrid = cdf.(Beta(3,3), range(0,1,length=Np+1))[2:end]
+	end
 	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
 	move_grids!(agrid, xmax=A, xmin=0.0)
 
@@ -238,6 +243,31 @@ function CrazyType(T::DataType;
 	Ep = zeros(Np, Na)
 
 	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, use_a, ψ, pgrid, agrid, Np, Na, gπ, ga, L, C, Ey, Eπ, Ep)
+end
+
+function MultiType(ct::CrazyType;
+	Nω = 20,
+	Nχ = 35,
+	χmin = 0.0,
+	χmax = 0.6 * Nash(ct),
+	)
+
+	z = 1e-4
+	
+	Na = length(ct.agrid)
+	Np = length(ct.pgrid)
+
+	ωgrid = -log.(range(0, 1, length=2+Nω))[2:end-1]
+	χgrid = range(χmin, χmax, length = Nχ)
+	
+	ν = ones(Nω, Nχ, Na)
+	μ = ones(Nω, Nχ, Na)
+
+	L_mat = zeros(Nω, Nχ, Np, Na)
+	C_mat = zeros(Nω, Nχ, Np, Na)
+	g_mat = zeros(Nω, Nχ, Np, Na)
+
+	return MultiType(ct, ωgrid, χgrid, z, ν, μ, L_mat, C_mat, g_mat)
 end
 
 ϕ(a::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
