@@ -35,12 +35,19 @@ end
 function hplot(ct::CrazyType; kwargs...)
     y = [ct.gπ[jp, ja] - av for jp in eachindex(ct.pgrid), (ja, av) in enumerate(ct.agrid)]
 
-    ctplot(ct, annualized.(y); kwargs...)
+    ctplot(ct, annualized.(y), title = "<i>g<sup>⋆</sup> - a"; kwargs...)
+end
+
+
+function Eplot(ct::CrazyType; kwargs...)
+    y = [ct.Ep[jp, ja] .- pv for (jp, pv) in enumerate(ct.pgrid), ja in eachindex(ct.agrid)]
+
+    ctplot(ct, y, title = "𝔼[<i>p'-p</i>]"; kwargs...)
 end
 
 gplot(ct::CrazyType; kwargs...) = ctplot(ct, annualized.(ct.gπ); kwargs...)
-Lplot(ct::CrazyType; kwargs...) = ctplot(ct, ct.L; kwargs...)
-function ctplot(ct::CrazyType, y::Array; slides=true, dark=false)
+Lplot(ct::CrazyType; kwargs...) = ctplot(ct, ct.L, title = "𝓛"; kwargs...)
+function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, kwargs...)
 
     vv = [ja / length(ct.agrid) for ja in eachindex(ct.agrid)]
     if dark
@@ -49,24 +56,26 @@ function ctplot(ct::CrazyType, y::Array; slides=true, dark=false)
         col = get(ColorSchemes.lapaz, 0.9 * vv, :clamp)
     end
 
+    min_a, max_a = annualized.(extrema(ct.agrid)) ./ annualized.(Nash(ct))
+
     jp = round(Int, length(ct.pgrid)/2)
 	xs = [ct.pgrid[jp] for _ in axes(y, 2)]
     ys = [y[jp, ja] for ja in axes(y, 2)]
     cols = range(0,1,length=length(xs))
 	colscale = [[(jp-1)/(length(col)-1), col[jp]] for jp in eachindex(col)]
-    colnames = round.(range(0, 1, length=6), digits=2)
+    colnames = round.(range(min_a, max_a, length=6), digits=2)
 
     data = [
         scatter(mode = "markers", marker_opacity = 0,
 				x = xs, y = ys, showlegend=false,
-				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(0,1,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
+				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(min_a, max_a,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
-        [scatter(x = ct.pgrid, y = y[:, ja], line_width = 2, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.agrid) if ja % 2 == 0]
+        [scatter(x = ct.pgrid, y = y[:, ja], line_width = 2, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.agrid) if ja % 1 == 0]
     ]
 
     template = qtemplate(dark = dark, slides = slides)
 
-    layout = Layout(template = template, hovermode ="x unified", showlegend=false)
+    layout = Layout(template = template, xaxis_title = "<i>p", hovermode ="x unified", showlegend=false; kwargs...)
 
     plot(data[end:-1:1], layout)
 end
@@ -81,8 +90,10 @@ function Lplot(mt::MultiType; jp = 2, kwargs...)
     title = "lim<sub><i>p→0</i></sub> min<sub><i>a</i></sub> 𝓛(<i>p,a,ω,χ</i>)"
     shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color = "#08282e", fillcolor="#08282e", type = "circle")]
 
+    xt = "Decay rate (%)"
+    yt = "Asymptote (χ)"
 
-    ctplot(mt, L; title = title, shapes = shape_vec, kwargs...)
+    ctplot(mt, L; title = title, xaxis_title = xt, yaxis_title = yt, shapes = shape_vec, kwargs...)
 end
 
 function ctplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
