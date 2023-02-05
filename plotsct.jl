@@ -113,3 +113,36 @@ function ctplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
     plot(data, layout)
 end
 
+function plansp(mt::MultiType; slides = true, dark = false)
+    Np = mt.ct.Np
+
+	data = zeros(Np, 3)
+    for jp in axes(data, 1)
+        
+        _, jj = findmin(mt.L_mat[:, :, jp, :])
+        
+        data[jp, 1] = perc_rate(mt.ωgrid[jj[1]])
+        data[jp, 2] = annualized(mt.ct.agrid[jj[3]])
+        data[jp, 3] = annualized(mt.χgrid[jj[2]])
+    end
+    
+    datanames = ["ω", "a<sub>0", "χ"]
+    yax = ["y2", "y1", "y1"]
+    
+    cols = [get(ColorSchemes.southwest, jj, :clamp) for jj in [0, 0.5, 1]]
+    lines = [
+        scatter(;x=mt.ct.pgrid[2:end], y=data[2:end, jj], line_width = 2.5, yaxis=yax[jj], marker_color=cols[jj], name="<i>"*datanames[jj]*"</i>") for jj in eachindex(datanames)
+    ]
+
+	layout = Layout(
+        template = qtemplate(dark = dark, slides = slides),
+        hovermode = "x",
+		yaxis = attr(domain=[0, 0.45], zeroline=false, title="<i>%"),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
+		xaxis = attr(zeroline=false, title="<i>p<sub>0"),
+		legend = attr(orientation="h", x=0.05),
+		title="Preferred plans",
+    )
+
+    plot(lines, layout)
+end

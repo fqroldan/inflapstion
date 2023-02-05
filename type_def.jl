@@ -246,8 +246,8 @@ function CrazyType(T::DataType;
 end
 
 function MultiType(ct::CrazyType;
-	Nω = 20,
-	Nχ = 35,
+	Nω = 40,
+	Nχ = 30,
 	χmin = 0.0,
 	χmax = 0.6 * Nash(ct),
 	)
