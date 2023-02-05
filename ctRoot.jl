@@ -144,11 +144,10 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim = true)
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
 		
 		aprime = ct.ga[jp, ja]
-		π_guess = ct.gπ[jp, ja]
+		ge = ct.gπ[jp, ja]
 
-		xguess = [π_guess, aprime]
+		xguess = [ge, aprime]
 
-		ge = π_guess
 		πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, aprime)
 
 		if optim
@@ -206,7 +205,7 @@ function update_others!(ct::Plan, new_others, upd_η2)
 	nothing
 end
 
-function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-4, maxiter::Int64=2000, verbose::Bool=true, accelerate = true)
+function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000, verbose::Bool=true, accelerate = true)
 	dist = 10.
 	iter = 0
 	upd_η = 1
