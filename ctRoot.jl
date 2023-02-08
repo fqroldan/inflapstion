@@ -278,7 +278,7 @@ function solve_all!(mt::MultiType; verbose = true)
 		mt.g_mat[jω, jχ, :, :] .= ct.gπ
 		
 		perc = 100 * iter / tot
-		verbose && print(" $(round(perc, sigdigits=2))% completed.\n")
+		verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")
 	end
 end
 
