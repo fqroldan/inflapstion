@@ -65,18 +65,12 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge
 
 	sum_prob = get_sumprob(ct)
 
-	f_y(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[3] * pdf_ϵ(ct, ϵv)
-	Ey, err = hquadrature(f_y, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
-	f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[2] * pdf_ϵ(ct, ϵv)
-	Ep, err = hquadrature(f_p, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[4] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
-	Ey = Ey / sum_prob
-	Ep = Ep / sum_prob
 	Ec = Ec / sum_prob
 
-	return Ey, Ep, Ec
+	return Ec
 end
 
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
@@ -130,8 +124,6 @@ end
 function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim = true)
 	gπ, ga = zeros(size(ct.gπ)), zeros(size(ct.ga))
 	L  	   = zeros(size(ct.L))
-	Ey, Eπ = zeros(size(ct.Ey)), zeros(size(ct.Eπ))
-	Ep, C  = zeros(size(ct.Ep)), zeros(size(ct.C))
 	πN 	   = Nash(ct)
 	
 	h = 0.05 * πN
@@ -172,37 +164,81 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim = true)
 		L[jp, ja] = Lc
 		ga[jp, ja] = ap
 
-		Ey[jp, ja], Ep[jp, ja], EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, Gc, pv, av, aprime, ge, πe′)
-		Eπ[jp, ja] = pv * av + (1.0 - pv) * Gc
-
-		if av >= πN || isapprox(av, πN)
-			C[jp, ja] = (1-ct.β)*1 + ct.β * EC′
-		else
-			C[jp, ja] = (1-ct.β)*(πN - Eπ[jp,ja])/(πN-av) + ct.β * EC′
-		end
 	end
-	return gπ, L, Ey, Eπ, Ep, C, ga
+	return gπ, L
 end
 
 function pf_iter(ct::Plan; optim=true)
-	knots = (ct.pgrid, ct.agrid);
-	itp_gπ = interpolate(knots, ct.gπ, Gridded(Linear()));
-	itp_L  = interpolate(knots, ct.L, Gridded(Linear()));
-	itp_C  = interpolate(knots, ct.C, Gridded(Linear()));
+	knts = (ct.pgrid, ct.agrid);
+	itp_gπ = interpolate(knts, ct.gπ, Gridded(Linear()));
+	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
+	itp_C  = interpolate(knts, ct.C, Gridded(Linear()));
 
-	new_gπ, new_L, new_y, new_π, new_p, new_C, new_a = optim_step(ct, itp_gπ, itp_L, itp_C, optim)
+	new_gπ, new_L = optim_step(ct, itp_gπ, itp_L, itp_C, optim)
 
-	return new_gπ, new_L, [new_y, new_π, new_p, new_C, new_a]
+	return new_gπ, new_L
 end
 
-function update_others!(ct::Plan, new_others, upd_η2)
-	new_y, new_π, new_p, new_C, new_a = new_others[:]
-	ct.Ey = new_y
-	ct.Eπ = new_π
-	ct.Ep = new_p
-	ct.C  = new_C
-	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
-	nothing
+# function update_others!(ct::Plan, new_others, upd_η2)
+# 	new_y, new_π, new_p, new_C, new_a = new_others[:]
+# 	ct.Ey = new_y
+# 	ct.Eπ = new_π
+# 	ct.Ep = new_p
+# 	ct.C  = new_C
+# 	ct.ga = ct.ga + upd_η2 * (new_a - ct.ga)
+# 	nothing
+# end
+
+function iter_cred!(new_C, ct::Plan, itp_C, itp_gπ, itp_L)
+	πN = Nash(ct)
+
+	apgrid = gridmake(1:ct.Np, 1:ct.Na)
+	Threads.@threads for js in axes(apgrid,1)
+		jp, ja = apgrid[js, :]
+		pv, av = ct.pgrid[jp], ct.agrid[ja]
+
+		aprime = ct.ga[jp, ja]
+		ge = ct.gπ[jp, ja]
+		
+		πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, aprime)
+		
+		EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, ge, pv, av, aprime, ge, πe′)
+
+		Eπ = pv * av + (1-pv) * ge
+
+		if πN > av
+			new_C[jp, ja] = (1-ct.β)*(πN - Eπ)/(πN-av) + ct.β * EC′
+		else
+			new_C[jp, ja] = (1-ct.β) * 1 + ct.β * EC′
+		end
+	end
+end
+		
+
+function cred_vfi!(ct::Plan; tol = 1e-5, maxiter = 2000, verbose = false)
+	dist, iter = 1+tol, 0
+
+	knts = (ct.pgrid, ct.agrid)
+	itp_gπ = interpolate(knts, ct.gπ, Gridded(Linear()));
+	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
+
+	new_C = similar(ct.C)
+	while dist > tol && iter < maxiter
+		iter += 1
+		verbose && print("iter $iter: ")
+
+		itp_C = interpolate(knts, ct.C, Gridded(Linear()));
+
+		iter_cred!(new_C, ct, itp_C, itp_gπ, itp_L)
+
+		norm_C = max(1, norm(ct.C))
+		dist = norm(new_C - ct.C) / norm_C
+
+		verbose && print("d, n = $dist, $norm_C\n")
+		ct.C .= new_C
+	end
+	verbose && print("Converged in $iter iterations.\n")
+	norm(ct.C)
 end
 
 function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000, verbose::Bool=true, accelerate = true)
@@ -218,13 +254,13 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000
 		if accelerate && dist < min(1e-2, tol * 100)
 			verbose && print("Acceleration step\n")
 			for _ in 1:10
-			_, new_L, _ = pf_iter(ct, optim = false)
+			_, new_L = pf_iter(ct, optim = false)
 			ct.L  = upd_η * new_L  + (1.0-upd_η) * ct.L
 			end
 		end
 		
-		new_gπ, new_L, new_others = pf_iter(ct, optim = true)
-		update_others!(ct, new_others, upd_η)
+		new_gπ, new_L = pf_iter(ct, optim = true)
+		# update_others!(ct, new_others, upd_η)
 
 		norm_L = max(1, norm(ct.L))
 		norm_g = max(1, norm(ct.gπ))
@@ -246,10 +282,12 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000
 		print("After $iter iterations, d(L) = $(@sprintf("%0.3g",dist))\n")
 	end
 
+	cred_vfi!(ct)
+
 	return (dist <= tol)
 end
 
-function solve_all!(mt::MultiType; verbose = true)
+function solve_all!(mt::MultiType; verbose = true, check = false)
 	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid)
@@ -268,6 +306,11 @@ function solve_all!(mt::MultiType; verbose = true)
 
 		ct.ω = ωv
 		ct.χ = χv
+		update_ga!(ct)
+		if check
+			ct.L .= mt.L_mat[jω, jχ, :, :]
+			ct.gπ .= mt.g_mat[jω, jχ, :, :]
+		end
 
 		flag = pfi!(ct, verbose = false)
 		verbose && flag && print(": ✓")
@@ -301,26 +344,30 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false, verbose::Bool
 
 			disp = sqrt(res.minimum)
 			if verbose && disp > 1e-4
-				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
+				print("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)\n")
 			end
 			pv = res.minimizer # p0 to get value k in the current type
 
 			νv = mt.ν[jω, jχ, ja] # Get density of the current type
-			res = Optim.optimize(
-				μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
-			disp = res.minimum
-			if verbose && disp > 1e-4
-				print_save("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)")
+			μv = (1-pv)/pv * mt.z/(1-mt.z) * νv # probability of announcement to start with p0
+			if (Bayes_plan(νv, mt.z, μv) - pv)^2 > 1e-4
+				print("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)\n")
 			end
-			μv = res.minimizer # probability of announcement to start with p0
+			# res = Optim.optimize(
+			# 	μ -> (Bayes_plan(νv, mt.z, μ) - pv)^2, 0, 1, GoldenSection())
+			# disp = res.minimum
+			# if verbose && disp > 1e-4
+			# 	print("WARNING: Couldn't find p0 at state ($ωv, $χv, $av)\n")
+			# end
+			# μv = res.minimizer # probability of announcement to start with p0
 
 			μ[jω, jχ, ja] = μv
 		end
 		p0[jω, jχ, ja] = pv # Save p0
 	end
 	if get_mu
-		knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
-		itp_C = interpolate(knots, mt.C_mat[end:-1:1,:,:,:], Gridded(Linear()))
+		knts = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
+		itp_C = interpolate(knts, mt.C_mat[end:-1:1,:,:,:], Gridded(Linear()))
 		C_eqm = [ itp_C(ωv, χv, p0[jω, jχ, ja], av) for (jω, ωv) in enumerate(ωgrid), (jχ, χv) in enumerate(χgrid), (ja, av) in enumerate(agrid) ]
 		C_mat = [ sum( [itp_C(ωv, χv, p0[jω, jχ, ja], av) * sum(μ[jω, jχ, ja]) for (ja, av) in enumerate(agrid)] ) for (jω, ωv) in enumerate(ωgrid), (jχ, χv) in enumerate(χgrid) ]
 		return μ, C_eqm, C_mat
@@ -376,13 +423,11 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 	L_mat = mt.L_mat
 
-	jp0 = floor(Int, length(mt.ct.pgrid)*0.9)
-
 	k_max = mean(L_mat[:,:,1,:]) # mean L when p = 0 (should be constant across plans)
-	k_min = minimum(L_mat[:,:,jp0,:]) # lower loss 
+	k_min = minimum(L_mat[:,:,end,:]) # lower loss 
 	V = var(L_mat[:,:,1,:])
 	if V > 1e-4
-		print_save("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V)), should be 0")
+		print("WARNING: variance of Lᴺ = $(@sprintf("%0.3g",V)), should be 0\n")
 	end
 
 	knots = (ωgrid[end:-1:1], χgrid, pgrid, agrid)
@@ -393,7 +438,7 @@ function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
 		k_min, k_max, GoldenSection())
 
 	if res.minimum > 1e-4
-		print_save("WARNING: Couldn't find μ at z = $z0")
+		print("WARNING: Couldn't find μ at z = $z0\n")
 	end
 
 	k_star = res.minimizer
@@ -419,3 +464,4 @@ function mimic_z(mt::MultiType, N=100; decay::Bool=false, annualize::Bool=false)
 
 	return data, datanames, zgrid
 end
+
