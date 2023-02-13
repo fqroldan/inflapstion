@@ -100,7 +100,7 @@ function solve_t0(mt::MultiType)
         m0.L[jω, jχ, ja, :, :] .= L
         m0.G[jω, jχ, ja, :, :] .= G
         
-        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))\n")
+        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))%\n")
     end
 
     return m0
