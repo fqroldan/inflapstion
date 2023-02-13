@@ -79,16 +79,17 @@ end
 function solve_t0(mt::MultiType)
 
     m0 = Prequel(mt)
-
     ct = mt.ct
+
+    finalshare = 0.0
     
-	tot  = length(m0.ωgrid) * length(m0.χgrid) * length(m0.agrid)
     iter = 0
+	tot  = length(m0.ωgrid) * length(m0.χgrid) * length(m0.agrid)
     for (jω, ωv) in enumerate(m0.ωgrid), (jχ, χv) in enumerate(m0.χgrid), (ja, av) in enumerate(m0.agrid)
         iter += 1
 
-        ct.L = copy(mt.L_mat[jω, jχ, :, :])
-        ct.gπ = copy(mt.g_mat[jω, jχ, :, :])
+        ct.L  .= mt.L_mat[jω, jχ, :, :]
+        ct.gπ .= mt.g_mat[jω, jχ, :, :]
         
         ct.ω = ωv
         ct.χ = χv
@@ -96,11 +97,13 @@ function solve_t0(mt::MultiType)
         
 		update_ga!(ct)
         G, L, share = pf_iter(ct, aprime)
+
+        finalshare = finalshare * (iter-1)/iter + share / iter
         
         m0.L[jω, jχ, ja, :, :] .= L
         m0.G[jω, jχ, ja, :, :] .= G
         
-        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))%\n")
+        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))%. So far share = $(@sprintf("%.3g", 100*finalshare))%\n")
     end
 
     return m0
