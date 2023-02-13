@@ -48,7 +48,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
         res = Optim.optimize(obj, Gmin, Gmax, GoldenSection())
         
         tot += 1
-        if res.minimum < 1e-6
+        if sqrt(res.minimum) < 5e-4
             Gc = res.minimizer
         else
             broken += 1
@@ -103,7 +103,7 @@ function solve_t0(mt::MultiType)
         m0.L[jω, jχ, ja, :, :] .= L
         m0.G[jω, jχ, ja, :, :] .= G
         
-        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))%. So far share = $(@sprintf("%.3g", 100*finalshare))%\n")
+        print("Plan $iter of $tot: share > tol = $(@sprintf("%.3g", 100*share))%. So far share = $(@sprintf("%.3g", 100*finalshare))%\n")
     end
 
     return m0
