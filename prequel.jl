@@ -28,25 +28,30 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
 
 	h = 0.05 * πN
 	Gmin, Gmax = -h, πN + h
+
+    broken = 0
+    tot = 0
 	
 	apgrid = gridmake(1:ct.Np, 1:ct.Na)
 	Threads.@threads for js in axes(apgrid,1)
 		jp, ja = apgrid[js, :]
 		pv, av = ct.pgrid[jp], ct.agrid[ja]
-
+        
 		ge = ct.gπ[jp, ja]
-
+        
 		xguess = [ge, aprime]
-
+        
 		πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, aprime)
-
+        
         obj(G) = (G - opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, G, πe′, use_ϕ = false)[1])^2
-
+        
         res = Optim.optimize(obj, Gmin, Gmax, GoldenSection())
-
+        
+        tot += 1
         if res.minimum < 1e-6
             Gc = res.minimizer
         else
+            broken += 1
             Gc = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′, use_ϕ = false)[1]
         end
 
@@ -56,7 +61,8 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
 		L[jp, ja] = Lc
 
 	end
-	return gπ, L
+    share = broken / tot
+	return gπ, L, share
 end
 
 function pf_iter(ct::Plan, aprime::Number)
@@ -65,9 +71,9 @@ function pf_iter(ct::Plan, aprime::Number)
 	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
 	itp_C  = interpolate(knts, ct.C, Gridded(Linear()));
 
-	new_gπ, new_L = optim_step(ct, itp_gπ, itp_L, itp_C, aprime)
+	new_gπ, new_L, share = optim_step(ct, itp_gπ, itp_L, itp_C, aprime)
 
-	return new_gπ, new_L
+	return new_gπ, new_L, share
 end
 
 function solve_t0(mt::MultiType)
@@ -89,12 +95,12 @@ function solve_t0(mt::MultiType)
         aprime = av
         
 		update_ga!(ct)
-        G, L = pf_iter(ct, aprime)
+        G, L, share = pf_iter(ct, aprime)
         
         m0.L[jω, jχ, ja, :, :] .= L
         m0.G[jω, jχ, ja, :, :] .= G
         
-        print("Plan $iter of $tot\n")
+        print("Plan $iter of $tot: share > 10⁻⁶ = $(@sprintf("%.3g", 100*share))\n")
     end
 
     return m0
