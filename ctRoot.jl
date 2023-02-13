@@ -4,6 +4,7 @@ include("type_def.jl")
 include("reporting_routines.jl")
 include("simul.jl")
 include("plotsct.jl")
+include("prequel.jl")
 # include("planner.jl")
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
@@ -28,7 +29,7 @@ end
 next_a(ct::Plan, av, apv, π) = ifelse(ct.use_a, ϕ(ct, av), ϕ(ct, av) + ct.ψ * (π-av))
 next_a(ct::DovisKirpalani, av, apv, π) = apv
 
-function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′) where {T<:PhillipsCurve}
+function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′; use_ϕ = true) where {T<:PhillipsCurve}
     # ge = itp_gπ(pv, av)
     pprime = Bayes(ct, obs_π, ge, pv, av)
 
@@ -37,7 +38,9 @@ function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, 
     a_min, a_max = extrema(ct.agrid)
 
     π_today = max(a_min, min(a_max, obs_π))
-    aprime = next_a(ct, av, aprime, π_today)
+	if use_ϕ
+    	aprime = next_a(ct, av, aprime, π_today)
+	end
     aprime = max(a_min, min(a_max, aprime))
 
     # if aprime <= minimum(ct.agrid) || aprime >= maximum(ct.agrid)
@@ -61,11 +64,11 @@ end
 
 get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
 
-function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
+function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
 
 	sum_prob = get_sumprob(ct)
 
-	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[4] * pdf_ϵ(ct, ϵv)
+	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[4] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 
 	Ec = Ec / sum_prob
@@ -73,22 +76,22 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge
 	return Ec
 end
 
-function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′)
+function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′)[1] * pdf_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[1] * pdf_ϵ(ct, ϵv)
 	val, err = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
 	return val/sum_prob
 end
 
-function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′)
+function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′; use_ϕ = true)
     π_guess = xguess[1]
 	aprime = xguess[2]
 
     gπ, L = π_guess, itp_L(pv, av)
 
-    obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, aprime, ge, πe′)
+    obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)
 	
     πN = Nash(ct)
     h = 0.05 * πN
@@ -121,7 +124,7 @@ function exp_π_prime(ct::Plan{SemiForward}, pv, av, itp_gπ, ge, aprime)
 	return val/sum_prob
 end
 
-function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim = true)
+function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim::Bool = true)
 	gπ, ga = zeros(size(ct.gπ)), zeros(size(ct.ga))
 	L  	   = zeros(size(ct.L))
 	πN 	   = Nash(ct)
