@@ -93,7 +93,6 @@ function Cplot(mt::MultiType; jp = 2, kwargs...)
     ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> 𝓛(<i>p,a,ω*,χ</i>)"; kwargs...)
 end
 
-
 function Lplot(mt::MultiType; jp = 2, kwargs...)
     L = [minimum(mt.L_mat[jω, jχ, jp, :]) for jω in axes(mt.L_mat,1), jχ in axes(mt.L_mat, 2)]
 
@@ -105,6 +104,24 @@ function Lplot(mt::MultiType; jp = 2, kwargs...)
     shape_vec = [attr(;x0=xmin-0.001, x1 = xmin+0.001, y0 = ymin-0.002, y1=ymin+0.002, line_color = "#08282e", fillcolor="#08282e", type = "circle")]
 
     ctplot(mt, L; title = title, shapes = shape_vec, kwargs...)
+end
+
+function Lωplot(m0::Prequel; jp = 2, slides=true, dark=false, kwargs...)
+    L = [minimum(m0.L[:, jχ, 1, jp, ja]) for ja in axes(m0.L, 5), jχ in axes(m0.L, 2)]
+
+    jj = findfirst(L .== minimum(L))
+    xmin = annualized(m0.agrid[jj[1]])
+    ymin = annualized(m0.χgrid[jj[2]])
+
+    shape_vec = [
+        attr(; x0=xmin - 0.001, x1=xmin + 0.001, y0=ymin - 0.002, y1=ymin + 0.002, line_color="darkred", fillcolor="darkred", type="circle")
+        attr(; x0=0, x1 = annualized(m0.χgrid[end]), y0=0, y1 = annualized(m0.χgrid[end]), type = "line", line_width = 1, line_dash="dash", line_color = "darkred")
+    ]
+    
+    ctωplot(m0, L, shapes = shape_vec, 
+        title = "lim<sub><i>p→0</i></sub> min<sub><i>ω</i></sub> 𝓛(<i>p,a,ω,χ</i>)", 
+        slides=slides, dark=dark; kwargs...
+    )
 end
 
 function Lωplot(mt::MultiType; jp=2, slides=true, dark=false, kwargs...)
@@ -124,8 +141,10 @@ function Lωplot(mt::MultiType; jp=2, slides=true, dark=false, kwargs...)
         slides=slides, dark=dark; kwargs...)
 end
 
-function ctωplot(mt::MultiType, y::Array; title = "", slides = true, dark = false, kwargs...)
-    Na, Nχ = length(mt.ct.agrid), length(mt.χgrid)
+ctωplot(m0::Prequel, y::Array; title = "", slides = true, dark = false, kwargs...) = ctωplot(m0, y, annualized.(m0.agrid), title = title, slides = slides, dark = dark; kwargs...)
+
+function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.agrid), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, kwargs...)
+    Na, Nχ = length(xgrid), length(ygrid)
     @assert size(y) == (Na, Nχ)
 
     colpal = ColorSchemes.lapaz
@@ -133,7 +152,7 @@ function ctωplot(mt::MultiType, y::Array; title = "", slides = true, dark = fal
     yt = "Asymptote (χ)"
 
     data = contour(
-        z = y', x = annualized.(mt.ct.agrid), y = annualized.(mt.χgrid),
+        z = y', x = xgrid, y = ygrid,
         colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)]
 
     )
@@ -147,7 +166,7 @@ function ctωplot(mt::MultiType, y::Array; title = "", slides = true, dark = fal
 end
 
 
-function ctplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
+function ctplot(mt::Union{MultiType, Prequel}, y::Array; slides = true, dark = false, kwargs...)
     
 	colpal = ColorSchemes.lapaz
     xt = "Decay rate (%)"
@@ -165,7 +184,7 @@ function ctplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
     )
     
     plot(data, layout)
-end
+end 
 
 function plansp(mt::MultiType; slides = true, dark = false)
     Np = mt.ct.Np
@@ -279,4 +298,40 @@ function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = fals
     p2 = plot(c2, l2)
 
     return p1, p2
+end
+
+
+function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
+	ct = mt.ct
+	rp = Ramsey(ct)
+
+	vfi!(rp, verbose = false)
+	πR, θR = simul_plan(rp)
+
+	# tvec = 1:length(πR)
+	tvec = 1:11
+
+	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
+
+	πC = (mean_a - mean_χ) * exp.(-mean_ω * (tvec.-1)) .+ mean_χ
+
+	minL, jj = findmin(mt.L_mat[:, :, 3, :])
+	ωK = mt.ωgrid[jj[1]]
+	χK = mt.χgrid[jj[2]]
+	aK = mt.ct.agrid[jj[3]]
+
+	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
+
+    layout = Layout(
+        title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",   legend=attr(orientation="h", x=0.05),
+        template = qtemplate(slides = slides, dark = dark)
+    )
+    data = [
+        scatter(x=tvec.-1, y=annualized.(πR)[tvec], marker_color=get(ColorSchemes.southwest, 0.01, :clamp), name="<i>Ramsey")
+        scatter(x=tvec.-1, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99, :clamp), name="<i>Average eq'm")
+        scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5, :clamp), name="<i>Kambe eq'm")
+    ]
+
+    p1 = plot(data, layout)
+
 end

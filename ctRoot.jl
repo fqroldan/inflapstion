@@ -5,7 +5,7 @@ include("reporting_routines.jl")
 include("simul.jl")
 include("plotsct.jl")
 include("prequel.jl")
-# include("planner.jl")
+include("planner.jl")
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	
@@ -467,4 +467,33 @@ function mimic_z(mt::MultiType, N=100; decay::Bool=false, annualize::Bool=false)
 
 	return data, datanames, zgrid
 end
+
+function make_itp(rp::Ramsey, y)
+    knots = (rp.θgrid,)
+    itp = interpolate(knots, y, Gridded(Linear()))
+    return itp
+end
+
+function simul_plan(pp::Ramsey, T=4 * 10)
+
+    θv = zeros(T)
+    πv = zeros(T)
+
+	itp_v = make_itp(pp, pp.v)
+    itp_gπ = make_itp(pp, pp.g[:, 1])
+    itp_gθ = make_itp(pp, pp.g[:, 3])
+
+    θt = initial_state(pp)
+    for jt in 1:T
+        πt = policy(pp, θt, itp_gπ, itp_v)
+
+        θv[jt] = θt
+        πv[jt] = πt
+
+        θt = new_state(pp, θt, πt, itp_gθ)
+    end
+
+    return πv, θv
+end
+
 
