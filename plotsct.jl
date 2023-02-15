@@ -32,6 +32,57 @@ function qtemplate(; dark=false, slides=!dark)
 	return Template(layout=l)
 end
 
+
+function plot_announcements(; slides = true, dark = false, add_opt=false, cond_t=false, cond=cond_t)
+	xvec = 0:0.25:10
+
+	slides ? colorpal = ColorSchemes.davos : colorpal = ColorSchemes.southwest
+	slides ? correction = 0.8 : correction = 1
+	dark ? fl = 0.2 : fl = 0
+
+	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
+
+	lines = [scatter(;x=xvec, y=(a0-χ) * exp.(-ω.*(xvec)).+χ, showlegend=false, marker_color=get(colorpal, fl + correction*χ/2, :clamp)) for a0 in range(0,2, length=5) for ω in range(0,0.8,length=3) for (jχ, χ) in enumerate(range(2,0,length=5)) if ω != 0.0]
+
+	plotname = "announcements"
+	annotations = []
+	if cond
+		lines = [lines[43]]
+		plotname *= "_cond"
+		te = 9*4+1
+		xe = lines[1][:x][te]
+		ye = lines[1][:y][te]
+		col_line = lines[1][:marker][:color]
+		push!(annotations, attr(; x=xe, y=ye+0.05, text="<i>c", font_color=col_line, showarrow=false))
+	end
+
+	if add_opt
+		push!(lines, line_opt)
+		plotname *= "_w_opt"
+	end
+
+	dark ? shape_col = get(ColorSchemes.davos, 0.9, :clamp) : shape_col = get(ColorSchemes.darkrainbow, 0.12, :clamp)
+	shapes = []
+	if cond_t
+		tt = 11
+		x0 = lines[1][:x][tt]
+		y0 = lines[1][:y][tt]
+		shapes = [vline(x0, line_dash = "dash", line_color=shape_col); attr(;x0=x0-1*0.03, x1 = x0+1*0.03, y0 = y0-1*0.01, y1=y0+1*0.01, line_color=shape_col, fillcolor=shape_col, type="circle")]
+		push!(annotations,attr(; x=x0 + 0.05, y=y0 + 0.01, text="<i>a<sub>t</sub><sup>c</sup>", ax=35, font_color = shape_col, font_size=24, font_family="Lato"))
+		plotname *="_t"
+	end
+
+    layout = Layout(
+        template = qtemplate(slides=slides, dark=dark),
+        xaxis_title="<i>Quarters", yaxis_range=[-0.1;2.1], yaxis_title="%",
+        title="Inflation announcements", shapes = shapes, 
+        annotations=annotations,
+        )
+
+	plot(lines, layout)
+end
+
+
 function hplot(ct::CrazyType; kwargs...)
     y = [ct.gπ[jp, ja] - av for jp in eachindex(ct.pgrid), (ja, av) in enumerate(ct.agrid)]
 

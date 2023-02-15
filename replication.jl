@@ -2,6 +2,9 @@ include("ctRoot.jl")
 
 function replicate_all(;saveall=false)
 
+    fig1 = plot_announcements(slides = false)
+    saveall && savefig(fig1, "Graphs/current/announcements_paper.pdf", width = 900, height = 450)
+
     mt = load("Output/mt.jld2", "mt")
 
     fig2 = Lplot(mt.ct, slides = false)
