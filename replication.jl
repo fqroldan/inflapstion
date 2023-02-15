@@ -40,6 +40,6 @@ function replicate_all(;saveall=false)
     saveall && savefig(fig12, "Graphs/current/ramsey_paper.pdf", width = 900, height = 350)
 
     fig_app1 = Lplot_fixed_ω(mt, slides = false)
-    saveall && savefig(fig_app1, "Graphs/current/contour_app_paper.pdf", width = 900, height = 500)
+    saveall && savefig(fig_app1, "Graphs/current/contour_app_paper.pdf", width = 900, height = 400)
 
 end
