@@ -8,29 +8,35 @@ function replicate_all(;saveall=false)
     saveall && savefig(fig2, "Graphs/current/first_L_paper.pdf", width = 900, height = 450)
 
     fig3 = hplot(mt.ct, slides = false)
-    saveall && savefig(fig3, "Graphs/current/first_g_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig3, "Graphs/current/first_g_paper.pdf", width = 900, height = 350)
 
     fig4 = Eplot(mt.ct, slides = false)
-    saveall && savefig(fig4, "Graphs/current/first_p_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig4, "Graphs/current/first_p_paper.pdf", width = 900, height = 400)
 
     fig5 = plansp(mt, slides = false)
-    saveall && savefig(fig5, "Graphs/current/plans_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig5, "Graphs/current/plans_paper.pdf", width = 900, height = 400)
 
     fig6 = Lωplot(mt, slides = false)
-    saveall && savefig(fig6, "Graphs/current/contour_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig6, "Graphs/current/contour_paper.pdf", width = 900, height = 500)
 
     fig7 = Cplot(mt, slides = false)
     saveall && savefig(fig7, "Graphs/current/Ccontour_paper.pdf", width = 900, height = 450)
 
     fig8 = avgplans(mt, 100, CIs = false, slides = false)
-    saveall && savefig(fig8, "Graphs/current/mimics_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig8, "Graphs/current/mimics_paper.pdf", width = 900, height = 400)
 
-    fig9a, fig9b = strategy_μ(mt, slides = false);
-    saveall && savefig(fig9a, "Graphs/current/marg_achi_paper.pdf", width = 600, height = 600)
-    saveall && savefig(fig9b, "Graphs/current/marg_omegachi_paper.pdf", width = 600, height = 600)
+    mt = load("Output/mt.jld2", "mt")
+
+    fig9a, fig9b = strategy_μ(mt, slides = false, save_stats = true);
+    saveall && savefig(fig9a, "Graphs/current/marg_achi_paper.pdf", width = 600, height = 450)
+    saveall && savefig(fig9b, "Graphs/current/marg_omegachi_paper.pdf", width = 600, height = 450)
 
     # Comparative statics would go here
 
     fig12 = comp_plot_planner(mt, slides = false)
-    saveall && savefig(fig12, "Graphs/current/ramsey_paper.pdf", width = 900, height = 450)
+    saveall && savefig(fig12, "Graphs/current/ramsey_paper.pdf", width = 900, height = 350)
+
+    fig_app1 = Lplot_fixed_ω(mt, slides = false)
+    saveall && savefig(fig_app1, "Graphs/current/contour_app_paper.pdf", width = 900, height = 500)
+
 end

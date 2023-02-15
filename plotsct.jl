@@ -93,6 +93,16 @@ function Cplot(mt::MultiType; jp = 2, kwargs...)
     ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> 𝓛(<i>p,a,ω*,χ</i>)"; kwargs...)
 end
 
+function Lplot_fixed_ω(mt::MultiType; jp = 2, kwargs...)
+    _, jj = findmin(mt.L_mat[:,:,2,:])
+
+    jχ = jj[2]
+
+    L = mt.L_mat[:, jχ, jp, :]
+    title = "lim<sub><i>p→0</i></sub> 𝓛(<i>p,a,ω,χ*</i>)"
+
+    ctaplot(mt, L, title = title; kwargs...)
+end
 function Lplot(mt::MultiType; jp = 2, kwargs...)
     L = [minimum(mt.L_mat[jω, jχ, jp, :]) for jω in axes(mt.L_mat,1), jχ in axes(mt.L_mat, 2)]
 
@@ -148,7 +158,7 @@ function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(m
     @assert size(y) == (Na, Nχ)
 
     colpal = ColorSchemes.lapaz
-    xt = "Initial Inflation (<i>a<sub>0</sub></i>)"
+    xt = "Initial inflation (<i>a<sub>0</sub></i>)"
     yt = "Asymptote (χ)"
 
     data = contour(
@@ -164,6 +174,26 @@ function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(m
     
     plot(data, layout)
 end
+
+function ctaplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
+
+    colpal = ColorSchemes.lapaz
+    xt = "Decay rate (%)"
+    yt = "Initial inflation (<i>a<sub>0</sub></i>)"
+
+    data = contour(
+        z = y', x = perc_rate.(mt.ωgrid), y = annualized.(mt.ct.agrid),
+        colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)]
+
+    )
+    layout = Layout(
+        xaxis_title = xt, yaxis_title = yt, 
+        template = qtemplate(slides=slides, dark=dark);
+        kwargs...
+    )
+    
+    plot(data, layout)
+end 
 
 
 function ctplot(mt::Union{MultiType, Prequel}, y::Array; slides = true, dark = false, kwargs...)
