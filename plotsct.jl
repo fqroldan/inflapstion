@@ -105,7 +105,7 @@ function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, mod_a = 1, kwa
     if dark
         col = get(ColorSchemes.lapaz, 1 .- 0.9 * vv, :clamp)
     else
-        col = get(ColorSchemes.lapaz, 0.9 * vv, :clamp)
+        col = get(ColorSchemes.lapaz, 0.95 * vv, :clamp)
     end
 
     min_a, max_a = annualized.(extrema(ct.agrid)) ./ annualized.(Nash(ct))
@@ -122,7 +122,7 @@ function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, mod_a = 1, kwa
 				x = xs, y = ys, showlegend=false,
 				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(min_a, max_a,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
-        [scatter(x = ct.pgrid, y = y[:, ja], line_width = 2, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.agrid) if ja % mod_a == 0]
+        [scatter(x = ct.pgrid, y = y[:, ja], line_width = 1.75, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.agrid) if ja % mod_a == 0]
     ]
 
     template = qtemplate(dark = dark, slides = slides)
