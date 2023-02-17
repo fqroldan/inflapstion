@@ -48,6 +48,6 @@ function thumbnail(;saveall = false)
 
     mt = load("Output/mt.jld2", "mt")
 
-    fig = Lplot(mt.ct, slides = true)
+    fig = Lplot(mt.ct, slides = true, plot_bgcolor="#fafafa", paper_bgcolor="#fafafa")
     saveall && savefig(fig, "cddp_fig.png", width = 850, height = 500)
 end
