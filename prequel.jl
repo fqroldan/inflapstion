@@ -1,13 +1,3 @@
-struct Prequel
-    ωgrid::Vector{Float64}
-    χgrid::Vector{Float64}
-    agrid::Vector{Float64}
-    pgrid::Vector{Float64}
-    Agrid::Vector{Float64}
-    L::Array{Float64, 5}    # ω, χ, a, p, A
-    G::Array{Float64, 5}    # ω, χ, a, p, A
-end
-
 function Prequel(mt::MultiType)
     ωgrid = mt.ωgrid
     χgrid = mt.χgrid

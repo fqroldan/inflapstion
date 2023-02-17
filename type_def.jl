@@ -102,6 +102,16 @@ mutable struct MultiType
 	g_mat::Array{Float64, 4}
 end
 
+struct Prequel
+    ωgrid::Vector{Float64}
+    χgrid::Vector{Float64}
+    agrid::Vector{Float64}
+    pgrid::Vector{Float64}
+    Agrid::Vector{Float64}
+    L::Array{Float64, 5}    # ω, χ, a, p, A
+    G::Array{Float64, 5}    # ω, χ, a, p, A
+end
+
 mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
 	β::Float64
 	γ::Float64

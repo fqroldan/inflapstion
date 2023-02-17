@@ -43,3 +43,11 @@ function replicate_all(;saveall=false)
     saveall && savefig(fig_app1, "Graphs/current/contour_app_paper.pdf", width = 900, height = 400)
 
 end
+
+function thumbnail(;saveall = false)
+
+    mt = load("Output/mt.jld2", "mt")
+
+    fig = Lplot(mt.ct, slides = true)
+    saveall && savefig(fig, "cddp_fig.png", width = 850, height = 500)
+end
