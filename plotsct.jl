@@ -381,8 +381,16 @@ function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = fals
     return p1, p2
 end
 
+function get_Kambe(mt::MultiType; jp = 2)
+	minL, jj = findmin(mt.L_mat[:, :, jp, :])
+	ωK = mt.ωgrid[jj[1]]
+	χK = mt.χgrid[jj[2]]
+	aK = mt.ct.agrid[jj[3]]
 
-function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
+    return ωK, χK, aK
+end
+
+function prep_plot_planner(mt::MultiType)
 	ct = mt.ct
 	rp = Ramsey(ct)
 
@@ -396,12 +404,34 @@ function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
 
 	πC = (mean_a - mean_χ) * exp.(-mean_ω * (tvec.-1)) .+ mean_χ
 
-	minL, jj = findmin(mt.L_mat[:, :, 3, :])
-	ωK = mt.ωgrid[jj[1]]
-	χK = mt.χgrid[jj[2]]
-	aK = mt.ct.agrid[jj[3]]
+    ωK, χK, aK = get_Kambe(mt)
 
 	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
+
+    return tvec, πR, πC, πK
+end
+
+function get_Kambe(m0::Prequel; jp = 2)
+	minL, jj = findmin(m0.L[:, :, 1, jp, :])
+	ωK = m0.ωgrid[jj[1]]
+	χK = m0.χgrid[jj[2]]
+	aK = m0.agrid[jj[3]]
+
+    return ωK, χK, aK
+end
+
+function prep_plot_prequel(m0::Prequel)
+    tvec = 1:11
+
+    ωK, χK, aK = get_Kambe(m0)
+	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
+
+    πK = vcat([0], πK)
+    return 0:11, πK
+end
+
+function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
+    tvec, πR, πC, πK = prep_plot_planner(mt)
 
     layout = Layout(
         title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",   legend=attr(orientation="h", x=0.05),
@@ -415,4 +445,24 @@ function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
 
     p1 = plot(data, layout)
 
+end
+
+function comp_plot_planner(m0::Prequel, mt::MultiType; slides=true, dark=false)
+    tvec, πR, πC, πK = prep_plot_planner(mt)
+
+    tvec2, πK0 = prep_plot_prequel(m0)
+
+    layout = Layout(
+        title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",
+        legend=attr(orientation="h", x=0.05),
+        template = qtemplate(slides = slides, dark = dark)
+    )
+    data = [
+        scatter(x=tvec.-1, y=annualized.(πR)[tvec], marker_color=get(ColorSchemes.southwest, 0.01, :clamp), name="<i>Ramsey")
+        scatter(x=tvec.-1, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99, :clamp), name="<i>Average eq'm")
+        scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5, :clamp), name="<i>Kambe eq'm")
+        scatter(x=tvec2.-1, y=annualized.(πK0), name ="<i>Kambe eq'm with initial period", line_dash="dash")
+    ]
+
+    p1 = plot(data, layout)
 end
