@@ -1,9 +1,19 @@
-function Prequel(mt::MultiType)
+function Prequel_s(mt::MultiType; jp = 2)
+
+    _, jj = findmin(mt.L_mat[:,:,jp,:])
+
+    χ_star = mt.χgrid[jj[2]]
+
+    Agrid = [0., χ_star]
+
+    return Prequel(mt, Agrid = Agrid)
+end
+
+function Prequel(mt::MultiType; Agrid = mt.ct.agrid)
     ωgrid = mt.ωgrid
     χgrid = mt.χgrid
     agrid = mt.ct.agrid
     pgrid = mt.ct.pgrid
-    Agrid = agrid
 
     L = zeros(length(ωgrid), length(χgrid), length(agrid), length(pgrid), length(Agrid))
     G = zeros(size(L))
@@ -11,9 +21,14 @@ function Prequel(mt::MultiType)
     return Prequel(ωgrid, χgrid, agrid, pgrid, Agrid, L, G)
 end
 
-function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
-	gπ = zeros(size(ct.gπ))
-	L  = zeros(size(ct.L))
+Np(m::Prequel) = length(m.pgrid)
+NA(m::Prequel) = length(m.Agrid)
+
+function optim_step(ct::Plan, m0::Prequel, itp_gπ, itp_L, itp_C, aprime::Number)
+	gπ = zeros(Np(m0), NA(m0))
+    L = similar(gπ)
+    # gπ = zeros(size(ct.gπ))
+	# L  = zeros(size(ct.L))
 	πN = Nash(ct)
 
 	h = 0.05 * πN
@@ -22,12 +37,12 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
     broken = 0
     tot = 0
 	
-	apgrid = gridmake(1:ct.Np, 1:ct.Na)
+	apgrid = gridmake(1:Np(m0), 1:NA(m0))
 	Threads.@threads for js in axes(apgrid,1)
-		jp, ja = apgrid[js, :]
-		pv, av = ct.pgrid[jp], ct.agrid[ja]
+		jp, jA = apgrid[js, :]
+		pv, av = m0.pgrid[jp], m0.agrid[jA]
         
-		ge = ct.gπ[jp, ja]
+		ge = πN
         
 		xguess = [ge, aprime]
         
@@ -38,7 +53,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
         res = Optim.optimize(obj, Gmin, Gmax, GoldenSection())
         
         tot += 1
-        if sqrt(res.minimum) < 5e-4
+        if Optim.converged(res) && sqrt(res.minimum) < 5e-4
             Gc = res.minimizer
         else
             broken += 1
@@ -47,28 +62,18 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, aprime::Number)
 
         _, Lc, _ = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, Gc, πe′, use_ϕ = false)
 
-		gπ[jp, ja] = Gc
-		L[jp, ja] = Lc
+		gπ[jp, jA] = Gc
+		L[jp, jA] = Lc
 
 	end
     share = broken / tot
 	return gπ, L, share
 end
 
-function pf_iter(ct::Plan, aprime::Number)
-	knts = (ct.pgrid, ct.agrid);
-	itp_gπ = interpolate(knts, ct.gπ, Gridded(Linear()));
-	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
-	itp_C  = interpolate(knts, ct.C, Gridded(Linear()));
-
-	new_gπ, new_L, share = optim_step(ct, itp_gπ, itp_L, itp_C, aprime)
-
-	return new_gπ, new_L, share
-end
 
 function solve_t0(mt::MultiType)
 
-    m0 = Prequel(mt)
+    m0 = Prequel_s(mt)
     ct = mt.ct
 
     finalshare = 0.0
@@ -78,15 +83,17 @@ function solve_t0(mt::MultiType)
     for (jω, ωv) in enumerate(m0.ωgrid), (jχ, χv) in enumerate(m0.χgrid), (ja, av) in enumerate(m0.agrid)
         iter += 1
 
-        ct.L  .= mt.L_mat[jω, jχ, :, :]
-        ct.gπ .= mt.g_mat[jω, jχ, :, :]
-        
+        knts   = (mt.ct.pgrid, mt.ct.agrid)
+        itp_L  = interpolate(knts, mt.L_mat[jω, jχ, :, :], Gridded(Linear()))
+        itp_gπ = interpolate(knts, mt.g_mat[jω, jχ, :, :], Gridded(Linear()))
+    	itp_C  = interpolate(knts, mt.C_mat[jω, jχ, :, :], Gridded(Linear()));
+    
         ct.ω = ωv
         ct.χ = χv
         aprime = av
         
 		update_ga!(ct)
-        G, L, share = pf_iter(ct, aprime)
+        G, L, share = optim_step(ct, m0, itp_gπ, itp_L, itp_C, aprime)
 
         finalshare = finalshare * (iter-1)/iter + share / iter
         

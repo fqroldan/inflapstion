@@ -167,8 +167,8 @@ function Lplot(mt::MultiType; jp = 2, kwargs...)
     ctplot(mt, L; title = title, shapes = shape_vec, kwargs...)
 end
 
-function Lωplot(m0::Prequel; jp = 2, slides=true, dark=false, kwargs...)
-    L = [minimum(m0.L[:, jχ, 1, jp, ja]) for ja in axes(m0.L, 5), jχ in axes(m0.L, 2)]
+function Lωplot(m0::Prequel; jp = 2, jA = 1, slides=true, dark=false, kwargs...)
+    L = [minimum(m0.L[:, jχ, ja, jp, jA]) for ja in axes(m0.L, 3), jχ in axes(m0.L, 2)]
 
     jj = findfirst(L .== minimum(L))
     xmin = annualized(m0.agrid[jj[1]])
@@ -411,8 +411,8 @@ function prep_plot_planner(mt::MultiType)
     return tvec, πR, πC, πK
 end
 
-function get_Kambe(m0::Prequel; jp = 2)
-	minL, jj = findmin(m0.L[:, :, 1, jp, :])
+function get_Kambe(m0::Prequel, jA; jp = 2)
+	minL, jj = findmin(m0.L[:, :, :, jp, jA])
 	ωK = m0.ωgrid[jj[1]]
 	χK = m0.χgrid[jj[2]]
 	aK = m0.agrid[jj[3]]
@@ -420,13 +420,13 @@ function get_Kambe(m0::Prequel; jp = 2)
     return ωK, χK, aK
 end
 
-function prep_plot_prequel(m0::Prequel)
+function prep_plot_prequel(m0::Prequel, jA = 1)
     tvec = 1:11
 
-    ωK, χK, aK = get_Kambe(m0)
+    ωK, χK, aK = get_Kambe(m0, jA)
 	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
 
-    πK = vcat([0], πK)
+    πK = vcat([m0.Agrid[jA]], πK)
     return 0:11, πK
 end
 
@@ -443,14 +443,13 @@ function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
         scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5, :clamp), name="<i>Kambe eq'm")
     ]
 
-    p1 = plot(data, layout)
-
+    plot(data, layout)
 end
 
-function comp_plot_planner(m0::Prequel, mt::MultiType; slides=true, dark=false)
+function comp_plot_planner(m0::Prequel, mt::MultiType; jA = 1, slides=true, dark=false)
     tvec, πR, πC, πK = prep_plot_planner(mt)
 
-    tvec2, πK0 = prep_plot_prequel(m0)
+    tvec2, πK0 = prep_plot_prequel(m0, jA)
 
     layout = Layout(
         title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",
@@ -464,5 +463,5 @@ function comp_plot_planner(m0::Prequel, mt::MultiType; slides=true, dark=false)
         scatter(x=tvec2.-1, y=annualized.(πK0), name ="<i>Kambe eq'm with initial period", line_dash="dash")
     ]
 
-    p1 = plot(data, layout)
+    plot(data, layout)
 end
