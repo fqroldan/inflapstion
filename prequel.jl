@@ -1,4 +1,4 @@
-function Prequel_s(mt::MultiType; jp = 2)
+function Prequel_s(mt::MultiType; jp = 2, Np = 10)
 
     _, jj = findmin(mt.L_mat[:,:,jp,:])
 
@@ -6,14 +6,15 @@ function Prequel_s(mt::MultiType; jp = 2)
 
     Agrid = [0., χ_star]
 
-    return Prequel(mt, Agrid = Agrid)
+	pgrid = cdf.(Beta(6,1), range(0,1,length=100))[1:Np]
+
+    return Prequel(mt, Agrid = Agrid)#, pgrid = pgrid)
 end
 
-function Prequel(mt::MultiType; Agrid = mt.ct.agrid)
+function Prequel(mt::MultiType; Agrid = mt.ct.agrid, pgrid = mt.ct.pgrid)
     ωgrid = mt.ωgrid
     χgrid = mt.χgrid
     agrid = mt.ct.agrid
-    pgrid = mt.ct.pgrid
 
     L = zeros(length(ωgrid), length(χgrid), length(agrid), length(pgrid), length(Agrid))
     G = zeros(size(L))
@@ -40,7 +41,7 @@ function optim_step(ct::Plan, m0::Prequel, itp_gπ, itp_L, itp_C, aprime::Number
 	apgrid = gridmake(1:Np(m0), 1:NA(m0))
 	Threads.@threads for js in axes(apgrid,1)
 		jp, jA = apgrid[js, :]
-		pv, av = m0.pgrid[jp], m0.agrid[jA]
+		pv, av = m0.pgrid[jp], m0.Agrid[jA]
         
 		ge = πN
         
@@ -56,8 +57,13 @@ function optim_step(ct::Plan, m0::Prequel, itp_gπ, itp_L, itp_C, aprime::Number
         if Optim.converged(res) && sqrt(res.minimum) < 5e-4
             Gc = res.minimizer
         else
-            broken += 1
-            Gc = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′, use_ϕ = false)[1]
+            res = Optim.optimize(obj, Gmin, Gmax, Brent())
+            if Optim.converged(res) && sqrt(res.minimum) < 5e-4
+                Gc = res.minimizer
+            else
+                broken += 1
+                Gc = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′, use_ϕ = false)[1]
+            end
         end
 
         _, Lc, _ = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, Gc, πe′, use_ϕ = false)
