@@ -26,16 +26,24 @@ function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	return p′
 end
 
-next_a(ct::Plan, av, apv, π) = ifelse(ct.use_a, ϕ(ct, av), ϕ(ct, av) + ct.ψ * (π-av))
+function next_a(ct::Plan, av, apv, π)
+	if haskey(ct.pars, :ψ)
+		return ϕ(ct, av) + ct.pars[:ψ] * (π - av)
+	else
+		return ϕ(ct, av)
+	end
+end
+
 next_a(ct::DovisKirpalani, av, apv, π) = apv
 
 function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, πe′; use_ϕ = true) where {T<:PhillipsCurve}
-    # ge = itp_gπ(pv, av)
+	ystar, γ, β = (ct.pars[k] for k in (:ystar, :γ, :β))
+
     pprime = Bayes(ct, obs_π, ge, pv, av)
 
     πe = pv * av + (1 - pv) * ge
 
-    a_min, a_max = extrema(ct.agrid)
+    a_min, a_max = extrema(ct.gr[:a])
 
     π_today = max(a_min, min(a_max, obs_π))
 	if use_ϕ
@@ -56,20 +64,20 @@ function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, 
     end
 
     y = PC(ct, obs_π, πe, exp_π′, πe′) # Automatically uses method for forward or backward
-    L = (ct.ystar - y)^2 + ct.γ * obs_π^2 + ct.β * L′
+    L = (ystar - y)^2 + γ * obs_π^2 + β * L′
     C′ = itp_C(pprime, aprime)
 
     return L, pprime, y, C′
 end
 
-get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.σ) - cdf_ϵ(ct, -3.09*ct.σ)
+get_sumprob(ct::Plan) = cdf_ϵ(ct, 3.09*ct.pars[:σ]) - cdf_ϵ(ct, -3.09*ct.pars[:σ])
 
 function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
 
 	sum_prob = get_sumprob(ct)
 
 	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[4] * pdf_ϵ(ct, ϵv)
-	Ec, err = hquadrature(f_C, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	Ec, err = hquadrature(f_C, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 
 	Ec = Ec / sum_prob
 
@@ -79,7 +87,7 @@ end
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
 
 	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[1] * pdf_ϵ(ct, ϵv)
-	val, err = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	val, err = hquadrature(f, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
 	return val/sum_prob
@@ -118,7 +126,7 @@ end
 
 function exp_π_prime(ct::Plan{SemiForward}, pv, av, itp_gπ, ge, aprime)
 	f(ϵv) = π_prime(ct, ϵv, pv, av, itp_gπ, ge, aprime) * pdf_ϵ(ct, ϵv)
-	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.σ, 3.09*ct.σ, rtol=1e-10, atol=0, maxevals=0)
+	val::Float64, err::Float64 = hquadrature(f, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
 	return val/sum_prob
@@ -132,11 +140,11 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim::Bool = true)
 	h = 0.05 * πN
 	Gmin, Gmax = -h, πN + h
 	
-	apgrid = gridmake(1:ct.Np, 1:ct.Na)
+	apgrid = gridmake(1:N(ct, :p), 1:N(ct, :a))
 	Threads.@threads for js in axes(apgrid,1)
 		# for js in axes(apgrid,1)
 		jp, ja = apgrid[js, :]
-		pv, av = ct.pgrid[jp], ct.agrid[ja]
+		pv, av = ct.gr[:p][jp], ct.gr[:a][ja]
 		
 		aprime = ct.ga[jp, ja]
 		ge = ct.gπ[jp, ja]
@@ -172,7 +180,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim::Bool = true)
 end
 
 function pf_iter(ct::Plan; optim=true)
-	knts = (ct.pgrid, ct.agrid);
+	knts = (ct.gr[:p], ct.gr[:a]);
 	itp_gπ = interpolate(knts, ct.gπ, Gridded(Linear()));
 	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
 	itp_C  = interpolate(knts, ct.C, Gridded(Linear()));
@@ -193,12 +201,13 @@ end
 # end
 
 function iter_cred!(new_C, ct::Plan, itp_C, itp_gπ, itp_L)
+	β = ct.pars[:β]
 	πN = Nash(ct)
 
-	apgrid = gridmake(1:ct.Np, 1:ct.Na)
+	apgrid = gridmake(1:N(ct,:p), 1:N(ct,:a))
 	Threads.@threads for js in axes(apgrid,1)
 		jp, ja = apgrid[js, :]
-		pv, av = ct.pgrid[jp], ct.agrid[ja]
+		pv, av = ct.gr[:p][jp], ct.gr[:a][ja]
 
 		aprime = ct.ga[jp, ja]
 		ge = ct.gπ[jp, ja]
@@ -210,9 +219,9 @@ function iter_cred!(new_C, ct::Plan, itp_C, itp_gπ, itp_L)
 		Eπ = pv * av + (1-pv) * ge
 
 		if πN > av
-			new_C[jp, ja] = (1-ct.β)*(πN - Eπ)/(πN-av) + ct.β * EC′
+			new_C[jp, ja] = (1-β)*(πN - Eπ)/(πN-av) + β * EC′
 		else
-			new_C[jp, ja] = (1-ct.β) * 1 + ct.β * EC′
+			new_C[jp, ja] = (1-β) * 1 + β * EC′
 		end
 	end
 end
@@ -221,7 +230,7 @@ end
 function cred_vfi!(ct::Plan; tol = 1e-5, maxiter = 2000, verbose = false)
 	dist, iter = 1+tol, 0
 
-	knts = (ct.pgrid, ct.agrid)
+	knts = (ct.gr[:p], ct.gr[:a])
 	itp_gπ = interpolate(knts, ct.gπ, Gridded(Linear()));
 	itp_L  = interpolate(knts, ct.L, Gridded(Linear()));
 
@@ -328,12 +337,53 @@ function solve_all!(mt::MultiType; verbose = true, check = false)
 	end
 end
 
+function solve_all!(mt::Multiψ; verbose = true, check = false)
+	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
+	iter = 0
+	tot  = length(mt.ωgrid) * length(mt.χgrid) * length(mt.ψgrid)
+	for (jω, ωv) in enumerate(mt.ωgrid), (jχ, χv) in enumerate(mt.χgrid), (jψ, ψv) in enumerate(mt.ψgrid)
+		iter += 1
+		
+		show_ω = @sprintf("%.3g", ωv)
+		show_χ = @sprintf("%.3g", annualized(χv))
+		show_ψ = @sprintf("%.3g", 100*ψv)
+		
+		verbose && print("Plan with (ω, χ, ψ) = ($show_ω, $show_χ%, $show_ψ%)")
+		ct = mt.ct
+
+		if jω > 1 && jχ == 1
+			ct.L .= mt.L[jω - 1, jχ, jψ, :, :]
+		end
+
+		ct.pars[:ω] = ωv
+		ct.pars[:χ] = χv
+		ct.pars[:ψ] = ψv
+		update_ga!(ct)
+		if check
+			ct.L .= mt.L[jω, jχ, jψ, :, :]
+			ct.gπ .= mt.g[jω, jχ, jψ, :, :]
+		end
+
+		flag = pfi!(ct, verbose = false)
+		verbose && flag && print(": ✓")
+		verbose && !flag && print(": no convergence.")
+		
+		mt.L[jω, jχ, jψ, :, :] .= ct.L
+		mt.C[jω, jχ, jψ, :, :] .= ct.C
+		mt.g[jω, jχ, jψ, :, :] .= ct.gπ
+		
+		perc = 100 * iter / tot
+		verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")
+	end
+end
+
+
 Bayes_plan(ν, z, μ) = z*ν / (z*ν + (1-z)*μ)
 
 function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false, verbose::Bool=false)
 
 	ωgrid, χgrid, L_mat = mt.ωgrid, mt.χgrid, mt.L_mat
-	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+	pgrid, agrid = mt.ct.gr[:p], mt.ct.gr[:a]
 
 	μ, p0 = [zeros(length(ωgrid), length(χgrid), length(agrid)) for jj in 1:2]
 
@@ -380,7 +430,7 @@ function eval_k_to_mu(mt::MultiType, k, itp_L; get_mu::Bool=false, verbose::Bool
 end
 
 function find_plan_μ(mt::MultiType; annualize::Bool=false, decay::Bool=false)
-	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+	pgrid, agrid = mt.ct.gr[:p], mt.ct.gr[:a]
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 
 	if decay
@@ -420,9 +470,9 @@ function find_plan_μ(mt::MultiType; annualize::Bool=false, decay::Bool=false)
 	return mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ
 end
 
-function find_equil!(mt::MultiType, z0=mt.ct.pgrid[3])
+function find_equil!(mt::MultiType, z0=mt.ct.gr[:p][3])
 	mt.z = z0
-	pgrid, agrid = mt.ct.pgrid, mt.ct.agrid
+	pgrid, agrid = mt.ct.gr[:p], mt.ct.gr[:a]
 	ωgrid, χgrid = mt.ωgrid, mt.χgrid
 	L_mat = mt.L_mat
 

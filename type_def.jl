@@ -25,23 +25,11 @@ abstract type Plan{T<:PhillipsCurve}
 end
 
 mutable struct CrazyType{T<:PhillipsCurve} <: Plan{T}
-	β::Float64
-	γ::Float64
-	κ::Float64
-	σ::Float64
-	ystar::Float64
-	ω::Float64
-	χ::Float64
+	pars::Dict{Symbol, Float64}
+	gr::Dict{Symbol, Vector{Float64}}
+
+	opt::Dict{Symbol, Bool}
 	
-	use_a::Bool
-	ψ::Float64
-
-	pgrid::Vector{Float64}
-	agrid::Vector{Float64}
-
-	Np::Int64
-	Na::Int64
-
 	gπ::Array{Float64, 2}
 	ga::Array{Float64, 2}
 	L::Array{Float64, 2}
@@ -100,6 +88,18 @@ mutable struct MultiType
 	L_mat::Array{Float64, 4}
 	C_mat::Array{Float64, 4}
 	g_mat::Array{Float64, 4}
+end
+
+mutable struct Multiψ
+	ct::CrazyType
+	
+	ωgrid::Vector{Float64}
+	χgrid::Vector{Float64}
+	ψgrid::Vector{Float64}
+
+	L::Array{Float64, 5}
+	C::Array{Float64, 5}
+	g::Array{Float64, 5}
 end
 
 struct Prequel
@@ -230,6 +230,9 @@ function CrazyType(T::DataType;
 		# γ = 1.75
 	end
 
+	pars = Dict(:β => β, :γ => γ, :κ => κ, :ψ => ψ, :σ => σ, :ystar => ystar, :ω => ω, :χ => χ)
+	opt = Dict(:use_a => use_a)
+
 	A = Nash(T, β, γ, κ, ystar)
 
 	pgrid = cdf.(Beta(5,3), range(0,1,length=Np))
@@ -238,6 +241,8 @@ function CrazyType(T::DataType;
 	end
 	agrid = cdf.(Beta(2,2), range(0,1,length=Na))
 	move_grids!(agrid, xmax=A, xmin=0.0)
+
+	gr = Dict(:p => pgrid, :a => agrid)
 
 	gπ, ga = [zeros(Np, Na) for jj in 1:2]
 	for jp in 1:Np, (ja, av) in enumerate(agrid)
@@ -252,8 +257,10 @@ function CrazyType(T::DataType;
 	Eπ = zeros(Np, Na)
 	Ep = zeros(Np, Na)
 
-	return CrazyType{T}(β, γ, κ, σ, ystar, ω, χ, use_a, ψ, pgrid, agrid, Np, Na, gπ, ga, L, C, Ey, Eπ, Ep)
+	return CrazyType{T}(pars, gr, opt, gπ, ga, L, C, Ey, Eπ, Ep)
 end
+
+N(ct, k::Symbol) = length(ct.gr[k])
 
 function MultiType(ct::CrazyType;
 	Nω = 40,
@@ -264,8 +271,8 @@ function MultiType(ct::CrazyType;
 
 	z = 1e-4
 	
-	Na = length(ct.agrid)
-	Np = length(ct.pgrid)
+	Na = length(ct.gr[:a])
+	Np = length(ct.gr[:p])
 
 	ωgrid = -log.(range(0, 1, length=2+Nω))[2:end-1]
 	χgrid = range(χmin, χmax, length = Nχ)
@@ -280,13 +287,37 @@ function MultiType(ct::CrazyType;
 	return MultiType(ct, ωgrid, χgrid, z, ν, μ, L_mat, C_mat, g_mat)
 end
 
-ϕ(a::Float64, ω::Float64, χ::Float64) = exp(-ω) * (a-χ) + χ
-ϕ(ct::Plan, a::Float64) = ϕ(a, ct.ω, ct.χ)
+function Multiψ(ct::CrazyType;
+	Nω = 15,
+	Nχ = 35,
+	Nψ = 25,
+	χmin = 0.0,
+	χmax = 0.6 * Nash(ct),
+	)
+	
+	Na = length(ct.gr[:a])
+	Np = length(ct.gr[:p])
 
-function update_ga!(ct::CrazyType; ω = ct.ω, χ = ct.χ)
-	ct.ω = ω
-	ct.χ = χ
-	for jp in 1:ct.Np, (ja, av) in enumerate(ct.agrid)
+	ωgrid = -log.(range(0, 1, length=2+Nω))[2:end-1]
+	χgrid = range(χmin, χmax, length = Nχ)
+	
+	ψgrid = range(0, 0.1, length=Nψ)
+
+	L = zeros(Nω, Nχ, Nψ, Np, Na)
+	C = zeros(Nω, Nχ, Nψ, Np, Na)
+	g = zeros(Nω, Nχ, Nψ, Np, Na)
+
+	return Multiψ(ct, ωgrid, χgrid, ψgrid, L, C, g)
+end
+
+ϕ(a::Number, ω::Number, χ::Number) = exp(-ω) * (a-χ) + χ
+ϕ(ct::Plan, a::Number) = ϕ(a, ct.pars[:ω], ct.pars[:χ])
+
+function update_ga!(ct::CrazyType; ω = ct.pars[:ω], χ = ct.pars[:χ], ψ = ct.pars[:ψ])
+	ct.pars[:ω] = ω
+	ct.pars[:χ] = χ
+	ct.pars[:ψ] = ψ
+	for jp in eachindex(ct.gr[:p]), (ja, av) in enumerate(ct.gr[:a])
 		ct.ga[jp, ja] = ϕ(ct, av)
 	end
 	nothing
@@ -298,10 +329,10 @@ Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward || T==SemiForward, κ /
 
 # Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
 
-Nash(ct::Plan{T}) where T <: PhillipsCurve = Nash(T, ct.β, ct.γ, ct.κ, ct.ystar)
+Nash(ct::Plan{T}) where T <: PhillipsCurve = Nash(T, ct.pars[:β], ct.pars[:γ], ct.pars[:κ], ct.pars[:ystar])
 
 
-dist_ϵ(ct) = Normal(0, ct.σ)
+dist_ϵ(ct) = Normal(0, ct.pars[:σ])
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)
 cdf_ϵ(ct, ϵv) = cdf.(dist_ϵ(ct), ϵv)
 
@@ -311,9 +342,9 @@ deannual(x::Real) = (x*0.01 + 1.0)^0.25 - 1.0
 perc_rate(x) = 100 * (1 .- exp.(-x))
 
 
-PC(ct::Plan{Forward}, obs_π, πe, exp_π′, πe′) = (1/ct.κ) * (obs_π - ct.β * exp_π′)
-PC(ct::Plan{Simultaneous}, obs_π, πe, exp_π′, πe′) = 1/ct.κ  * (obs_π - πe)
-PC(ct::Plan{SemiForward}, obs_π, πe, exp_π′, πe′) = (1/ct.κ) * (obs_π - ct.β * πe′)
+PC(ct::Plan{Forward}, obs_π, πe, exp_π′, πe′) = (1/ct.pars[:κ]) * (obs_π - ct.pars[:β] * exp_π′)
+PC(ct::Plan{Simultaneous}, obs_π, πe, exp_π′, πe′) = 1/ct.pars[:κ]  * (obs_π - πe)
+PC(ct::Plan{SemiForward}, obs_π, πe, exp_π′, πe′) = (1/ct.pars[:κ]) * (obs_π - ct.pars[:β] * πe′)
 
 # PC(ct::Plan{Forward}, obs_π, pv, av, pprime, aprime, itp_gπ) = (1/ct.κ) * (obs_π - ct.β * (pprime * aprime + (1-pprime) * itp_gπ(pprime, aprime)))
 # PC(ct::Plan{Simultaneous}, obs_π, pv, av, pprime, aprime, itp_gπ) = 1/ct.κ * (obs_π - (pv*av+(1-pv)*itp_gπ(pv,av)))
