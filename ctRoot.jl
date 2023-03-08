@@ -306,18 +306,18 @@ function solve_all!(mt::MultiType; verbose = true, check = false)
 	for (jω, ωv) in enumerate(mt.ωgrid), (jχ, χv) in enumerate(mt.χgrid)
 		iter += 1
 		
-		show_ω = @sprintf("%.3g", ωv)
+		show_ω = @sprintf("%.3g", perc_rate(ωv))
 		show_χ = @sprintf("%.3g", annualized(χv))
 		
-		verbose && print("Plan with (ω, χ) = ($show_ω, $show_χ%)")
+		verbose && print("Plan with (ω, χ) = ($show_ω%, $show_χ%)")
 		ct = mt.ct
 
 		if jω > 1 && jχ == 1
 			ct.L .= mt.L_mat[jω - 1, jχ, :, :]
 		end
 
-		ct.ω = ωv
-		ct.χ = χv
+		ct.pars[:ω] = ωv
+		ct.pars[:χ] = χv
 		update_ga!(ct)
 		if check
 			ct.L .= mt.L_mat[jω, jχ, :, :]

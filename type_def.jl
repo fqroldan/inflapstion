@@ -97,7 +97,7 @@ mutable struct Multiψ
 	χgrid::Vector{Float64}
 	ψgrid::Vector{Float64}
 
-	L::Array{Float64, 5}
+	L::Array{Float64, 5} # ω, χ, ψ, p, a
 	C::Array{Float64, 5}
 	g::Array{Float64, 5}
 end

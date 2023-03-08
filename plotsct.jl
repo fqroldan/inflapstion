@@ -465,3 +465,21 @@ function comp_plot_planner(m0::Prequel, mt::MultiType; jA = 1, slides=true, dark
 
     plot(data, layout)
 end
+
+function Lωplot(mt::Multiψ; jp = 2, slides = true, dark = false)
+
+    L = [minimum(mt.L[:, :, jψ, jp, ja]) for jψ in axes(mt.L,3), ja in axes(mt.L, 5)]
+
+    layout = Layout(
+        template = qtemplate(slides=slides, dark=dark),
+        xaxis_title = "Initial inflation (<i>a<sub>0</sub></i>)",
+        yaxis_title = "ψ",
+    )
+    colpal = ColorSchemes.lapaz
+    data = contour(
+        z = L, y = mt.ψgrid, x = annualized.(mt.ct.gr[:a]),
+        colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)],
+    )
+
+    plot(data, layout)
+end
