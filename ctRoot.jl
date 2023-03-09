@@ -547,3 +547,38 @@ function simul_plan(pp::Ramsey, T=4 * 10)
 end
 
 
+function extend_ψ(ct::CrazyType; ψmin = 0.0, ψmax = 0.35, Nψ = 100)
+
+	Lψ = Float64[]
+	ψvec = Float64[]
+
+	print("Preparing run.\n")
+
+	ct.pars[:ψ] = 0.
+	pfi!(ct, verbose = false)
+
+	ψgrid = range(ψmin, ψmax, length = Nψ)
+
+	for (jψ, ψv) in enumerate(ψgrid)
+
+		frac = @sprintf("%.3g", 100 * jψ / Nψ)
+
+		print("Starting with ψ = $(@sprintf("%.3g", ψv))")
+
+		ct.pars[:ψ] = ψv
+
+		flag = pfi!(ct, verbose = false)
+
+		if flag
+			push!(Lψ, minimum(ct.L[2,:]))
+			push!(ψvec, ψv)
+
+			print(": convergence reached.")
+		else
+			print(": failed.")
+		end
+		print(" Done with $frac%\n")
+	end
+
+	return Lψ, ψvec
+end

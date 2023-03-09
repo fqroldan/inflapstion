@@ -287,6 +287,28 @@ function MultiType(ct::CrazyType;
 	return MultiType(ct, ωgrid, χgrid, z, ν, μ, L_mat, C_mat, g_mat)
 end
 
+function best_ct(mt::MultiType; jp = 2)
+
+	_, jj = findmin(mt.L_mat[:,:,jp,:])
+
+	jω = jj[1]
+	jχ = jj[2]
+	ja = jj[3]
+
+	ωv = mt.ωgrid[jω]
+	χv = mt.χgrid[jχ]
+
+	ct = mt.ct
+
+	ct.pars[:ω] = ωv
+	ct.pars[:χ] = χv
+	update_ga!(ct)
+	ct.L .= mt.L_mat[jω, jχ, :, :]
+	ct.gπ .= mt.g_mat[jω, jχ, :, :]
+
+	return ct
+end
+
 function Multiψ(ct::CrazyType;
 	Nω = 15,
 	Nχ = 35,
