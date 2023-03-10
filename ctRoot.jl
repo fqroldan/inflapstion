@@ -48,6 +48,7 @@ function cond_L(ct::Plan{T}, itp_gπ, itp_L, itp_C, obs_π, pv, av, aprime, ge, 
     π_today = max(a_min, min(a_max, obs_π))
 	if use_ϕ
     	aprime = next_a(ct, av, aprime, π_today)
+    	# aprime = next_a(ct, av, aprime, πe)
 	end
     aprime = max(a_min, min(a_max, aprime))
 
