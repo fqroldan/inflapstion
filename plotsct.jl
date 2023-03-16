@@ -483,3 +483,26 @@ function Lωplot(mt::Multiψ; jp = 2, slides = true, dark = false)
 
     plot(data, layout)
 end
+
+function twolines(mt::Multiψ; jp = 2, slides = true, dark = false)
+
+    L_reopt = [minimum(mt.L[:,:,jψ, jp,:]) for jψ in eachindex(mt.ψgrid)]
+
+    _, jj = findmin(mt.L[:,:,1,jp,:])
+    jω = jj[1]
+    jχ = jj[2]
+    ja = jj[3]
+
+    L_og = mt.L[jω, jχ, :, jp, ja]
+
+    data = [
+        scatter(x=mt.ψgrid, y = L_reopt, name = "c*(ψ)")
+        scatter(x=mt.ψgrid, y = L_og, name = "c*")
+    ]
+
+    layout = Layout(
+        template = qtemplate(slides=slides, dark=dark),
+    )
+
+    plot(data, layout)
+end
