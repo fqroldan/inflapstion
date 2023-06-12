@@ -484,9 +484,16 @@ function Lωplot(mt::Multiψ; jp = 2, slides = true, dark = false)
     plot(data, layout)
 end
 
-function twolines(mt::Multiψ; jp = 2, slides = true, dark = false)
-
-    L_reopt = [minimum(mt.L[:,:,jψ, jp,:]) for jψ in eachindex(mt.ψgrid)]
+function twolines(mt::Multiψ; show="L", jp = 2, slides = true, dark = false)
+    cols = [get(ColorSchemes.southwest, x, :clamp) for x in (0.99, 0.5)]
+    # L_reopt = [minimum(mt.L[:,:,jψ, jp,:]) for jψ in eachindex(mt.ψgrid)]
+    L_reopt = zeros(length(mt.ψgrid))
+    C_reopt = similar(L_reopt)
+    for jψ in eachindex(mt.ψgrid)
+        L, jj = findmin(mt.L[:,:,jψ, jp, :])
+        L_reopt[jψ] = L
+        C_reopt[jψ] = mt.C[jj[1], jj[2], jψ, jp, jj[3]]
+    end
 
     _, jj = findmin(mt.L[:,:,1,jp,:])
     jω = jj[1]
@@ -494,14 +501,22 @@ function twolines(mt::Multiψ; jp = 2, slides = true, dark = false)
     ja = jj[3]
 
     L_og = mt.L[jω, jχ, :, jp, ja]
+    C_og = mt.C[jω, jχ, :, jp, ja]
 
     data = [
-        scatter(x=mt.ψgrid, y = L_reopt, name = "c*(ψ)")
-        scatter(x=mt.ψgrid, y = L_og, name = "c*")
+        scatter(x=mt.ψgrid, y = L_reopt, marker_color=cols[1], name = "c*(ψ)")
+        scatter(x=mt.ψgrid, y = L_og, marker_color=cols[2], name = "c*")
     ]
+    if show == "C"
+        data = [
+            scatter(x=mt.ψgrid, y = C_reopt, marker_color=cols[1], name = "c*(ψ)")
+            scatter(x=mt.ψgrid, y = C_og, marker_color=cols[2], name = "c*")
+        ]
+    end
 
     layout = Layout(
         template = qtemplate(slides=slides, dark=dark),
+        xaxis_title = "<i>ψ"
     )
 
     plot(data, layout)
