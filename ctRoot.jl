@@ -338,7 +338,7 @@ function solve_all!(mt::MultiType; verbose = true, check = false)
 	end
 end
 
-function solve_all!(mt::Multiψ; verbose = true, check = false)
+function solve_all!(mt::Multiψ; verbose = true, check = false, save_progress = false)
 	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid) * length(mt.ψgrid)
@@ -375,6 +375,8 @@ function solve_all!(mt::Multiψ; verbose = true, check = false)
 		
 		perc = 100 * iter / tot
 		verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")
+		
+        save_progress && (jψ == length(mt.ψgrid)) && save("temp.jld2", "mt", mt)
 	end
 end
 
