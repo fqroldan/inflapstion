@@ -315,6 +315,7 @@ function Multiψ(ct::CrazyType;
 	Nψ = 25,
 	χmin = 0.0,
 	χmax = 0.6 * Nash(ct),
+	ψmax = 0.2
 	)
 	
 	Na = length(ct.gr[:a])
@@ -323,7 +324,7 @@ function Multiψ(ct::CrazyType;
 	ωgrid = -log.(range(0, 1, length=2+Nω))[2:end-1]
 	χgrid = range(χmin, χmax, length = Nχ)
 	
-	ψgrid = range(0, 0.1, length=Nψ)
+	ψgrid = range(0, ψmax, length=Nψ)
 
 	L = zeros(Nω, Nχ, Nψ, Np, Na)
 	C = zeros(Nω, Nχ, Nψ, Np, Na)
