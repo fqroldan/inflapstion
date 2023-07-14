@@ -274,7 +274,7 @@ function MultiType(ct::CrazyType;
 	Na = length(ct.gr[:a])
 	Np = length(ct.gr[:p])
 
-	ωgrid = -log.(range(0, 1, length=2+Nω))[2:end-1]
+	ωgrid = -log.(range(0, 1, length=3+Nω))[2:end-2]
 	χgrid = range(χmin, χmax, length = Nχ)
 	
 	ν = ones(Nω, Nχ, Na)
