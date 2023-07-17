@@ -141,7 +141,7 @@ function Cplot(mt::MultiType; jp = 2, kwargs...)
         C[ja, jχ] = mt.C_mat[jω, jχ, jp, ja]
     end
 
-    ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> 𝒞(<i>p,a,ω*,χ</i>)"; kwargs...)
+    ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> C(<i>p,a,ω*,χ</i>)"; kwargs...)
 end
 
 function Lplot_fixed_ω(mt::MultiType; jp = 2, kwargs...)
@@ -204,7 +204,7 @@ end
 
 ctωplot(m0::Prequel, y::Array; title = "", slides = true, dark = false, kwargs...) = ctωplot(m0, y, annualized.(m0.agrid), title = title, slides = slides, dark = dark; kwargs...)
 
-function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.agrid), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, kwargs...)
+function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.gr[:a]), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, kwargs...)
     Na, Nχ = length(xgrid), length(ygrid)
     @assert size(y) == (Na, Nχ)
 
