@@ -372,6 +372,7 @@ function solve_all!(mt::Multiψ; verbose = true, check = false, save_progress = 
 		mt.L[jω, jχ, jψ, :, :] .= ct.L
 		mt.C[jω, jχ, jψ, :, :] .= ct.C
 		mt.g[jω, jχ, jψ, :, :] .= ct.gπ
+		mt.F[jω, jχ, jψ, :, :] .= flag
 		
 		perc = 100 * iter / tot
 		verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")

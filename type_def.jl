@@ -100,6 +100,7 @@ mutable struct Multiψ
 	L::Array{Float64, 5} # ω, χ, ψ, p, a
 	C::Array{Float64, 5}
 	g::Array{Float64, 5}
+	F::Array{Float64, 5}
 end
 
 struct Prequel
@@ -329,8 +330,9 @@ function Multiψ(ct::CrazyType;
 	L = zeros(Nω, Nχ, Nψ, Np, Na)
 	C = zeros(Nω, Nχ, Nψ, Np, Na)
 	g = zeros(Nω, Nχ, Nψ, Np, Na)
+	F = zeros(Nω, Nχ, Nψ, Np, Na)
 
-	return Multiψ(ct, ωgrid, χgrid, ψgrid, L, C, g)
+	return Multiψ(ct, ωgrid, χgrid, ψgrid, L, C, g, F)
 end
 
 ϕ(a::Number, ω::Number, χ::Number) = exp(-ω) * (a-χ) + χ
