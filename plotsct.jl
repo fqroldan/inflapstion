@@ -96,7 +96,7 @@ function Eplot(ct::CrazyType; kwargs...)
     ctplot(ct, y, title = "𝔼[<i>p'-p</i>]"; kwargs...)
 end
 
-Cplot(cc::CrazyType; kwargs...) = ctplot(ct, ct.C; kwargs...)
+Cplot(ct::CrazyType; kwargs...) = ctplot(ct, ct.C; kwargs...)
 gplot(ct::CrazyType; kwargs...) = ctplot(ct, annualized.(ct.gπ); kwargs...)
 Lplot(ct::CrazyType; kwargs...) = ctplot(ct, ct.L, title = "𝓛"; kwargs...)
 function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, mod_a = 1, kwargs...)
@@ -141,7 +141,7 @@ function Cplot(mt::MultiType; jp = 2, kwargs...)
         C[ja, jχ] = mt.C_mat[jω, jχ, jp, ja]
     end
 
-    ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> 𝓛(<i>p,a,ω*,χ</i>)"; kwargs...)
+    ctωplot(mt, C, title="lim<sub><i>p→0</i></sub> 𝒞(<i>p,a,ω*,χ</i>)"; kwargs...)
 end
 
 function Lplot_fixed_ω(mt::MultiType; jp = 2, kwargs...)
