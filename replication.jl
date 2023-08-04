@@ -42,6 +42,19 @@ function replicate_all(;saveall=false)
     fig_app1 = Lplot_fixed_ω(mt, slides = false)
     saveall && savefig(fig_app1, "Graphs/current/contour_app_paper.pdf", width = 900, height = 400)
 
+
+    # Gradual Feedback Rules
+
+    mtp = load("Output/mtpsi_s20_20230720.jld2", "mt_psi");
+
+    fig13a = twolines(mtp, jp = 2, slides = false)
+    saveall && savefig(fig13a, "Graphs/current/psithing_L1.pdf", width = 500, height = 350)
+
+    fig13b = twolines(mtp, show = "C", jp = 2, slides = false)
+    saveall && savefig(fig13b, "Graphs/current/psithing_C1.pdf", width = 500, height = 350)
+
+    fig14 = implied_plan(mtp, slides = false)
+    saveall && savefig(fig14, "Graphs/current/psithing_plans.pdf", width = 1000, height = 450)
 end
 
 function thumbnail(;saveall = false)

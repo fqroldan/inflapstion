@@ -521,3 +521,78 @@ function twolines(mt::Multiψ; show="L", jp = 2, slides = true, dark = false)
 
     plot(data, layout)
 end
+
+function implied_plan(mt::Multiψ; jp = 2, slides = true, dark = false)
+
+    ψvec = mt.ψgrid
+
+    ωvec = similar(ψvec)
+    χvec = similar(ψvec)
+    avec = similar(ψvec)
+
+    for jψ in eachindex(ψvec)
+        _, jj = findmin(mt.L[:,:,jψ,jp,:])
+        ωvec[jψ] = mt.ωgrid[jj[1]]
+        χvec[jψ] = mt.χgrid[jj[2]]
+        avec[jψ] = mt.ct.gr[:a][jj[3]]
+    end
+
+    ωvec = perc_rate.(ωvec)
+    χvec = annualized.(χvec)
+    avec = annualized.(avec)
+
+    cols = [get(ColorSchemes.southwest, jj, :clamp) for jj in [0, 0.5, 1]]
+
+    lines = [
+        scatter(x = ψvec, y = ωvec, line_width = 2.5, yaxis = "y2", marker_color = cols[1], name = "<i>ω*(ψ)")
+        scatter(x = ψvec, y = avec, line_width = 2.5, yaxis = "y1", marker_color = cols[2], name = "<i>a<sub>0</sub>*(ψ)")
+        scatter(x = ψvec, y = χvec, line_width = 2.5, yaxis = "y1", marker_color = cols[3], name = "<i>χ*(ψ)")
+    ]
+
+	layout = Layout(
+        template = qtemplate(;slides, dark),
+        hovermode = "x",
+		yaxis = attr(domain=[0, 0.45], zeroline=false, title="<i>%"),
+		yaxis2 = attr(domain=[0.55, 1], zeroline=false, title="<i>%"),
+		xaxis = attr(zeroline=false, title="<i>ψ"),
+		legend = attr(orientation="h", x=0.05),
+		title="Preferred plans",
+    )
+
+    plot(lines, layout)
+end
+
+function allplans(mt::Multiψ; jp = 2, T = 11, slides = true, dark = false)
+
+    ψvec = mt.ψgrid
+
+    ωvec = similar(ψvec)
+    χvec = similar(ψvec)
+    avec = similar(ψvec)
+
+    cvec = zeros(1:T, length(ψvec))
+
+    for jψ in eachindex(ψvec)
+        _, jj = findmin(mt.L[:,:,jψ,jp,:])
+        ωvec[jψ] = mt.ωgrid[jj[1]]
+        χvec[jψ] = mt.χgrid[jj[2]]
+        avec[jψ] = mt.ct.gr[:a][jj[3]]
+
+        a = annualized(avec[jψ])
+        χ = annualized(χvec[jψ])
+        Ω = exp(-ωvec[jψ])
+        
+        for tt in 1:T
+            cvec[tt, jψ] = χ + Ω^(tt-1) * (a - χ)
+        end
+    end
+
+    lines = [scatter(x = 0:T-1, y = cvec[:, jψ], name = "ψ = $(round(ψv, sigdigits=2))") for (jψ, ψv) in enumerate(ψvec)]
+
+    layout = Layout(
+        template = qtemplate(;slides, dark)
+    )
+
+    plot(lines, layout)
+end
+
