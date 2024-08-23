@@ -113,6 +113,14 @@ struct Prequel
     G::Array{Float64, 5}    # ω, χ, a, p, A
 end
 
+struct Zero{T}
+	pars::Dict{Symbol, Float64}
+	gr::Dict{Symbol, Vector{Float64}}
+	L::Array{Float64, T}
+	G::Array{Float64, T}
+end
+
+
 mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
 	β::Float64
 	γ::Float64
@@ -203,7 +211,38 @@ end
 function move_grids!(xgrid; xmin=0.0, xmax=1.0)
 	xgrid[:] = xgrid[:] * (xmax-xmin) .+ xmin
  	nothing
- end
+end
+
+
+function CCT(pars; a = 0., Np = 50)
+
+	ω = 0.
+	χ = a
+
+	opt = Dict(:use_a => true)
+	A = Nash(Forward, pars[:β], pars[:γ], pars[:κ], pars[:ystar])
+
+	agrid = [a, A]
+	Na = 2
+
+	pgrid = cdf.(Beta(5,3), range(0,1,length=Np))
+    gr = Dict(:p => pgrid, :a => agrid)
+
+    gπ, ga = [zeros(Np, Na) for _ in 1:2]
+    for jp in 1:Np, (ja, av) in enumerate(agrid)
+        gπ[jp, ja] = av
+        ga[jp, ja] = ϕ(av, ω, χ)
+    end
+
+    L = ones(Np, Na)
+    C = ones(Np, Na)
+
+    Ey = zeros(Np, Na)
+    Eπ = zeros(Np, Na)
+    Ep = zeros(Np, Na)
+
+    return CrazyType{Forward}(pars, gr, opt, gπ, ga, L, C, Ey, Eπ, Ep)
+end
 
 function CrazyType(T::DataType;
 		β = 1.02^(-0.25),
@@ -356,6 +395,7 @@ Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward || T==SemiForward, κ /
 
 Nash(ct::Plan{T}) where T <: PhillipsCurve = Nash(T, ct.pars[:β], ct.pars[:γ], ct.pars[:κ], ct.pars[:ystar])
 
+Nash(z::Zero) = Nash(Forward, z.pars[:β], z.pars[:γ], z.pars[:κ], z.pars[:ystar])
 
 dist_ϵ(ct) = Normal(0, ct.pars[:σ])
 pdf_ϵ(ct, ϵv) = pdf.(dist_ϵ(ct), ϵv)

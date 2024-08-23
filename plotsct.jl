@@ -84,14 +84,14 @@ end
 
 
 function hplot(ct::CrazyType; kwargs...)
-    y = [ct.gπ[jp, ja] - av for jp in eachindex(ct.pgrid), (ja, av) in enumerate(ct.agrid)]
+    y = [ct.gπ[jp, ja] - av for jp in eachindex(ct.gr[:p]), (ja, av) in enumerate(ct.gr[:a])]
 
     ctplot(ct, annualized.(y), title = "<i>g<sup>⋆</sup> - a"; kwargs...)
 end
 
 
 function Eplot(ct::CrazyType; kwargs...)
-    y = [ct.Ep[jp, ja] .- pv for (jp, pv) in enumerate(ct.pgrid), ja in eachindex(ct.agrid)]
+    y = [ct.Ep[jp, ja] .- pv for (jp, pv) in enumerate(ct.gr[:p]), ja in eachindex(ct.gr[:a])]
 
     ctplot(ct, y, title = "𝔼[<i>p'-p</i>]"; kwargs...)
 end
@@ -101,17 +101,17 @@ gplot(ct::CrazyType; kwargs...) = ctplot(ct, annualized.(ct.gπ); kwargs...)
 Lplot(ct::CrazyType; kwargs...) = ctplot(ct, ct.L, title = "𝓛"; kwargs...)
 function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, mod_a = 1, kwargs...)
 
-    vv = [ja / length(ct.agrid) for ja in eachindex(ct.agrid)]
+    vv = [ja / length(ct.gr[:a]) for ja in eachindex(ct.gr[:a])]
     if dark
         col = get(ColorSchemes.lapaz, 1 .- 0.9 * vv, :clamp)
     else
         col = get(ColorSchemes.lapaz, 0.95 * vv, :clamp)
     end
 
-    min_a, max_a = annualized.(extrema(ct.agrid)) ./ annualized.(Nash(ct))
+    min_a, max_a = annualized.(extrema(ct.gr[:a])) ./ annualized.(Nash(ct))
 
-    jp = round(Int, length(ct.pgrid)/2)
-	xs = [ct.pgrid[jp] for _ in axes(y, 2)]
+    jp = round(Int, length(ct.gr[:p])/2)
+	xs = [ct.gr[:p][jp] for _ in axes(y, 2)]
     ys = [y[jp, ja] for ja in axes(y, 2)]
     cols = range(0,1,length=length(xs))
 	colscale = [[(jp-1)/(length(col)-1), col[jp]] for jp in eachindex(col)]
@@ -122,15 +122,30 @@ function ctplot(ct::CrazyType, y::Array; slides=true, dark=false, mod_a = 1, kwa
 				x = xs, y = ys, showlegend=false,
 				marker = attr(color=cols, reversescale=false, colorscale=colscale, colorbar = attr(tickvals=range(min_a, max_a,length=length(colnames)), title="&nbsp;<i>a/π<sup>N", ticktext=colnames))
 				)
-        [scatter(x = ct.pgrid, y = y[:, ja], line_width = 1.75, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.agrid) if ja % mod_a == 0]
+        [scatter(x = ct.gr[:p], y = y[:, ja], line_width = 1.75, marker_color = col[ja], name = "a = $(round(annualized(av), sigdigits=2))") for (ja, av) in enumerate(ct.gr[:a]) if ja % mod_a == 0]
     ]
 
     template = qtemplate(dark = dark, slides = slides)
 
-    layout = Layout(template = template, xaxis_title = "<i>p", hovermode ="x unified", showlegend=false; kwargs...)
+    layout = Layout(template = template, xaxis_title = "<i>p", hovermode ="x", showlegend=false; kwargs...)
 
     plot(data[end:-1:1], layout)
 end
+
+function astar(ct::CrazyType; dark = false, slides = true, kwargs...)
+
+    avec = [annualized(ct.gr[:a][findmin(ct.L[jp,:])[2]]) for jp in eachindex(ct.gr[:p])]
+
+    sc = scatter(x = ct.gr[:p], y = avec)
+
+    template = qtemplate(; dark, slides)
+
+    layout = Layout(; template, xaxis_title = "<i>p", yaxis_title = "<i>%", hovermode = "x", kwargs...)
+
+    plot(sc, layout)
+end
+
+
 
 function Cplot(mt::MultiType; jp = 2, kwargs...)
 
@@ -189,7 +204,7 @@ function Lωplot(mt::MultiType; jp=2, slides=true, dark=false, kwargs...)
     L = [minimum(mt.L_mat[:, jχ, jp, ja]) for ja in axes(mt.L_mat, 4), jχ in axes(mt.L_mat, 2)]
 
     jj = findfirst(L .== minimum(L))
-    xmin = annualized(mt.ct.agrid[jj[1]])
+    xmin = annualized(mt.ct.gr[:a][jj[1]])
     ymin = annualized(mt.χgrid[jj[2]])
 
     shape_vec = [
@@ -268,7 +283,7 @@ function ctplot(mt::Union{MultiType, Prequel}, y::Array; slides = true, dark = f
 end 
 
 function plansp(mt::MultiType; slides = true, dark = false)
-    Np = mt.ct.Np
+    Np = length(mt.ct.gr[:p])
 
 	data = zeros(Np, 3)
     for jp in axes(data, 1)
@@ -276,7 +291,7 @@ function plansp(mt::MultiType; slides = true, dark = false)
         _, jj = findmin(mt.L_mat[:, :, jp, :])
         
         data[jp, 1] = perc_rate(mt.ωgrid[jj[1]])
-        data[jp, 2] = annualized(mt.ct.agrid[jj[3]])
+        data[jp, 2] = annualized(mt.ct.gr[:a][jj[3]])
         data[jp, 3] = annualized(mt.χgrid[jj[2]])
     end
     
@@ -285,7 +300,7 @@ function plansp(mt::MultiType; slides = true, dark = false)
     
     cols = [get(ColorSchemes.southwest, jj, :clamp) for jj in [0, 0.5, 1]]
     lines = [
-        scatter(;x=mt.ct.pgrid[2:end], y=data[2:end, jj], line_width = 2.5, yaxis=yax[jj], marker_color=cols[jj], name="<i>"*datanames[jj]*"</i>") for jj in eachindex(datanames)
+        scatter(;x=mt.ct.gr[:p][2:end], y=data[2:end, jj], line_width = 2.5, yaxis=yax[jj], marker_color=cols[jj], name="<i>"*datanames[jj]*"</i>") for jj in eachindex(datanames)
     ]
 
 	layout = Layout(
@@ -330,11 +345,11 @@ function avgplans(mt::MultiType, N = 50; decay=true, CIs=false, slides = true, d
 	plot(ls, layout)
 end
 
-function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false)
+function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false, folder = "")
 
     χgrid = mt.χgrid
     ωgrid = mt.ωgrid
-    agrid = mt.ct.agrid
+    agrid = mt.ct.gr[:a]
 
     marg_aχ = [sum(mt.μ[:, jχ, ja]) for jχ in axes(mt.μ, 2), ja in axes(mt.μ, 3)]
 
@@ -346,19 +361,19 @@ function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = fals
 
     P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > χgrid[jχ]])
     print("P(a_0 > χ) = $(@sprintf("%0.3g",100P))%\n")
-    save_stats && write("pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
+    save_stats && write(folder * "pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
     P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > 5χgrid[jχ]])
     print("P(a_0 > 5χ) = $(@sprintf("%0.3g",100P))%\n")
-    save_stats && write("pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
+    save_stats && write(folder * "pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
     P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ] == 0])
     print("P(a_0 > 0) = $(@sprintf("%0.3g",100P))%\n")
-    save_stats && write("pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+    save_stats && write(folder * "pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
     P = sum([sum(mt.μ[jω, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω]) <= 10])
     print("P(ω ≤ 10%) = $(@sprintf("%0.3g",100P))%\n")
-    save_stats && write("pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+    save_stats && write(folder * "pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
 
     l1 = Layout(
         template = qtemplate(slides=slides, dark=dark),

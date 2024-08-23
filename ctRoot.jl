@@ -77,12 +77,17 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge
 
 	sum_prob = get_sumprob(ct)
 
+    f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ=use_ϕ)[2] * pdf_ϵ(ct, ϵv)
+    Ep, err = hquadrature(f_p, -3.09 * ct.pars[:σ], 3.09 * ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
+
+	Ep = Ep / sum_prob
+
 	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[4] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 
 	Ec = Ec / sum_prob
 
-	return Ec
+	return Ec, Ep
 end
 
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
@@ -215,7 +220,9 @@ function iter_cred!(new_C, ct::Plan, itp_C, itp_gπ, itp_L)
 		
 		πe′ = exp_π_prime(ct, pv, av, itp_gπ, ge, aprime)
 		
-		EC′ = exp_L_y(ct, itp_gπ, itp_L, itp_C, ge, pv, av, aprime, ge, πe′)
+		EC′, Ep = exp_L_y(ct, itp_gπ, itp_L, itp_C, ge, pv, av, aprime, ge, πe′)
+
+		ct.Ep[jp, ja] = Ep
 
 		Eπ = pv * av + (1-pv) * ge
 
