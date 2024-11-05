@@ -181,6 +181,7 @@ fillz!(y::Array{<:Number,5}, jp, ja, j0, x) = (y[jp, ja[1], ja[2], ja[3], j0] = 
 
 function solve!(z::Zero{2})
 
+    
     πN = Nash(z)
 
     Np = length(z.gr[:p])
