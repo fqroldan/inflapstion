@@ -22,11 +22,14 @@ function Prequel(mt::MultiType; Agrid = mt.ct.agrid, pgrid = mt.ct.pgrid)
     return Prequel(ωgrid, χgrid, agrid, pgrid, Agrid, L, G)
 end
 
-function makeZero(mt::MultiType; Na = length(mt.ct.gr[:a]), pgrid = mt.ct.gr[:p], T = 0)
+# cdf.(Beta(5,3), range(0,1,length=80))
+function makeZero(mt::MultiType; Na = length(mt.ct.gr[:a]), pgrid = mt.ct.gr[:p], T = 0) 
 
 
-    A = .8 * Nash(mt.ct)
-    agrid = cdf.(Beta(0.5,1.5), range(0,1,length=Na))
+    # A = .8 * Nash(mt.ct)
+    A = .85 * Nash(mt.ct)
+    
+    agrid = cdf.(Beta(0.5,1), range(0,1,length=Na))
 	move_grids!(agrid, xmax=A, xmin=0.0)
 
     pars = Dict(k => v for (k,v) in mt.ct.pars)
@@ -48,7 +51,7 @@ function makeZero(z0::Zero{T}) where T
 
     K = T + 1
 
-    L = zeros(length(gr[:p]), length(gr[:a]), (length(gr[:a]) for _ in 1:(K-2))...)
+    L = zeros(length(gr[:p]), length(gr[:a]), (length(gr[:a]) for _ in 1:(K-2))...) .* NaN
 
     G = similar(L)
 
@@ -159,28 +162,28 @@ function solve_t0(mt::MultiType)
     return m0
 end
 
-periods(z::Zero{T}) where T = T
+periods(::Zero{T}) where T = T
 
 QuantEcon.gridmake(z::Zero{2}) = gridmake(1:length(z.gr[:a]))
 QuantEcon.gridmake(z::Zero{3}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]))
 QuantEcon.gridmake(z::Zero{4}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]))
-# QuantEcon.gridmake(z::Zero{5}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]))
+QuantEcon.gridmake(z::Zero{5}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]))
 # QuantEcon.gridmake(z::Zero{6}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]))
 # QuantEcon.gridmake(z::Zero{7}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]), 1:length(z.gr[:a]))
 
 getnext(y::Array{<:Number,2}, _) = y[:, :]
 getnext(y::Array{<:Number,3}, js) = y[:, js[1], :]
 getnext(y::Array{<:Number,4}, js) = y[:, js[1], js[2], :]
-# getnext(y::Array{<:Number,5}, js) = y[:, js[1], js[2], js[3], :]
+getnext(y::Array{<:Number,5}, js) = y[:, js[1], js[2], js[3], :]
 # getnext(y::Array{<:Number,6}, js) = y[:, js[1], js[2], js[3], js[4], :]
 # getnext(y::Array{<:Number,7}, js) = y[:, js[1], js[2], js[3], js[4], js[5], :]
 
 fillz!(y::Array{<:Number,3}, jp, ja, j0, x) = (y[jp, ja[1], j0] = x)
 fillz!(y::Array{<:Number,4}, jp, ja, j0, x) = (y[jp, ja[1], ja[2], j0] = x)
 fillz!(y::Array{<:Number,5}, jp, ja, j0, x) = (y[jp, ja[1], ja[2], ja[3], j0] = x)
+fillz!(y::Array{<:Number,6}, jp, ja, j0, x) = (y[jp, ja[1], ja[2], ja[3], ja[4], j0] = x)
 
-function solve!(z::Zero{2})
-
+function solve!(z::Zero{2}; zero = false)
     
     πN = Nash(z)
 
@@ -199,13 +202,17 @@ function solve!(z::Zero{2})
             print("WARNING: no convergence\n")
         end
 
-        z.L[:, ja] .= ct.L[:, 1]
+        if zero
+            z.L[:, ja] .= 0.
+        else
+            z.L[:, ja] .= ct.L[:, 1]
+        end
         z.G[:, ja] .= ct.gπ[:, 1]
     end
     nothing
 end
 
-function extend(z0::Zero)
+function extend(z0::Zero; onlytop = false)
     z = makeZero(z0)
     πN = Nash(z0)
     
@@ -222,9 +229,11 @@ function extend(z0::Zero)
         avec = [z0.gr[:a][jj] for jj in ja]
         
         print("Out loop $jj with (a) = $([round(x/Nash(z), sigdigits=3) for x in avec])")
+        
+        
 
         aprime = avec[end]
-        
+
         Lp = getnext(z0.L, ja)
         gp = getnext(z0.G, ja)
 
@@ -234,24 +243,34 @@ function extend(z0::Zero)
         itp_C  = interpolate(knts, 0*gp, Gridded(Linear()))
 
         counter = 0
-        for (jp, pv) in enumerate(z.gr[:p]), (j0, a0) in enumerate(z.gr[:a])
-
-            xguess = [gguess, aprime]
-
-            πe′ = 0
-
-            obj(G) = (G - opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, a0, G, πe′)[1])^2
-
-            res = Optim.optimize(obj, Gmin, Gmax, GoldenSection())
-
-            if Optim.converged(res) && sqrt(res.minimum) < 5e-4
+        # for (jp, pv) in enumerate(z.gr[:p]), (j0, a0) in enumerate(z.gr[:a])
+        apgrid = gridmake(1:length(z.gr[:p]), 1:length(z.gr[:a]))
+    	Threads.@threads for js in axes(apgrid,1)
+	    	jp, j0 = apgrid[js, :]
+            
+            if onlytop && j0 < length(z.gr[:a])
+                Gc, Lc = NaN, NaN
             else
-                counter += 1
+                pv = z.gr[:p][jp]
+                a0 = z.gr[:a][j0]
+                
+                xguess = [gguess, aprime]
+
+                πe′ = 0
+
+                obj(G) = (G - opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, a0, G, πe′)[1])^2
+
+                res = Optim.optimize(obj, Gmin, Gmax, GoldenSection())
+
+                if Optim.converged(res) && sqrt(res.minimum) < 5e-4
+                else
+                    counter += 1
+                end
+
+                Gc = res.minimizer
+                _, Lc, _ = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, a0, Gc, πe′, use_ϕ=false)
+
             end
-
-            Gc = res.minimizer
-            _, Lc, _ = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, a0, Gc, πe′, use_ϕ=false)
-
             fillz!(z.G, jp, ja, j0, Gc)
             fillz!(z.L, jp, ja, j0, Lc)
         end

@@ -122,12 +122,7 @@ end
 
 
 mutable struct Ramsey{T<:PhillipsCurve} <: Plan{T}
-	β::Float64
-	γ::Float64
-	κ::Float64
-	ystar::Float64
-
-	Nθ::Int64
+	pars::Dict{Symbol, Float64}
 	θgrid::Vector{Float64}
 
 	g::Array{Float64, 2}
@@ -186,7 +181,9 @@ function set_ξ!(sp::Sustainable, ξ)
 end
 
 function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
-	β, γ, κ, ystar = ct.β, ct.γ, ct.κ, ct.ystar
+
+    pars = Dict(k => ct.pars[k] for k in (:β, :γ, :κ, :ystar))
+	pars[:Nθ] = Nθ
 
 	θgrid = range(-10, 10, length=Nθ)
 	g = zeros(Nθ,3)
@@ -195,7 +192,7 @@ function Ramsey(ct::CrazyType{T}, Nθ=1000) where T<:PhillipsCurve
 
 	v = zeros(Nθ)
 
-	return Ramsey{T}(β, γ, κ, ystar, Nθ, θgrid, g, v)
+	return Ramsey{T}(pars, θgrid, g, v)
 end
 function make_itp(rp::Ramsey, y)
 	knots = (rp.θgrid,)
@@ -392,7 +389,7 @@ which_PC(ct::Plan{T}) where T <: PhillipsCurve = T
 Nash(T::DataType, β, γ, κ, ystar) = ifelse(T==Forward || T==SemiForward, κ / (1.0 - β + κ^2*γ) * ystar, ystar / (κ*γ))
 
 # Nash(ct::CrazyType) = Nash(which_PC(ct), ct.β, ct.γ, ct.κ, ct.ystar)
-
+Nash(mt::Union{MultiType, Multiψ}) = Nash(mt.ct)
 Nash(ct::Plan{T}) where T <: PhillipsCurve = Nash(T, ct.pars[:β], ct.pars[:γ], ct.pars[:κ], ct.pars[:ystar])
 
 Nash(z::Zero) = Nash(Forward, z.pars[:β], z.pars[:γ], z.pars[:κ], z.pars[:ystar])

@@ -200,8 +200,8 @@ function Lωplot(m0::Prequel; jp = 2, jA = 1, slides=true, dark=false, kwargs...
     )
 end
 
-function Lωplot(mt::MultiType; jp=2, slides=true, dark=false, kwargs...)
-    L = [minimum(mt.L_mat[:, jχ, jp, ja]) for ja in axes(mt.L_mat, 4), jχ in axes(mt.L_mat, 2)]
+function Lωplot(mt::MultiType, L_mat = mt.L_mat; jp=2, slides=true, dark=false, kwargs...)
+    L = [minimum(L_mat[:, jχ, jp, ja]) for ja in axes(L_mat, 4), jχ in axes(L_mat, 2)]
 
     jj = findfirst(L .== minimum(L))
     xmin = annualized(mt.ct.gr[:a][jj[1]])
@@ -316,6 +316,59 @@ function plansp(mt::MultiType; slides = true, dark = false)
     plot(lines, layout)
 end
 
+function planspwide(mt::MultiType, dk = nothing; DKcrit = !isnothing(dk), slides = true, dark = false, T = 11, share = true)
+
+    data = zeros(T, length(mt.ct.gr[:p]))
+
+    for jp in axes(data, 2)
+        if DKcrit
+            _, jj = findmin(dk[:, :, jp, :])
+        else
+            _, jj = findmin(mt.L_mat[:, :, jp, :])
+        end
+
+        a = annualized(mt.ct.gr[:a][jj[3]])
+        χ = annualized(mt.χgrid[jj[2]])
+        ω = mt.ωgrid[jj[1]]
+        
+        for tt in 1:T
+            data[tt, jp] = χ + exp(-ω*(tt-1)) * (a - χ)
+        end
+    end
+
+    yaxis_title = "%"
+    if share
+        data .*= 1/annualized(Nash(mt))
+        yaxis_title = "Share of Nash inflation"
+    end
+
+    vv = [jp / length(mt.ct.gr[:p]) for jp in eachindex(mt.ct.gr[:p])]
+    min_z, max_z = extrema(mt.ct.gr[:p])
+    col = get(ColorSchemes.batlow, 0.85 * vv, :clamp)
+
+    jT = round(Int, T / 2)
+    xs = [jT for _ in axes(data, 2)]
+    ys = [data[jT, ja] for ja in axes(data, 2)]
+    cols = range(0, 1, length=length(xs))
+    colscale = [[(jT - 1) / (length(col) - 1), col[jT]] for jT in eachindex(col)]
+    colnames = round.(range(min_z, max_z, length=6), digits=2)
+
+
+    lines = [
+        scatter()
+        scatter(mode = "markers", marker_opacity = 0,
+        x = xs, y = ys, showlegend=false,
+            marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(min_z, max_z, length=length(colnames)), title="&nbsp;<i>p", ticktext=colnames))
+        )
+        [scatter(x=(1:T) .- 1, y=data[:, jp], marker_color=col[jp], showlegend = false) for jp in axes(data, 2) if jp > 1]
+    ]
+    layout = Layout(;
+        template = qtemplate(;slides, dark), xaxis_title = "<i>Quarters", yaxis_title
+    )
+
+    plot(lines, layout)
+end
+
 function avgplans(mt::MultiType, N = 50; decay=true, CIs=false, slides = true, dark = false)
     data, datanames, zgrid = mimic_z(mt, N, decay=decay, annualize=true)
 
@@ -400,12 +453,12 @@ function get_Kambe(mt::MultiType; jp = 2)
 	minL, jj = findmin(mt.L_mat[:, :, jp, :])
 	ωK = mt.ωgrid[jj[1]]
 	χK = mt.χgrid[jj[2]]
-	aK = mt.ct.agrid[jj[3]]
+	aK = mt.ct.gr[:a][jj[3]]
 
     return ωK, χK, aK
 end
 
-function prep_plot_planner(mt::MultiType)
+function prep_plot_planner(mt::MultiType; k = 10)
 	ct = mt.ct
 	rp = Ramsey(ct)
 
@@ -413,7 +466,7 @@ function prep_plot_planner(mt::MultiType)
 	πR, θR = simul_plan(rp)
 
 	# tvec = 1:length(πR)
-	tvec = 1:11
+    tvec = (0:k) .+ 1
 
 	mean_ω, mean_a, mean_χ, sd_ω, sd_a, sd_χ = find_plan_μ(mt; annualize=false, decay=false)
 
@@ -435,9 +488,9 @@ function get_Kambe(m0::Prequel, jA; jp = 2)
     return ωK, χK, aK
 end
 
-function prep_plot_prequel(m0::Prequel, jA = 1)
-    tvec = 1:11
-
+function prep_plot_prequel(m0::Prequel; k = 10, jA = 1)
+    tvec = (0:k) .+ 1
+    
     ωK, χK, aK = get_Kambe(m0, jA)
 	πK = (aK - χK) * exp.(-ωK * (tvec.-1)) .+ χK
 
@@ -445,20 +498,64 @@ function prep_plot_prequel(m0::Prequel, jA = 1)
     return 0:11, πK
 end
 
-function comp_plot_planner(mt::MultiType; slides::Bool=true, dark = false)
-    tvec, πR, πC, πK = prep_plot_planner(mt)
+function comp_plot_planner(mt::MultiType; k = 10, slides::Bool=true, dark = false, Kambe = true, Average = true, share = true, kwargs...)
 
-    layout = Layout(
-        title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",   legend=attr(orientation="h", x=0.05),
-        template = qtemplate(slides = slides, dark = dark)
+    yaxis_title = "%"
+
+    tvec, πR, πC, πK = prep_plot_planner(mt; k)
+
+
+
+    if share
+        yaxis_title = "Share of Nash inflation"
+        πN = Nash(mt)
+        πR *= 1/πN
+        πC *= 1/πN
+        πK *= 1/πN
+    else
+        πR = annualized.(πR)
+        πC = annualized.(πC)
+        πK = annualized.(πK)
+    end
+
+    layout = Layout(;
+        title="Plans", xaxis_title="<i>Quarters", yaxis_title, legend=attr(orientation="h", x=0.05), template = qtemplate(slides = slides, dark = dark),
+        kwargs...
     )
     data = [
-        scatter(x=tvec.-1, y=annualized.(πR)[tvec], marker_color=get(ColorSchemes.southwest, 0.01, :clamp), name="<i>Ramsey")
-        scatter(x=tvec.-1, y=annualized.(πC)[tvec], marker_color=get(ColorSchemes.southwest, 0.99, :clamp), name="<i>Average eq'm")
-        scatter(x=tvec.-1, y=annualized.(πK)[tvec], marker_color=get(ColorSchemes.southwest, 0.5, :clamp), name="<i>Kambe eq'm")
-    ]
+        scatter(x=tvec.-1, y=πR[tvec], marker_color=get(ColorSchemes.southwest, 0.01, :clamp), name="<i>Ramsey", showlegend=true)
+        ]
+    if Kambe
+        push!(data, scatter(x=tvec.-1, y=πK[tvec], marker_color=get(ColorSchemes.southwest, 0.5, :clamp), name="<i>Optimal eq'm"))
+    end
+    if Average
+        push!(data, scatter(x=tvec.-1, y=πC[tvec], marker_color=get(ColorSchemes.southwest, 0.99, :clamp), name="<i>Average eq'm"))
+    end
 
     plot(data, layout)
+end
+
+function show_μ(mt::MultiType; slides = true, dark = false)
+	pgrid, agrid = mt.ct.gr[:p], mt.ct.gr[:a]
+	ωgrid, χgrid = mt.ωgrid, mt.χgrid
+
+    πN = Nash(mt.ct)
+	tvec = 1:11
+
+    L = mt.L_mat[:, :, 2, :]
+    μ = (-L .+ maximum(L)) / (maximum(L) - minimum(L))
+
+    marker = attr(color = get(ColorSchemes.oslo, 0.4, :clamp))
+
+    sc = [
+        scatter(x=tvec .- 1, y=100*((av - χv) * exp.(-ωv * tvec .- 1) .+ χv) / πN; showlegend=false, marker = get(ColorSchemes.oslo, 0.8 * (1-μ[jω, jχ, ja]), :clamp), hoverinfo="skip", line_width = 0.1, opacity=μ[jω, jχ, ja]^13, mode="lines") for (ja, av) in enumerate(agrid), (jω, ωv) in enumerate(ωgrid), (jχ, χv) in enumerate(χgrid)
+    ] |> vec
+
+    layout = Layout(template = qtemplate(; slides, dark),
+        xaxis_title = "Quarters", yaxis_title = "Inflation (% of Nash)",
+    )
+
+    plot(sc, layout)
 end
 
 function comp_plot_planner(m0::Prequel, mt::MultiType; jA = 1, slides=true, dark=false)
@@ -576,6 +673,63 @@ function implied_plan(mt::Multiψ; jp = 2, slides = true, dark = false)
 
     plot(lines, layout)
 end
+
+function implied_plan_wide(mt::Multiψ, dk = nothing; DKcrit=!isnothing(dk), jp = 2, slides = true, dark = false, share = true, T = 11)
+
+    ψvec = mt.ψgrid
+
+    data = zeros(T, length(ψvec))
+    for jψ in axes(data, 2)
+        if DKcrit
+            _, jj = findmin(dk[:, :, jψ, jp, :])
+        else
+            _, jj = findmin(mt.L[:, :, jψ, jp, :])
+        end
+
+        a = annualized(mt.ct.gr[:a][jj[3]])
+        χ = annualized(mt.χgrid[jj[2]])
+        ω = mt.ωgrid[jj[1]]
+
+        for tt in 1:T
+            data[tt, jψ] = χ + exp(-ω * (tt - 1)) * (a - χ)
+        end
+    end
+
+    yaxis_title = "%"
+    if share
+        data .*= 1 / annualized(Nash(mt))
+        yaxis_title = "Share of Nash inflation"
+    end
+
+    vv = [jψ / length(ψvec) for jψ in eachindex(ψvec)]
+    min_z, max_z = extrema(ψvec)
+    col = get(ColorSchemes.batlow, 0.85 * vv, :clamp)
+
+    jT = round(Int, T / 2)
+    xs = [jT for _ in axes(data, 2)]
+    ys = [data[jT, ja] for ja in axes(data, 2)]
+    cols = range(0, 1, length=length(xs))
+    colscale = [[(jT - 1) / (length(col) - 1), col[jT]] for jT in eachindex(col)]
+    colnames = round.(range(min_z, max_z, length=6), digits=2)
+
+
+    lines = [
+        scatter()
+        scatter(mode="markers", marker_opacity=0,
+            x=xs, y=ys, showlegend=false,
+            marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(0, 1, length=length(colnames)), title="&nbsp;<i>ψ", ticktext=colnames))
+        )
+        [scatter(x=(1:T) .- 1, y=data[:, jψ], marker_color=col[jψ], showlegend=false) for jψ in axes(data, 2) if jψ > 1]
+    ]
+    layout = Layout(;
+        template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_title, yaxis_range = [-0.01, maximum(data)*1.05]
+    )
+
+    plot(lines, layout)
+end
+
+
+
 
 function allplans(mt::Multiψ; jp = 2, T = 11, slides = true, dark = false)
 

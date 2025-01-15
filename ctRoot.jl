@@ -6,6 +6,7 @@ include("simul.jl")
 include("plotsct.jl")
 include("prequel.jl")
 include("planner.jl")
+include("compstats.jl")
 
 function Bayes(ct::Plan, obs_π, exp_π, pv, av)
 	
@@ -77,12 +78,12 @@ function exp_L_y(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge
 
 	sum_prob = get_sumprob(ct)
 
-    f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ=use_ϕ)[2] * pdf_ϵ(ct, ϵv)
+    f_p(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′; use_ϕ)[2] * pdf_ϵ(ct, ϵv)
     Ep, err = hquadrature(f_p, -3.09 * ct.pars[:σ], 3.09 * ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 
 	Ep = Ep / sum_prob
 
-	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[4] * pdf_ϵ(ct, ϵv)
+	f_C(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′; use_ϕ)[4] * pdf_ϵ(ct, ϵv)
 	Ec, err = hquadrature(f_C, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 
 	Ec = Ec / sum_prob
@@ -92,7 +93,7 @@ end
 
 function exp_L(ct::Plan, itp_gπ, itp_L, itp_C, control_π, pv, av, aprime, ge, πe′; use_ϕ = true)
 
-	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)[1] * pdf_ϵ(ct, ϵv)
+	f(ϵv) = cond_L(ct, itp_gπ, itp_L, itp_C, control_π + ϵv, pv, av, aprime, ge, πe′; use_ϕ)[1] * pdf_ϵ(ct, ϵv)
 	val, err = hquadrature(f, -3.09*ct.pars[:σ], 3.09*ct.pars[:σ], rtol=1e-10, atol=0, maxevals=0)
 	sum_prob = get_sumprob(ct)
 
@@ -105,7 +106,7 @@ function opt_L(ct::CrazyType, itp_gπ, itp_L, itp_C, xguess, pv, av, ge, πe′;
 
     gπ, L = π_guess, itp_L(pv, av)
 
-    obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, aprime, ge, πe′, use_ϕ = use_ϕ)
+    obj_f(x) = exp_L(ct, itp_gπ, itp_L, itp_C, first(x), pv, av, aprime, ge, πe′; use_ϕ)
 	
     πN = Nash(ct)
     h = 0.05 * πN
@@ -173,7 +174,7 @@ function optim_step(ct::Plan, itp_gπ, itp_L, itp_C, optim::Bool = true)
 			_, Lc, ap = opt_L(ct, itp_gπ, itp_L, itp_C, xguess, pv, av, Gc, πe′)
 		else
 			Gc = ge
-			Lc = exp_L(ct, itp_gπ, itp_L, itp_C, ge, pv, av, aprime, ge, πe′)
+			Lc = exp_L(ct, itp_gπ, itp_L, itp_C, ge, pv, av, aprime, Gc, πe′)
 			ap = aprime
 		end
 
@@ -261,7 +262,7 @@ function cred_vfi!(ct::Plan; tol = 1e-5, maxiter = 2000, verbose = false)
 	norm(ct.C)
 end
 
-function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000, verbose::Bool=true, accelerate = true)
+function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=1000, verbose::Bool=true, accelerate = true)
 	dist = 10.
 	iter = 0
 	upd_η = 1
@@ -307,7 +308,7 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=2000
 	return (dist <= tol)
 end
 
-function solve_all!(mt::MultiType; verbose = true, check = false)
+function solve_all!(mt::MultiType; verbose = true, check = false, tol = 1e-5)
 	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid)
@@ -332,7 +333,7 @@ function solve_all!(mt::MultiType; verbose = true, check = false)
 			ct.gπ .= mt.g_mat[jω, jχ, :, :]
 		end
 
-		flag = pfi!(ct, verbose = false)
+		flag = pfi!(ct, verbose = false; tol)
 		verbose && flag && print(": ✓")
 		verbose && !flag && print(": no convergence.")
 		
@@ -592,4 +593,144 @@ function extend_ψ(ct::CrazyType; ψmin = 0.0, ψmax = 0.35, Nψ = 100)
 	end
 
 	return Lψ, ψvec
+end
+
+
+function iter_DK!(new_dk, itp_gπ, itp_L, itp_C, ct::CrazyType)
+
+	apgrid = gridmake(1:N(ct, :p), 1:N(ct, :a))
+	Threads.@threads for js in axes(apgrid,1)
+
+		jp, ja = apgrid[js, :]
+		pv, av = ct.gr[:p][jp], ct.gr[:a][ja]
+		
+		aprime = ct.ga[jp, ja]
+		ge = ct.gπ[jp, ja]
+
+		πe′ = 0.
+
+		Gc = av # do the announcement exactly if behavioral
+
+        Lb = exp_L(ct, itp_gπ, itp_L, itp_C, Gc, pv, av, aprime, ge, πe′)
+
+		new_dk[jp, ja] = Lb
+	end
+end
+
+
+function behavioral_payoff(ct::CrazyType, gπ; maxiter = 2000, tol = 1e-6)
+	bp = zeros(size(ct.L))
+
+	new_bp = similar(bp)
+
+	knts = (ct.gr[:p], ct.gr[:a]);
+	itp_gπ = interpolate(knts, gπ, Gridded(Linear()));
+    # itp_L = interpolate(knts, ct.L, Gridded(Linear()))
+    itp_C = interpolate(knts, ct.C, Gridded(Linear()))
+
+	iter = 0
+	dist = 1+tol
+
+	while dist > tol && iter < maxiter
+
+		itp_L = interpolate(knts, bp, Gridded(Linear()))
+		iter_DK!(new_bp, itp_gπ, itp_L, itp_C, ct)
+
+		dist = norm(bp - new_bp) / (1+norm(bp))
+
+		bp .= new_bp
+	end
+
+	return bp, dist < tol
+end
+
+
+function behavioral_payoff(mt::MultiType; maxiter, tol, verbose)
+
+	bp = similar(mt.L_mat)
+
+    tot = length(mt.ωgrid) * length(mt.χgrid)
+
+	iter = 0
+    for (jω, ωv) in enumerate(mt.ωgrid), (jχ, χv) in enumerate(mt.χgrid)
+        iter += 1
+
+        show_ω = @sprintf("%.3g", perc_rate(ωv))
+        show_χ = @sprintf("%.3g", annualized(χv))
+
+        verbose && print("Plan with (ω, χ) = ($show_ω%, $show_χ%)")
+        ct = mt.ct
+		ct.pars[:ω] = ωv
+		ct.pars[:χ] = χv
+
+		gπ = mt.g_mat[jω, jχ, :, :]
+
+		new, flag = behavioral_payoff(ct, gπ; maxiter, tol)
+
+        bp[jω, jχ, :, :] .= new
+
+		flag || print("WARNING: no convergence\n")
+
+        perc = 100 * iter / tot
+        verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")
+    end
+
+	return bp
+end
+
+function behavioral_payoff(mt::Multiψ; maxiter, tol, verbose)
+    bp = similar(mt.L)
+    tot = length(mt.ωgrid) * length(mt.χgrid) * length(mt.ψgrid)
+    iter = 0
+    for (jω, ωv) in enumerate(mt.ωgrid), (jχ, χv) in enumerate(mt.χgrid), (jψ, ψv) in enumerate(mt.ψgrid)
+        iter += 1
+
+        show_ω = @sprintf("%.3g", perc_rate(ωv))
+        show_χ = @sprintf("%.3g", annualized(χv))
+        show_ψ = @sprintf("%.3g", 100*ψv)
+
+        verbose && print("Plan with (ω, χ, ψ) = ($show_ω%, $show_χ%, $show_ψ%)")
+        ct = mt.ct
+        ct.pars[:ω] = ωv
+        ct.pars[:χ] = χv
+        ct.pars[:ψ] = ψv
+
+        gπ = mt.g[jω, jχ, jψ, :, :]
+
+        new, flag = behavioral_payoff(ct, gπ; maxiter, tol)
+
+        bp[jω, jχ, jψ, :, :] .= new
+
+        flag || print("WARNING: no convergence\n")
+        perc = 100 * iter / tot
+        verbose && print(" $(@sprintf("%.3g",perc))% completed.\n")
+    end
+
+    return bp
+end
+
+
+function DKcriterion(bp, mt::MultiType)
+	@assert size(bp) == size(mt.L_mat)
+	dk = similar(bp)
+	for (jp, pv) in enumerate(mt.ct.gr[:p])
+		dk[:, :, jp, :] .= pv * bp[:, :, jp, :] .+ (1-pv) * mt.L_mat[:, :, jp, :]
+	end
+	return dk
+end
+
+function DKcriterion(bp, mt::Multiψ)
+    @assert size(bp) == size(mt.L)
+    dk = similar(bp)
+    for (jp, pv) in enumerate(mt.ct.gr[:p])
+        dk[:, :, :, jp, :] .= pv * bp[:, :, :, jp, :] .+ (1 - pv) * mt.L[:, :, :, jp, :]
+    end
+    return dk
+end
+
+
+function DKcriterion(mt::Union{MultiType, Multiψ}; maxiter = 2000, tol = 1e-6, verbose = true)
+	bp = behavioral_payoff(mt; maxiter, tol, verbose)
+	dk = DKcriterion(bp, mt)
+	return dk, bp
 end

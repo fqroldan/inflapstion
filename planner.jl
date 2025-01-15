@@ -21,7 +21,7 @@ end
 function optim_step(rp::Ramsey, itp_v, itp_gπ)
 	g, v = zeros(size(rp.g)), zeros(size(rp.v))
 
-	ystar, γ, β, κ = rp.ystar, rp.γ, rp.β, rp.κ
+	ystar, γ, β, κ = (rp.pars[k] for k in (:ystar, :γ, :β, :κ))
 	minπ = -0.1 * Nash(rp)
 	miny = 1/κ * (minπ - β*Nash(rp))
 	maxπ = 1.1*Nash(rp)
