@@ -4,12 +4,13 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol)
     χvec = similar(xvec)
     avec = similar(xvec)
 
-    for (jx, xv) in enumerate(xvec)
+    iter = ProgressBar(enumerate(xvec))
+    for (jx, xv) in iter
 
         mt.ct.pars[k] = xv
 
-        print("Starting with $(string(k)) = $(@sprintf("%.3g", xv))\n")
-        solve_all!(mt, check = true, tol = 5e-4)
+        println(iter, "Starting with $(string(k)) = $(@sprintf("%.3g", xv))")
+        solve_all!(mt, iter, check = true, tol = 5e-4)
 
         _, jj = findmin(mt.L_mat[:,:,2,:])
 
@@ -22,7 +23,7 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol)
         avec[jx] = mt.ct.gr[:a][ja]
     end
 
-    return ωvec, χvec, avec
+    return ωvec, χvec, avec, xvec
 end
 
 function compstats(mt::MultiType, k::Symbol, K=15)
@@ -38,4 +39,22 @@ function compstats(mt::MultiType, k::Symbol, K=15)
 
     svec = range(smin, smax, length=K)
     compstats(mt, svec, k)
+end
+
+
+function save_compstats(k::Symbol, K = 15)
+    mt = load("Output/JET/mt.jld2", "mt")
+
+    s = string(k)
+    if s == "σ"
+        s = "sigma"
+    elseif s == "β"
+        s = "beta"
+    elseif s == "κ"
+        s = "kappa"
+    end
+
+    ωvec, χvec, avec, xvec = compstats(mt, k, K)
+
+    save("Output/JET/compstats_$s.jld2", "ωvec", ωvec, "χvec", χvec, "avec", avec, "$(s)vec", xvec)
 end

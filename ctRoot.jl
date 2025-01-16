@@ -1,4 +1,4 @@
-using Distributions, Interpolations, Optim, HCubature, QuantEcon, Printf, PlotlyJS, Dates, JLD2, LinearAlgebra
+using Distributions, Interpolations, Optim, HCubature, QuantEcon, Printf, PlotlyJS, Dates, JLD2, LinearAlgebra, ProgressBars
 
 include("type_def.jl")
 include("reporting_routines.jl")
@@ -308,7 +308,7 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=1000
 	return (dist <= tol)
 end
 
-function solve_all!(mt::MultiType; verbose = true, check = false, tol = 1e-5)
+function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(outeriter), verbose=!tinyreport, check=false, tol=1e-5)
 	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid)
@@ -336,6 +336,8 @@ function solve_all!(mt::MultiType; verbose = true, check = false, tol = 1e-5)
 		flag = pfi!(ct, verbose = false; tol)
 		verbose && flag && print(": ✓")
 		verbose && !flag && print(": no convergence.")
+
+        tinyreport && !flag && println(outeriter, "No convergence at (ω, χ) = ($show_ω%, $show_χ%)")
 		
 		mt.L_mat[jω, jχ, :, :] .= ct.L
 		mt.C_mat[jω, jχ, :, :] .= ct.C
