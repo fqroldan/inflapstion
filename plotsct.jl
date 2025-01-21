@@ -316,6 +316,34 @@ function plansp(mt::MultiType; slides = true, dark = false)
     plot(lines, layout)
 end
 
+function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name = "", sc::ColorScheme=ColorSchemes.batlow, scmax = 0.95)
+    @assert size(z) == (length(x), length(y))
+
+    vv = eachindex(y) / length(y)
+    m, M = extrema(y)
+
+    col = get(sc, scmax * vv, :clamp)
+
+    jx = round(Int, length(x)/2)
+    xs = [x[jx] for _ in axes(z,2)]
+    ys = [z[jx, jy] for jy in axes(z,2)]
+    cols = range(m,M, length=length(xs))
+    colscale = [[(jx-1) / (length(col) - 1), col[jx]] for jx in eachindex(col)]
+    colnames = round.(range(m, M, length = 6), digits = 2)
+
+    sc = [scatter(
+        mode = "markers", marker_opacity = 0,
+        x = xs, y = ys, showlegend=false,
+        marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(m, M, length=length(colnames)), title="&nbsp;<i>$name", ticktext=colnames))
+    )]
+
+    push!(sc, [
+        scatter(x = x, y = z[:, jy], showlegend = false, marker_color = col[jy]) for jy in eachindex(y)
+    ]...)
+
+    return sc
+end
+
 function planspwide(mt::MultiType, dk = nothing; DKcrit = !isnothing(dk), slides = true, dark = false, T = 11, share = true)
 
     data = zeros(T, length(mt.ct.gr[:p]))
@@ -342,31 +370,11 @@ function planspwide(mt::MultiType, dk = nothing; DKcrit = !isnothing(dk), slides
         yaxis_title = "Share of Nash inflation"
     end
 
-    vv = [jp / length(mt.ct.gr[:p]) for jp in eachindex(mt.ct.gr[:p])]
-    min_z, max_z = extrema(mt.ct.gr[:p])
-    col = get(ColorSchemes.batlow, 0.85 * vv, :clamp)
-
-    jT = round(Int, T / 2)
-    xs = [jT for _ in axes(data, 2)]
-    ys = [data[jT, ja] for ja in axes(data, 2)]
-    cols = range(0, 1, length=length(xs))
-    colscale = [[(jT - 1) / (length(col) - 1), col[jT]] for jT in eachindex(col)]
-    colnames = round.(range(min_z, max_z, length=6), digits=2)
-
-
-    lines = [
-        scatter()
-        scatter(mode = "markers", marker_opacity = 0,
-        x = xs, y = ys, showlegend=false,
-            marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(min_z, max_z, length=length(colnames)), title="&nbsp;<i>p", ticktext=colnames))
-        )
-        [scatter(x=(1:T) .- 1, y=data[:, jp], marker_color=col[jp], showlegend = false) for jp in axes(data, 2) if jp > 1]
-    ]
     layout = Layout(;
         template = qtemplate(;slides, dark), xaxis_title = "<i>Quarters", yaxis_title
     )
 
-    plot(lines, layout)
+    plot(scatscol(data[:,2:end], 0:T-1, mt.ct.gr[:p][2:end], name="p"), layout)
 end
 
 function avgplans(mt::MultiType, N = 50; decay=true, CIs=false, slides = true, dark = false)
@@ -561,7 +569,7 @@ end
 function comp_plot_planner(m0::Prequel, mt::MultiType; jA = 1, slides=true, dark=false)
     tvec, πR, πC, πK = prep_plot_planner(mt)
 
-    tvec2, πK0 = prep_plot_prequel(m0, jA)
+    tvec2, πK0 = prep_plot_prequel(m0; jA)
 
     layout = Layout(
         title="Plans", yaxis_title="%", xaxis_title="<i>Quarters",
@@ -725,6 +733,8 @@ function implied_plan_wide(mt::Multiψ, dk = nothing; DKcrit=!isnothing(dk), jp 
         template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_title, yaxis_range = [-0.01, maximum(data)*1.05]
     )
 
+    # lines = scatscol(data[:,2:end], 0:T-1, ψvec[2:end], name=string(k))
+
     plot(lines, layout)
 end
 
@@ -765,3 +775,47 @@ function allplans(mt::Multiψ; jp = 2, T = 11, slides = true, dark = false)
     plot(lines, layout)
 end
 
+function reformat_x(xvec, k::Symbol)
+    if k == :σ
+        xvec = xvec * 400
+    elseif k == :β
+        xvec = xvec.^(-4)
+    elseif k == :κ
+    else
+        throw(error("Wrong parameter name"))
+    end
+    xvec
+end
+
+function plot_compstats(k::Symbol, T = 11; share = false, slides = true, dark = false)
+
+    s = sk(k)
+
+    ωvec, χvec, avec, xvec = load("Output/JET/compstats_$s.jld2", "ωvec", "χvec", "avec", "$(s)vec")
+
+    K = length(xvec)
+    plans = zeros(T, K)
+    for jk in eachindex(xvec)
+
+        a = annualized(avec[jk])
+        χ = annualized(χvec[jk])
+        Ω = exp(-ωvec[jk])
+        
+        for tt in 1:T
+            plans[tt, jk] = χ + Ω^(tt-1) * (a - χ)
+        end
+    end
+
+    xvec = reformat_x(xvec, k)
+
+    yaxis_title = "%"
+    if share
+        plans .*= 1 / annualized(Nash(mt))
+        yaxis_title = "Share of Nash inflation"
+    end
+
+    plot(scatscol(plans, 0:T-1, xvec, name =string(k)), Layout(;
+            template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_title, yaxis_range=[-0.01, maximum(plans) * 1.05]
+        )
+    )
+end

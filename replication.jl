@@ -147,6 +147,15 @@ function replicate_JET2(; saveall = false)
     saveall && savefig(fig7, folder * "Ccontour" * qual * ".pdf", width=900, height=450)
 
 
+    # Comparative statics
+    fig8_old = plot_cs(:σ; slides)
+    saveall && savefig(fig8_old, folder * "compstats_sigma_old" * qual * ".pdf", width=900, height=400)
+
+    fig9b_old = plot_cs(:κ; slides)
+    saveall && savefig(fig9b_old, folder * "compstats_kappa_old" * qual * ".pdf", width=500, height=350)
+
+    # fig8 = plot_compstats(:σ)
+    # saveall && savefig(fig8, folder * "compstats_sigma" * qual * ".pdf", width = 900, height = 400)
 
     fig13_app = Eplot(mt.ct; slides)
     saveall && savefig(fig13_app, folder * "first_p" * qual * ".pdf", width=900, height=400)
@@ -164,5 +173,7 @@ function replicate_JET2(; saveall = false)
     fig14 = implied_plan_wide(mtp; slides)
     saveall && savefig(fig14, folder * "psithing_plans" * qual* ".pdf", width=900, height=350)
 
+    fig16_old = plot_cs(:σ; showL = true, slides)
+    saveall && savefig(fig16_old, folder * "compstats_L_sigma_old" * qual * ".pdf", width=900, height=400)
 
 end
