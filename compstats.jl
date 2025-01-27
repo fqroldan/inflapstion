@@ -1,9 +1,11 @@
-function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol)
+function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, saveprog)
 
     ωvec = similar(xvec)
     χvec = similar(xvec)
     avec = similar(xvec)
     Lmat = zeros(length(xvec), length(mt.ct.gr[:p]))
+    
+    Lm   = Vector{typeof(mt.L_mat)}(undef, length(xvec))
 
     iter = enumerate(xvec)
     for (jx, xv) in iter
@@ -23,15 +25,20 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol)
         χvec[jx] = mt.χgrid[jχ]
         avec[jx] = mt.ct.gr[:a][ja]
 
+        Lm[jx] = mt.L_mat
         for jp in axes(Lmat, 2)
             Lvec[jx, jp] = findmin(mt.L_mat[:,:,jp,:])[1]
         end
+
+        if saveprog
+            save(fname, "xvec", xvec, "Lm", Lm, "k", k)
+        end
     end
 
-    return ωvec, χvec, avec, Lmat, xvec
+    return ωvec, χvec, avec, Lmat, xvec, Lm
 end
 
-function compstats(mt::MultiType, k::Symbol, K=15)
+function compstats(mt::MultiType, k::Symbol, K=15; fname = "Output/JET/temp.jld2", saveprog = length(fname) > 0)
     if k == :σ
         smin, smax = 0.75/400, 1.25/400
     elseif k == :β
@@ -43,7 +50,7 @@ function compstats(mt::MultiType, k::Symbol, K=15)
     end
 
     svec = range(smin, smax, length=K)
-    compstats(mt, svec, k)
+    compstats(mt, svec, k; fname, saveprog)
 end
 
 function sk(k::Symbol)
