@@ -2,6 +2,34 @@ using PlotlyJS, ColorSchemes
 
 """ Define styles """
 
+OwlBlue() = "#0098E9"
+OwlRed() = "#FF5CA8"
+OwlYellow() = "#F29318"
+OwlOrange() = "#F97860"
+OwlGreen() = "#5AA800"
+OwlPurple() = "#807AC9"
+
+defblue() = "#1f77b4"
+
+Owls() = [OwlBlue(), OwlOrange(), OwlGreen(), OwlPurple(), OwlYellow(), OwlRed()]
+Owls(k::Int64) = cycle(k - 1, Owls())
+
+BlRd() = [
+    "#001621",
+    "#004164",
+    "#006DA6",
+    "#0098E9",
+    "#3FB1ED",
+    "#7DC9F2",
+    "#BCE2F6",
+    "#F4CEC3",
+    "#EB8B71",
+    "#E2481E"
+]
+BlRd(k::Int64) = cycle(k, BlRd())
+
+cycle(k::Int64, v::Vector) = v[k%length(v)+1]
+
 sand() = "#F5F3F1"
 darkbgd() = "#272929"
 lightgrid() = "#353535"
@@ -39,6 +67,9 @@ function plot_announcements(; slides = true, dark = false, add_opt=false, cond_t
 	slides ? colorpal = ColorSchemes.davos : colorpal = ColorSchemes.southwest
 	slides ? correction = 0.8 : correction = 1
 	dark ? fl = 0.2 : fl = 0
+    
+    colorpal = ColorSchemes.lapaz
+    correction = 0.9
 
 	line_opt = scatter(;x=xvec, y=((1.750133)-(0.784)) * exp.(-0.4951.*(4.0.*xvec)).+(0.784), showlegend=false, marker_color="#d62728", line_width=3, line_dash="dash")
 
@@ -83,10 +114,18 @@ function plot_announcements(; slides = true, dark = false, add_opt=false, cond_t
 end
 
 
-function hplot(ct::CrazyType; kwargs...)
+function hplot(ct::CrazyType; share = false, kwargs...)
     y = [ct.gπ[jp, ja] - av for jp in eachindex(ct.gr[:p]), (ja, av) in enumerate(ct.gr[:a])]
+    y = annualized.(y)
 
-    ctplot(ct, annualized.(y), title = "<i>g<sup>⋆</sup> - a"; kwargs...)
+    title = "<i>g<sup>⋆</sup> - a"
+    yaxis_title = "%"
+    if share
+        y *= 1/annualized(Nash(ct))
+        yaxis_title = "Share of Nash inflation"
+    end
+
+    ctplot(ct, y; title, yaxis_title, kwargs...)
 end
 
 
@@ -248,7 +287,7 @@ function ctaplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...
     yt = "Initial inflation (<i>a<sub>0</sub></i>)"
 
     data = contour(
-        z = y', x = perc_rate.(mt.ωgrid), y = annualized.(mt.ct.agrid),
+        z = y', x = perc_rate.(mt.ωgrid), y = annualized.(mt.ct.gr[:a]),
         colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)]
 
     )
@@ -316,7 +355,7 @@ function plansp(mt::MultiType; slides = true, dark = false)
     plot(lines, layout)
 end
 
-function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name = "", sc::ColorScheme=ColorSchemes.batlow, scmax = 0.95)
+function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name = "", sc::ColorScheme=ColorSchemes.batlow, scmax = 0.95, kwargs...)
     @assert size(z) == (length(x), length(y))
 
     vv = eachindex(y) / length(y)
@@ -338,7 +377,7 @@ function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name 
     )]
 
     push!(sc, [
-        scatter(x = x, y = z[:, jy], showlegend = false, marker_color = col[jy]) for jy in eachindex(y)
+        scatter(x = x, y = z[:, jy], showlegend = false, name = "$name = $(@sprintf("%.3g", y[jy]))", marker_color = col[jy]; kwargs...) for jy in eachindex(y)
     ]...)
 
     return sc
@@ -624,13 +663,13 @@ function twolines(mt::Multiψ; show="L", jp = 2, slides = true, dark = false)
     C_og = mt.C[jω, jχ, :, jp, ja]
 
     data = [
-        scatter(x=mt.ψgrid, y = L_reopt, marker_color=cols[1], name = "c*(ψ)")
-        scatter(x=mt.ψgrid, y = L_og, marker_color=cols[2], name = "c*")
+        scatter(x=mt.ψgrid, y = L_reopt, marker_color=cols[1], name = "<b>a</b>*(ψ)")
+        scatter(x=mt.ψgrid, y = L_og, marker_color=cols[2], name = "<b>a</b>*")
     ]
     if show == "C"
         data = [
-            scatter(x=mt.ψgrid, y = C_reopt, marker_color=cols[1], name = "c*(ψ)")
-            scatter(x=mt.ψgrid, y = C_og, marker_color=cols[2], name = "c*")
+            scatter(x=mt.ψgrid, y = C_reopt, marker_color=cols[1], name = "<b>a</b>*(ψ)")
+            scatter(x=mt.ψgrid, y = C_og, marker_color=cols[2], name = "<b>a</b>*")
         ]
     end
 
@@ -787,11 +826,11 @@ function reformat_x(xvec, k::Symbol)
     xvec
 end
 
-function plot_compstats(k::Symbol, T = 11; share = false, slides = true, dark = false)
+function plot_compstats(k::Symbol, T = 11; share = false, slides = true, dark = false, showLmat = false)
 
     s = sk(k)
 
-    ωvec, χvec, avec, xvec = load("Output/JET/compstats_$s.jld2", "ωvec", "χvec", "avec", "$(s)vec")
+    ωvec, χvec, avec, xvec, Lmat, pvec = load("Output/JET/compstats_$s.jld2", "ωvec", "χvec", "avec", "$(s)vec", "Lmat", "pvec")
 
     K = length(xvec)
     plans = zeros(T, K)
@@ -814,8 +853,79 @@ function plot_compstats(k::Symbol, T = 11; share = false, slides = true, dark = 
         yaxis_title = "Share of Nash inflation"
     end
 
+    if showLmat
+        return plot(
+            contour(z = Lmat, x = pvec, y = xvec), 
+            Layout(;template = qtemplate(;slides, dark), xaxis_title = "<i>p", yaxis_title = "<i>$(string(k))")
+        )
+    end
+
     plot(scatscol(plans, 0:T-1, xvec, name =string(k)), Layout(;
             template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_title, yaxis_range=[-0.01, maximum(plans) * 1.05]
         )
     )
+end
+
+
+findflex(y::Array{T, 2}; jp) where T = findmin(y[jp, :])[2]
+findflex(y::Array{T, 3}; jp) where T = findmin(y[jp, :, :])[2]
+findflex(y::Array{T, 4}; jp) where T = findmin(y[jp, :, :, :])[2]
+findflex(y::Array{T, 5}; jp) where T = findmin(y[jp, :, :, :, :])[2]
+findflex(y::Array{T, 6}; jp) where T = findmin(y[jp, :, :, :, :, :])[2]
+
+function bestflex(z::Zero, mt=nothing; slides = true, dark = false, share = true)
+    T = periods(z)
+
+    a = zeros(T+4, T+4) * NaN
+
+    y = z.L
+    for (jt, tt) in enumerate(T:-1:2)
+
+        jv = findflex(y, jp = 2)
+        a_inv = annualized.(z.gr[:a][i] for i in Tuple(jv))
+
+        a[periods(z)-tt+1:periods(z), jt] = a_inv[end:-1:1]
+        
+        if periods(z) < size(a,1)
+            a[periods(z)+1:end, jt] .= a[periods(z), jt]
+        end
+
+        y = same_last_two(y)
+    end
+
+    yaxis_title = "%"
+    if share
+        yaxis_title = "Share of Nash inflation"
+        a .*= 1/annualized(Nash(z))
+    end
+
+    sc = [
+        [scatter(x=T-1:length(a), y=a[T+1:end, jj], name="<i>K</i> = $(periods(z)-jj+1)", marker_color=Owls(jj), legendgroup = jj, showlegend = false, line_dash="dot") for jj in 1:T-1]
+        [scatter(x=axes(a, 1) .- 1, y=a[1:T, jj], name="<i>K</i> = $(periods(z)-jj)", marker_color=Owls(jj), legendgroup=jj) for jj in 1:T-1]
+    ]
+    My = maximum(a[.!(isnan.(a))])*1.05
+
+    plans = zeros(T+3)
+    if !isnothing(mt)
+        _, jj = findmin(mt.L_mat[:, :, 2, :])
+        a = annualized(mt.ct.gr[:a][jj[3]])
+        χ = annualized(mt.χgrid[jj[2]])
+        ω = mt.ωgrid[jj[1]]
+        
+        for tt in eachindex(plans)
+            plans[tt] = χ + exp(-ω*(tt-1)) * (a - χ)
+        end
+        if share
+            plans .*= 1/annualized(Nash(mt))
+        end
+
+        push!(sc,
+            scatter(x = eachindex(plans).-1, y = plans, line_dash = "dash", marker_color = Owls(T), name = "Opt. announcement")
+        )
+    end
+    Mp = maximum(plans * 1.05)
+
+    My = max(My, Mp)
+
+    plot(sc, Layout(; template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_title, yaxis_range = [-0.05, My]))
 end

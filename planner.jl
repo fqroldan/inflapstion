@@ -144,3 +144,13 @@ function simul_plan(pp::Ramsey, T=4 * 10)
 
     return πv, θv
 end
+
+function checkRamsey(mt::MultiType)
+
+    β, γ, κ = (mt.ct.pars[k] for k in (:β, :γ, :κ))
+    λ = γ * κ^2
+
+    return checkRamsey(β, λ)
+end
+
+checkRamsey(β, λ) = (1 + β + λ - sqrt((1+β+λ)^2 - 4*β)) / (2*β)

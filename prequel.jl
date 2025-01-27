@@ -162,7 +162,7 @@ function solve_t0(mt::MultiType)
     return m0
 end
 
-periods(::Zero{T}) where T = T
+periods(::Zero{T}) where T = T - 1
 
 QuantEcon.gridmake(z::Zero{2}) = gridmake(1:length(z.gr[:a]))
 QuantEcon.gridmake(z::Zero{3}) = gridmake(1:length(z.gr[:a]), 1:length(z.gr[:a]))
@@ -276,6 +276,46 @@ function extend(z0::Zero; onlytop = false)
         end
         success_rate = 1 - counter / (length(z.gr[:p]) * length(z.gr[:a]))
         print(": $(@sprintf("%.3g",100 * success_rate))% successful\n")
+    end
+    return z
+end
+
+function same_last_two(y::Array{T,6}) where T
+
+    x = Array{eltype(y)}(undef, [size(y, jj) for jj in 1:ndims(y)-1]...)
+
+    for j1 in axes(x, 1), j2 in axes(x, 2), j3 in axes(x, 3), j4 in axes(x, 4), j5 in axes(x, 5)
+        x[j1,j2,j3,j4,j5] = y[j1, j2, j2, j3, j4, j5]
+    end
+    return x
+end
+
+function same_last_two(y::Array{T,5}) where T
+
+    x = Array{eltype(y)}(undef, [size(y, jj) for jj in 1:ndims(y)-1]...)
+
+    for j1 in axes(x,1), j2 in axes(x,2), j3 in axes(x,3), j4 in axes(x,4)
+        x[j1,j2,j3,j4] = y[j1, j2, j2, j3, j4]
+    end
+    return x
+end
+
+function same_last_two(y::Array{T,4}) where {T}
+
+    z = Array{eltype(y)}(undef, [size(y, jj) for jj in 1:ndims(y)-1]...)
+
+    for j1 in axes(z, 1), j2 in axes(z, 2), j3 in axes(z, 3)
+        z[j1, j2, j3] = y[j1, j2, j2, j3]
+    end
+    return z
+end
+
+function same_last_two(y::Array{T,3}) where {T}
+
+    z = Array{eltype(y)}(undef, [size(y, jj) for jj in 1:ndims(y)-1]...)
+
+    for j1 in axes(z, 1), j2 in axes(z, 2)
+        z[j1, j2] = y[j1, j2, j2]
     end
     return z
 end
