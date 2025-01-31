@@ -323,6 +323,8 @@ function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(oute
 
 		if jω > 1 && jχ == 1
 			ct.L .= mt.L_mat[jω - 1, jχ, :, :]
+		elseif jω > 1
+			ct.L .= mt.L_mat[jω, jχ - 1, :, :]
 		end
 
 		ct.pars[:ω] = ωv
