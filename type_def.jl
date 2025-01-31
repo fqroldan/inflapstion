@@ -299,8 +299,6 @@ end
 
 N(ct, k::Symbol) = length(ct.gr[k])
 
-# testing
-
 function MultiType(ct::CrazyType;
 	Nω = 40,
 	Nχ = 30,
@@ -322,6 +320,10 @@ function MultiType(ct::CrazyType;
 	L_mat = zeros(Nω, Nχ, Np, Na)
 	C_mat = zeros(Nω, Nχ, Np, Na)
 	g_mat = zeros(Nω, Nχ, Np, Na)
+
+	for jω in axes(L_mat, 1), jχ in axes(L_mat, 2)
+		L_mat[jω, jχ, :, :] .= ct.L
+	end
 
 	return MultiType(ct, ωgrid, χgrid, z, ν, μ, L_mat, C_mat, g_mat)
 end
