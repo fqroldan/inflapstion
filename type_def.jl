@@ -299,6 +299,8 @@ end
 
 N(ct, k::Symbol) = length(ct.gr[k])
 
+# testing
+
 function MultiType(ct::CrazyType;
 	Nω = 40,
 	Nχ = 30,
