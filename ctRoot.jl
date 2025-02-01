@@ -321,9 +321,9 @@ function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(oute
 		verbose && print("Plan with (ω, χ) = ($show_ω%, $show_χ%)")
 		ct = mt.ct
 
-		if jω > 1 && jχ == 1
+		if jω > 1
 			ct.L .= mt.L_mat[jω - 1, jχ, :, :]
-		elseif jω > 1
+		elseif jχ > 1
 			ct.L .= mt.L_mat[jω, jχ - 1, :, :]
 		end
 
