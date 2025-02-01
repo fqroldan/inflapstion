@@ -27,7 +27,7 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, savepr
 
         Lm[jx] = mt.L_mat
         for jp in axes(Lmat, 2)
-            Lvec[jx, jp] = findmin(mt.L_mat[:,:,jp,:])[1]
+            Lmat[jx, jp] = findmin(mt.L_mat[:,:,jp,:])[1]
         end
 
         if saveprog
