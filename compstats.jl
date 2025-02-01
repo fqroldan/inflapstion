@@ -12,7 +12,7 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, savepr
 
         mt.ct.pars[k] = xv
 
-        println("Starting with $(string(k)) = $(@sprintf("%.3g", xv)) at $(Dates.format(now(), "HH:MM"))")
+        println("Starting with $(string(k)) = $(@sprintf("%.3g", xv)) on $(Dates.format(now(), "dd-u at HH:MM"))")
         solve_all!(mt, check = true, tol = 5e-4, tinyreport = true, maxiter = 500)
 
         L, jj = findmin(mt.L_mat[:,:,2,:])
