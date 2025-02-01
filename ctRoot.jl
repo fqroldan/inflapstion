@@ -309,7 +309,7 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=1000
 end
 
 function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(outeriter), verbose=!tinyreport, check=false, tol=1e-5, maxiter = 1000)
-	verbose && print("Going over all plans at $(Dates.format(now(), "HH:MM"))\n")
+    verbose && print("Going over all plans on $(Dates.format(now(), "dd-u at HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid)
 	for (jω, ωv) in enumerate(mt.ωgrid), (jχ, χv) in enumerate(mt.χgrid)
