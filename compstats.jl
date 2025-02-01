@@ -65,12 +65,13 @@ function sk(k::Symbol)
     return s
 end
 
-function save_compstats(k::Symbol, K = 15)
-    mt = load("Output/JET/mt.jld2", "mt")
+function save_compstats(k::Symbol, K = 15; folder = "Output/JET/")
+    mt = load(folder * "mt.jld2", "mt")
 
     s = sk(k)
+    fname = ifelse(length(folder)>0, folder * "temp.jld2", "")
 
-    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k, K)
+    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k, K; fname)
 
-    save("Output/JET/compstats_$s.jld2", "ωvec", ωvec, "χvec", χvec, "avec", avec, "Lmat", Lmat, "$(s)vec", xvec, "pvec", pvec)
+    save(folder * "compstats_$s.jld2", "ωvec", ωvec, "χvec", χvec, "avec", avec, "Lmat", Lmat, "$(s)vec", xvec, "pvec", pvec)
 end
