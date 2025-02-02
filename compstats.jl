@@ -38,11 +38,11 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, savepr
     return ωvec, χvec, avec, Lmat, xvec, Lm
 end
 
-function compstats(mt::MultiType, k::Symbol, K=15; fname = "Output/JET/temp.jld2", saveprog = length(fname) > 0)
+function compstats(mt::MultiType, k::Symbol; K=15, fname = "Output/JET/temp.jld2", saveprog = length(fname) > 0)
     if k == :σ
         smin, smax = 0.75/400, 1.25/400
     elseif k == :β
-        smin, smax = 1.01^(-0.25), 1.1^(-0.25)
+        smin, smax = 1.01^(-0.25), 1.09^(-0.25)
     elseif k == :κ
         smin, smax = 0.1, 0.25
     else
@@ -65,13 +65,13 @@ function sk(k::Symbol)
     return s
 end
 
-function save_compstats(k::Symbol, K = 15; folder = "Output/JET/")
+function save_compstats(k::Symbol; K = 15, folder = "Output/JET/")
     mt = load(folder * "mt.jld2", "mt")
 
     s = sk(k)
     fname = ifelse(length(folder)>0, folder * "temp.jld2", "")
 
-    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k, K; fname)
+    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k; K, fname)
 
     save(folder * "compstats_$s.jld2", "ωvec", ωvec, "χvec", χvec, "avec", avec, "Lmat", Lmat, "$(s)vec", xvec, "pvec", pvec)
 end
