@@ -308,7 +308,7 @@ function pfi!(ct::Plan; miniter::Int = 2, tol::Float64=1e-5, maxiter::Int64=1000
 	return (dist <= tol)
 end
 
-function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(outeriter), verbose=!tinyreport, check=false, tol=1e-5, maxiter = 1000)
+function solve_all!(mt::MultiType; tinyreport=true, verbose=!tinyreport, check=false, tol=1e-5, maxiter = 1000)
     verbose && print("Going over all plans on $(Dates.format(now(), "dd-u at HH:MM"))\n")
 	iter = 0
 	tot  = length(mt.ωgrid) * length(mt.χgrid)
@@ -339,7 +339,7 @@ function solve_all!(mt::MultiType, outeriter=nothing; tinyreport=!isnothing(oute
 		verbose && flag && print(": ✓")
 		verbose && !flag && print(": no convergence.")
 
-        tinyreport && !flag && println(outeriter, "No convergence at (ω, χ) = ($show_ω%, $show_χ%)")
+        tinyreport && !flag && println("No convergence at (ω, χ) = ($show_ω%, $show_χ%)")
 		
 		mt.L_mat[jω, jχ, :, :] .= ct.L
 		mt.C_mat[jω, jχ, :, :] .= ct.C
