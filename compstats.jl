@@ -31,7 +31,7 @@ function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, savepr
         end
 
         if saveprog
-            save(fname, "xvec", xvec, "Lm", Lm, "k", k)
+            save(fname, "xvec", xvec, "Lm", Lm, "k", k, "mt", mt)
         end
     end
 
@@ -69,7 +69,7 @@ function save_compstats(k::Symbol; K = 15, folder = "Output/JET/")
     mt = load(folder * "mt.jld2", "mt")
 
     s = sk(k)
-    fname = ifelse(length(folder)>0, folder * "temp.jld2", "")
+    fname = ifelse(length(folder)>0, folder * "temp$(s).jld2", "")
 
     ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k; K, fname)
 
