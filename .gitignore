@@ -1,2 +1,41 @@
 .gitignore
 .vscode
+
+AER/
+backup/
+Codes_backup/
+cont */
+finite period model/
+Finite_horizon/
+First period/
+Fonts/
+Graphs/
+HPC_output/
+JME/
+JYC2003/
+Presentations/
+References/
+
+Notes/Chang/
+Notes/new/
+Notes/old/
+
+*.aux
+*.bbl
+*.out
+*.synctex.gz
+
+cddp_IMFwp.pdf
+cddp_notes.pdf
+cover_imfwp.pdf
+inflation_notes.*
+
+*.log
+REM*.xlsx
+restriction*
+targets_ARG.*
+
+temp.jld2
+temp.png
+temp.txt
+update_aps.sh
