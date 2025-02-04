@@ -1,14 +1,23 @@
 function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, saveprog)
 
+    Lm   = Vector{typeof(mt.L_mat)}(undef, length(xvec))
+
+    compstats!(xvec, Lm, k, mt; fname, saveprog)
+end
+
+function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog)
+
     ωvec = similar(xvec)
     χvec = similar(xvec)
     avec = similar(xvec)
     Lmat = zeros(length(xvec), length(mt.ct.gr[:p]))
     
-    Lm   = Vector{typeof(mt.L_mat)}(undef, length(xvec))
-
     iter = enumerate(xvec)
     for (jx, xv) in iter
+
+        if isassigned(Lm, jx)
+            mt.L_mat .= Lm[jx]
+        end
 
         mt.ct.pars[k] = xv
 
