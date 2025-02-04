@@ -34,7 +34,7 @@ function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog)
         χvec[jx] = mt.χgrid[jχ]
         avec[jx] = mt.ct.gr[:a][ja]
 
-        Lm[jx] = mt.L_mat
+        Lm[jx] = copy(mt.L_mat)
         for jp in axes(Lmat, 2)
             Lmat[jx, jp] = findmin(mt.L_mat[:,:,jp,:])[1]
         end
