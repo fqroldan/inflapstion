@@ -1,6 +1,8 @@
 .gitignore
 .vscode
 
+mt_highres.jld2
+
 AER/
 backup/
 Codes_backup/
