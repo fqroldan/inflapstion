@@ -1,11 +1,11 @@
-function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, saveprog)
+function compstats(mt::MultiType, xvec::AbstractVector, k::Symbol; fname, saveprog, tol)
 
     Lm   = Vector{typeof(mt.L_mat)}(undef, length(xvec))
 
-    compstats!(xvec, Lm, k, mt; fname, saveprog)
+    compstats!(xvec, Lm, k, mt; fname, saveprog, tol)
 end
 
-function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog)
+function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog, tol)
 
     ωvec = similar(xvec)
     χvec = similar(xvec)
@@ -22,7 +22,7 @@ function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog)
         mt.ct.pars[k] = xv
 
         println("Starting with $(string(k)) = $(@sprintf("%.3g", xv)) on $(Dates.format(now(), "dd-u at HH:MM"))")
-        solve_all!(mt, check = true, tol = 5e-4, tinyreport = true, maxiter = 500)
+        solve_all!(mt; check = true, tol, tinyreport = true, maxiter = 500)
 
         L, jj = findmin(mt.L_mat[:,:,2,:])
 
@@ -47,7 +47,7 @@ function compstats!(xvec, Lm, k::Symbol, mt::MultiType; fname, saveprog)
     return ωvec, χvec, avec, Lmat, xvec, Lm
 end
 
-function compstats(mt::MultiType, k::Symbol; K=15, fname = "Output/JET/temp.jld2", saveprog = length(fname) > 0)
+function compstats(mt::MultiType, k::Symbol; K=15, fname="Output/JET/temp.jld2", saveprog=length(fname) > 0, tol=5e-4)
     if k == :σ
         smin, smax = 0.75/400, 1.25/400
     elseif k == :β
@@ -59,7 +59,7 @@ function compstats(mt::MultiType, k::Symbol; K=15, fname = "Output/JET/temp.jld2
     end
 
     svec = range(smin, smax, length=K)
-    compstats(mt, svec, k; fname, saveprog)
+    compstats(mt, svec, k; fname, saveprog, tol)
 end
 
 function sk(k::Symbol)
@@ -74,13 +74,13 @@ function sk(k::Symbol)
     return s
 end
 
-function save_compstats(k::Symbol; K = 15, folder = "Output/JET/")
+function save_compstats(k::Symbol; K=15, folder="Output/JET/", tol=5e-4)
     mt = load(folder * "mt.jld2", "mt")
 
     s = sk(k)
     fname = ifelse(length(folder)>0, folder * "temp_$(s).jld2", "")
 
-    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k; K, fname)
+    ωvec, χvec, avec, Lmat, xvec, pvec = compstats(mt, k; K, fname, tol)
 
     save(folder * "compstats_$s.jld2", "ωvec", ωvec, "χvec", χvec, "avec", avec, "Lmat", Lmat, "$(s)vec", xvec, "pvec", pvec)
 end
