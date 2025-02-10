@@ -158,6 +158,7 @@ function replicate_JET2(; saveall = false)
     saveall && savefig(fig7, folder * "compstats_sigma" * qual * ".pdf", width=900, height=400)
 
     fig8a = plot_compstats(:β; slides)
+    plot_consol(:β; slides)
     saveall && savefig(fig8a, folder * "compstats_beta" * qual * ".pdf", width=500, height=350)
 
     fig8b = plot_compstats(:κ; slides)

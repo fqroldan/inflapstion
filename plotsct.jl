@@ -830,7 +830,16 @@ function plot_compstats(k::Symbol, T = 11; share = false, slides = true, dark = 
 
     s = sk(k)
 
-    ωvec, χvec, avec, xvec, Lmat, pvec = load("Output/JET/compstats_$s.jld2", "ωvec", "χvec", "avec", "$(s)vec", "Lmat", "pvec")
+    sf = load("Output/JET/compstats_$s.jld2")
+
+    ωvec, χvec, avec, xvec = (sf[key] for key in ("ωvec", "χvec", "avec", "$(s)vec"))
+
+    if haskey(sf, "Lmat")
+        Lmat = sf["Lmat"]
+    end
+    if haskey(sf, "pvec")
+        pvec = sf["pvec"]
+    end
 
     K = length(xvec)
     plans = zeros(T, K)
