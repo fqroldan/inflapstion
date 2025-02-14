@@ -258,13 +258,17 @@ end
 
 ctωplot(m0::Prequel, y::Array; title = "", slides = true, dark = false, kwargs...) = ctωplot(m0, y, annualized.(m0.agrid), title = title, slides = slides, dark = dark; kwargs...)
 
-function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.gr[:a]), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, kwargs...)
+function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.gr[:a]), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, censor = 0., kwargs...)
     Na, Nχ = length(xgrid), length(ygrid)
     @assert size(y) == (Na, Nχ)
 
     colpal = ColorSchemes.lapaz
     xt = "Initial inflation (<i>a<sub>0</sub></i>)"
     yt = "Asymptote (χ)"
+
+    if censor > 0
+        y[y .<= censor] .== NaN
+    end
 
     data = contour(
         z = y', x = xgrid, y = ygrid,
@@ -445,35 +449,74 @@ function avgplans(mt::MultiType, N = 50; decay=true, CIs=false, slides = true, d
 	plot(ls, layout)
 end
 
-function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false, folder = "")
+function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false, folder = "", censor = 0.)
 
     χgrid = mt.χgrid
     ωgrid = mt.ωgrid
     agrid = mt.ct.gr[:a]
 
-    marg_aχ = [sum(mt.μ[:, jχ, ja]) for jχ in axes(mt.μ, 2), ja in axes(mt.μ, 3)]
+    μ = copy(mt.μ)
 
-    marg_ωχ = [sum(mt.μ[jω, jχ, :]) for jω in axes(mt.μ, 1), jχ in axes(mt.μ, 2)]
 
-    c1 = contour(x=annualized.(agrid), y=annualized.(χgrid), z=marg_aχ, colorscale=[[jj, get(ColorSchemes.lapaz, jj, :clamp)] for jj in range(0, 1, length=50)])
-
-    c2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj, :clamp)] for jj in range(0, 1, length=50)])
-
-    P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > χgrid[jχ]])
+    P = sum([sum(μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > χgrid[jχ]])
     print("P(a_0 > χ) = $(@sprintf("%0.3g",100P))%\n")
     save_stats && write(folder * "pa_chi.txt", "$(@sprintf("%0.3g",100P))\\%.")
-
-    P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > 5χgrid[jχ]])
+    
+    P = sum([sum(μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if agrid[ja] > 5χgrid[jχ]])
     print("P(a_0 > 5χ) = $(@sprintf("%0.3g",100P))%\n")
     save_stats && write(folder * "pa_chi5.txt", "$(@sprintf("%0.3g",100P))\\%.")
-
-    P = sum([sum(mt.μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ] == 0])
+    
+    P = sum([sum(μ[:, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid) if χgrid[jχ] == 0])
     print("P(a_0 > 0) = $(@sprintf("%0.3g",100P))%\n")
     save_stats && write(folder * "pa_chi0.txt", "$(@sprintf("%0.3g",100P))\\%.")
-
-    P = sum([sum(mt.μ[jω, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω]) <= 10])
+    
+    P = sum([sum(μ[jω, jχ, ja]) for jχ in 1:length(χgrid), ja in 1:length(agrid), jω in 1:length(ωgrid) if perc_rate(ωgrid[jω]) <= 10])
     print("P(ω ≤ 10%) = $(@sprintf("%0.3g",100P))%\n")
     save_stats && write(folder * "pa_omega0.txt", "$(@sprintf("%0.3g",100P))\\%.")
+    
+    if censor > 0
+        cond = μ .<= censor
+        print("censoring above $censor. Shares of indices affected = $(sum(cond)/length(μ)) \n")
+        # μ[cond] .= 0.0
+        # μ .*= 1 / sum(μ)
+        # μ[cond] .= NaN
+    end
+
+    marg_aχ = [sum(μ[:, jχ, ja]) for jχ in axes(μ, 2), ja in axes(μ, 3)]
+
+    marg_ωχ = [sum(μ[jω, jχ, :]) for jω in axes(μ, 1), jχ in axes(μ, 2)]
+
+    if censor > 0
+        cond_a = marg_aχ .<= censor
+        cond_ω = marg_ωχ .<= censor
+
+        marg_aχ[cond_a] .= 0
+        marg_aχ .*= 1/sum(marg_aχ)
+        marg_aχ[cond_a] .= NaN
+        marg_ωχ[cond_ω] .= 0
+        marg_ωχ .*= 1/sum(marg_ωχ)
+        marg_ωχ[cond_ω] .= NaN
+    end
+
+    f(x) = exp(10000*x)
+    g(y) = log(y)/10000
+    
+    z = max.(5e-4, marg_aχ)
+    Nz = 7
+    zmin, zmax = extrema(z[.!(isnan.(z))])
+    zvals = range(f(zmin), f(zmax), length=Nz)
+    Sz = 2 * (Nz - 1)
+    @show stepsize = (f(zmax) - f(zmin)) / Sz
+
+
+    c1 = contour(x=annualized.(agrid), y=annualized.(χgrid), z=f.(z), colorscale=ColorSchemes.lapaz, autocontour=false, contours=Dict(:start => f(zmin), :end => f(zmax), :size => stepsize), colorbar=attr(tickmode="array", tickvals=zvals, ticktext=[@sprintf("%.2g",g(zz)) for zz in zvals]))
+    
+    # zvals = range(extrema(z[.!(isnan.(z))] .+ 2e-5)..., length = 8)
+
+    # c1 = contour(x=annualized.(agrid), y=annualized.(χgrid), z=z, colorscale=ColorSchemes.lapaz, colorbar = attr(tickmode ="array", tickvals = zvals, ticktext=[@sprintf("%.2g", z) for z in zvals]))
+
+
+    c2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj, :clamp)] for jj in range(0, 1, length=500)])
 
     l1 = Layout(
         template = qtemplate(slides=slides, dark=dark),

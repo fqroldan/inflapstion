@@ -173,11 +173,14 @@ function replicate_JET2(; saveall = false)
     fig10 = implied_plan_wide(mtp; slides)
     saveall && savefig(fig10, folder * "psithing_plans" * qual * ".pdf", width=900, height=350)
 
-    fig11a, fig11b = strategy_μ(mt; slides, save_stats=true, folder)
+    mth = load("Output/JET/mt_highres.jld2", "mt")
+    find_equil!(mth, 1e-13)
+    fig11a = strategy_μ(mth; slides, save_stats=true, folder, censor = 1e-9)[1]
     saveall && savefig(fig11a, folder * "marg_achi" * qual * ".pdf", width=900, height=400)
 
 
     # Appendix
+
 
     fig12_app = Eplot(mt.ct; slides)
     saveall && savefig(fig12_app, folder * "first_p" * qual * ".pdf", width=900, height=400)
