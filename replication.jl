@@ -145,13 +145,13 @@ function replicate_JET2(; saveall = false)
     saveall && savefig(fig6_plans, folder * "planswide" * qual * ".pdf", width=900, height=400)
 
     # Comparative statics
-    fig7_old = plot_cs(:σ; share=true, slides)
+    fig7_old = plot_consol(:σ; share=true, slides)
     saveall && savefig(fig7_old, folder * "compstats_sigma_old" * qual * ".pdf", width=900, height=400)
 
-    fig8a_old = plot_cs(:β; slides)
+    fig8a_old = plot_consol(:β; slides)
     saveall && savefig(fig8a_old, folder * "compstats_beta_old" * qual * ".pdf", width=500, height=350)
 
-    fig8b_old = plot_cs(:κ; slides)
+    fig8b_old = plot_consol(:κ; slides)
     saveall && savefig(fig8b_old, folder * "compstats_kappa_old" * qual * ".pdf", width=500, height=350)
 
     fig7 = plot_compstats(:σ; slides)

@@ -359,7 +359,7 @@ function plansp(mt::MultiType; slides = true, dark = false)
     plot(lines, layout)
 end
 
-function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name = "", sc::ColorScheme=ColorSchemes.batlow, scmax = 0.95, kwargs...)
+function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name = "", sc::ColorScheme=ColorSchemes.batlow, scmax = 0.95, suff = "", kwargs...)
     @assert size(z) == (length(x), length(y))
 
     vv = eachindex(y) / length(y)
@@ -377,7 +377,7 @@ function scatscol(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; name 
     sc = [scatter(
         mode = "markers", marker_opacity = 0,
         x = xs, y = ys, showlegend=false,
-        marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(m, M, length=length(colnames)), title="&nbsp;<i>$name", ticktext=colnames))
+        marker=attr(color=cols, reversescale=false, colorscale=colscale, colorbar=attr(tickvals=range(m, M, length=length(colnames)), title="&nbsp;<i>$name", ticktext=["$c$suff" for c in colnames], ticksuffix=suff))
     )]
 
     push!(sc, [
@@ -861,7 +861,7 @@ function reformat_x(xvec, k::Symbol)
     if k == :σ
         xvec = xvec * 400
     elseif k == :β
-        xvec = xvec.^(-4)
+        xvec = 100 * (xvec.^(-4) .- 1)
     elseif k == :κ
     else
         throw(error("Wrong parameter name"))

@@ -177,7 +177,15 @@ function plot_consol(k::Symbol; T=11, jp=2, showLmat=false, showL=false, slides=
             ), Layout(template=qtemplate(; slides, dark), title="lim<sub><i>p→0</i></sub> min<sub>(a,ω,χ)</sub> 𝓛(<i>p,a,ω,χ)", xaxis_title="<i>p", yaxis_title="<i>$(string(k))"))
     end
 
-    plot(scatscol(plans, 0:T-1, xvec, name=string(k)), Layout(;
+    suff = ""
+    name = string(k)
+    if k == :β
+        suff = "%"
+        name = "β<sup>-1</sup>-1"
+    end
+
+
+    plot(scatscol(plans, 0:T-1, xvec; name, suff), Layout(;
         template=qtemplate(; slides, dark), xaxis_title="<i>Quarters", yaxis_range=[-0.01, maximum(plans) * 1.05], yaxis_title
     )
     )
