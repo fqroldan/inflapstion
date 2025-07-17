@@ -3,7 +3,7 @@ include("old_cs.jl")
 
 function replicate_all(;saveall=false)
 
-    fig1 = plot_announcement;(slides)
+    fig1 = plot_announcements(;slides)
     saveall && savefig(fig1, "Graphs/current/announcements_paper.pdf", width = 900, height = 450)
 
     mt, dk = load("Output/mt.jld2", "mt", "dk")
