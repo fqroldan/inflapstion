@@ -138,7 +138,7 @@ function replicate_JET2(; saveall = false)
     fig4_L = Lplot(mt.ct; slides)
     saveall && savefig(fig4_L, folder * "first_L" * qual * ".pdf", width=900, height=450)
 
-    fig5_cred = Cplot(mt; slides)
+    fig5_cred = Cplot(mt; slides, share = true)
     saveall && savefig(fig5_cred, folder * "Ccontour" * qual * ".pdf", width=900, height=450)
 
     fig6_plans = planspwide(mt, dk; slides, share = true)
@@ -186,11 +186,11 @@ function replicate_JET2(; saveall = false)
     saveall && savefig(fig12_app, folder * "first_p" * qual * ".pdf", width=900, height=400)
 
 
-    fig13_app = Lωplot(mt; slides)
+    fig13_app = Lωplot(mt; slides, share = true)
     saveall && savefig(fig13_app, folder * "contour" * qual * ".pdf", width=900, height=500)
 
 
-    fig14_app = Lplot_fixed_ω(mt; slides)
+    fig14_app = Lplot_fixed_ω(mt; slides, share = true)
     saveall && savefig(fig14_app, folder * "contour_app" * qual * ".pdf", width=900, height=400)
 
     # z = load("Output/z30.jld2", "z")

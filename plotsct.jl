@@ -239,59 +239,65 @@ function Lωplot(m0::Prequel; jp = 2, jA = 1, slides=true, dark=false, kwargs...
     )
 end
 
-function Lωplot(mt::MultiType, L_mat = mt.L_mat; jp=2, slides=true, dark=false, kwargs...)
+function Lωplot(mt::MultiType, L_mat = mt.L_mat; jp=2, slides=true, dark=false, share = true, kwargs...)
     L = [minimum(L_mat[:, jχ, jp, ja]) for ja in axes(L_mat, 4), jχ in axes(L_mat, 2)]
 
     jj = findfirst(L .== minimum(L))
-    xmin = annualized(mt.ct.gr[:a][jj[1]])
-    ymin = annualized(mt.χgrid[jj[2]])
+    
+    sh = ifelse(share, 1 / annualized(Nash(mt)), 1)
+    xmin = annualized(mt.ct.gr[:a][jj[1]])  * sh
+    ymin = annualized(mt.χgrid[jj[2]])  * sh
 
     shape_vec = [
         attr(; x0=xmin - 0.001, x1=xmin + 0.001, y0=ymin - 0.002, y1=ymin + 0.002, line_color="darkred", fillcolor="darkred", type="circle")
-        attr(; x0=0, x1 = annualized(mt.χgrid[end]), y0=0, y1 = annualized(mt.χgrid[end]), type = "line", line_width = 1, line_dash="dash", line_color = "darkred")
+        attr(; x0=0, x1 = annualized(mt.χgrid[end]) * sh, y0=0, y1 = annualized(mt.χgrid[end]) * sh, type = "line", line_width = 1, line_dash="dash", line_color = "darkred")
     ]
     
     ctωplot(mt, L, shapes = shape_vec, 
-        title = "lim<sub><i>p→0</i></sub> min<sub><i>ω</i></sub> 𝓛(<i>p,a,ω,χ</i>)", 
-        slides=slides, dark=dark; kwargs...)
+        title = "lim<sub><i>p→0</i></sub> min<sub><i>ω</i></sub> 𝓛(<i>p,a,ω,χ</i>)"; 
+        slides, dark, share, kwargs...)
 end
 
 ctωplot(m0::Prequel, y::Array; title = "", slides = true, dark = false, kwargs...) = ctωplot(m0, y, annualized.(m0.agrid), title = title, slides = slides, dark = dark; kwargs...)
 
-function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.gr[:a]), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, censor = 0., kwargs...)
+function ctωplot(mt::Union{MultiType, Prequel}, y::Array, xgrid = annualized.(mt.ct.gr[:a]), ygrid = annualized.(mt.χgrid); title = "", slides = true, dark = false, censor = 0., share = false, kwargs...)
     Na, Nχ = length(xgrid), length(ygrid)
     @assert size(y) == (Na, Nχ)
 
     colpal = ColorSchemes.lapaz
-    xt = "Initial inflation (<i>a<sub>0</sub></i>)"
-    yt = "Asymptote (χ)"
+    xt = "Initial inflation (<i>a<sub>0</sub></i>" * ifelse(share, " / <i>π<sup>N</sup></i>)", ")")
+    yt = "Asymptote (χ" * ifelse(share, " / <i>π<sup>N</sup></i>)", ")")
 
     if censor > 0
         y[y .<= censor] .== NaN
     end
+    
+    sh = ifelse(share, 1 / annualized(Nash(mt)), 1)
 
     data = contour(
-        z = y', x = xgrid, y = ygrid,
+        z = y', x = xgrid * sh, y = ygrid * sh,
         colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)]
 
     )
     layout = Layout(
         xaxis_title = xt, yaxis_title = yt, title = title,
-        template = qtemplate(slides=slides, dark=dark);
+        template = qtemplate(;slides, dark);
         kwargs...
     )
     
     plot(data, layout)
 end
 
-function ctaplot(mt::MultiType, y::Array; slides = true, dark = false, kwargs...)
+function ctaplot(mt::MultiType, y::Array; share = false, slides = true, dark = false, kwargs...)
 
     colpal = ColorSchemes.lapaz
     xt = "Decay rate (%)"
-    yt = "Initial inflation (<i>a<sub>0</sub></i>)"
+    yt = "Initial inflation (<i>a<sub>0</sub></i>" * ifelse(share, " / <i>π<sup>N</sup></i>)", ")")
 
+    sh = ifelse(share, 1 / annualized(Nash(mt)), 1)
+    
     data = contour(
-        z = y', x = perc_rate.(mt.ωgrid), y = annualized.(mt.ct.gr[:a]),
+        z = y', x = perc_rate.(mt.ωgrid), y = annualized.(mt.ct.gr[:a]) * sh,
         colorscale = [[jj, get(colpal, 1-jj, :clamp)] for jj in range(0,1,length=50)]
 
     )
@@ -449,11 +455,14 @@ function avgplans(mt::MultiType, N = 50; decay=true, CIs=false, slides = true, d
 	plot(ls, layout)
 end
 
-function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false, folder = "", censor = 0.)
+function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = false, folder = "", share = true, censor = 0.)
 
-    χgrid = mt.χgrid
+    sh = ifelse(share, 1 / annualized(Nash(mt)), 1)
+
+    χgrid = annualized.(mt.χgrid) * sh
+    agrid = annualized.(mt.ct.gr[:a]) * sh
     ωgrid = mt.ωgrid
-    agrid = mt.ct.gr[:a]
+
 
     μ = copy(mt.μ)
 
@@ -509,22 +518,22 @@ function strategy_μ(mt::MultiType; save_stats=false, slides = true, dark = fals
     @show stepsize = (f(zmax) - f(zmin)) / Sz
 
 
-    c1 = contour(x=annualized.(agrid), y=annualized.(χgrid), z=f.(z), colorscale=ColorSchemes.lapaz, autocontour=false, contours=Dict(:start => f(zmin), :end => f(zmax), :size => stepsize), colorbar=attr(tickmode="array", tickvals=zvals, ticktext=[@sprintf("%.2g",g(zz)) for zz in zvals]))
+    c1 = contour(x=(agrid), y=(χgrid), z=f.(z), colorscale=ColorSchemes.lapaz, autocontour=false, contours=Dict(:start => f(zmin), :end => f(zmax), :size => stepsize), colorbar=attr(tickmode="array", tickvals=zvals, ticktext=[@sprintf("%.2g",g(zz)) for zz in zvals]))
     
     # zvals = range(extrema(z[.!(isnan.(z))] .+ 2e-5)..., length = 8)
 
-    # c1 = contour(x=annualized.(agrid), y=annualized.(χgrid), z=z, colorscale=ColorSchemes.lapaz, colorbar = attr(tickmode ="array", tickvals = zvals, ticktext=[@sprintf("%.2g", z) for z in zvals]))
+    # c1 = contour(x=agrid, y=χgrid, z=z, colorscale=ColorSchemes.lapaz, colorbar = attr(tickmode ="array", tickvals = zvals, ticktext=[@sprintf("%.2g", z) for z in zvals]))
 
 
-    c2 = contour(x=perc_rate.(ωgrid), y=annualized.(χgrid), z=marg_ωχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj, :clamp)] for jj in range(0, 1, length=500)])
+    c2 = contour(x=perc_rate.(ωgrid), y=χgrid, z=marg_ωχ', colorscale=[[jj, get(ColorSchemes.lapaz, jj, :clamp)] for jj in range(0, 1, length=500)])
 
     l1 = Layout(
         template = qtemplate(slides=slides, dark=dark),
         title="lim<sub>z→0</sub>∫<i>μ<sub>z</sub></i> (<i>ω, χ, a<sub>0</sub></i>) d<i>ω</i>",
         font_size=16,
-        xaxis=attr(title="Initial inflation (<i>a<sub>0</sub></i>)"),
-        yaxis=attr(title="Asymptote (<i>χ</i>)"),
-        shapes = [attr(x0=0, x1 = annualized(χgrid[end]), y0=0, y1=annualized(χgrid[end]), type = "line", line_color="darkred", line_dash="dash", line_width = 1)]
+        xaxis_title="Initial inflation (<i>a<sub>0</sub></i>" * ifelse(share, " / <i>π<sup>N</sup></i>)", ")"),
+        yaxis_title="Asymptote (<i>χ</i>" * ifelse(share, " / <i>π<sup>N</sup></i>)", ")"),
+        shapes = [attr(x0=0, x1 = χgrid[end], y0=0, y1=χgrid[end], type = "line", line_color="darkred", line_dash="dash", line_width = 1)]
     )
     l2 = Layout(
         template = qtemplate(slides=slides, dark=dark),
