@@ -51,7 +51,7 @@ function qtemplate(; dark=false, slides=!dark)
 		width=width,
 		height=width * ifelse(slides, 10 / 16, 7 / 16),
 		font=attr(
-			family=ifelse(slides, "Lato", "Linux Libertine"),
+            family=ifelse(slides, "Lato", "Libertinus Serif"),
 			size=16, color=ifelse(dark, sand(), darkbgd())
 		),
 		paper_bgcolor=bgcol(slides, dark), plot_bgcolor=bgcol(slides, dark),
